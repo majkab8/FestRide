@@ -19,7 +19,8 @@ class UserCreate(BaseModel):
 
 class UserLogin(BaseModel):
     email: EmailStr
-    password: str
+    # Cap length only (no min) so bad logins return 401, not a 422 or a 500.
+    password: str = Field(max_length=72)
 
 
 class ProfileUpdate(BaseModel):
