@@ -2,15 +2,19 @@
 
 from typing import Optional
 
-from pydantic import BaseModel, EmailStr
+from pydantic import BaseModel, EmailStr, Field
 
 from .models import DrivingStyle
+
+# bcrypt only hashes the first 72 bytes; reject longer passwords up front so we
+# return a clear 422 instead of a 500 from the hashing layer.
+_PASSWORD = Field(min_length=8, max_length=72)
 
 
 class UserCreate(BaseModel):
     email: EmailStr
-    password: str
-    display_name: str
+    password: str = _PASSWORD
+    display_name: str = Field(min_length=1, max_length=80)
 
 
 class UserLogin(BaseModel):
