@@ -75,7 +75,7 @@ def _user(session: Session, name, genres, style, smoker, email=None) -> User:
     return user
 
 
-def _upcoming(session: Session, min_days: int, city=None, exclude=()) -> Event | None:
+def _upcoming(session: Session, min_days: int, city=None, exclude=(), genre=None) -> Event | None:
     stmt = (
         select(Event)
         .where(Event.event_date >= today_pl() + timedelta(days=min_days), col(Event.id).not_in(list(exclude) or [0]))
@@ -83,6 +83,8 @@ def _upcoming(session: Session, min_days: int, city=None, exclude=()) -> Event |
     )
     if city:
         stmt = stmt.where(Event.city == city)
+    if genre:
+        stmt = stmt.where(Event.genre == genre)
     return session.exec(stmt).first()
 
 
@@ -115,7 +117,10 @@ def main() -> int:
             print("Demo data already exists. Use --reset to recreate it.")
             return 0
 
-        showcase = _upcoming(session, 5, city="Kraków") or _upcoming(session, 5)
+        # An electronic event, so "techno ..." sentences find the showcase (Kuba = 100%).
+        showcase = (_upcoming(session, 5, city="Kraków", genre="Dance/Electronic")
+                    or _upcoming(session, 5, genre="Dance/Electronic")
+                    or _upcoming(session, 5, city="Kraków") or _upcoming(session, 5))
         mine = _upcoming(session, 3, city="Warszawa", exclude=[showcase.id]) if showcase else None
         if showcase is None or mine is None:
             print("No upcoming events found. Run `python import_events.py` first.")
