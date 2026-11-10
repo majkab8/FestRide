@@ -109,6 +109,7 @@ _MAX_ITEMS = 5
 class ExplainRequest(BaseModel):
     ride_ids: list[int] = Field(default_factory=list, max_length=_MAX_ITEMS)  # as passenger
     request_ids: list[int] = Field(default_factory=list, max_length=_MAX_ITEMS)  # as driver
+    lang: Literal["en", "pl"] = "en"  # language of the sentences (UI language)
 
 
 class ExplainResponse(BaseModel):
@@ -149,9 +150,9 @@ def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> d
     }
 
 
-def _cache_key(you: User, them: User, facts: dict) -> tuple:
+def _cache_key(you: User, them: User, facts: dict, lang: str) -> tuple:
     # Profiles are part of the key, so editing a profile refreshes the text.
-    return (you.id, them.id, json.dumps(facts, sort_keys=True, ensure_ascii=False))
+    return (you.id, them.id, lang, json.dumps(facts, sort_keys=True, ensure_ascii=False))
 
 
 @router.post("/explain", response_model=ExplainResponse)
@@ -189,7 +190,7 @@ def explain(
     result: dict[str, dict[int, str]] = {"rides": {}, "requests": {}}
     todo = []
     for kind, obj_id, other, facts in jobs:
-        cached = _explain_cache.get_or_none(_cache_key(current_user, other, facts))
+        cached = _explain_cache.get_or_none(_cache_key(current_user, other, facts, data.lang))
         if cached is not None:
             result[kind][obj_id] = cached
         else:
@@ -199,12 +200,12 @@ def explain(
     if todo:
         try:
             # Temporary ids 0..n-1, so ride and request ids can't collide.
-            texts = ai.explain_matches([{"id": i, **facts} for i, (_, _, _, facts) in enumerate(todo)])
+            texts = ai.explain_matches([{"id": i, **facts} for i, (_, _, _, facts) in enumerate(todo)], data.lang)
         except ai.AIUnavailable:
             texts, available = {}, False
         for i, (kind, obj_id, other, facts) in enumerate(todo):
             if i in texts:
                 result[kind][obj_id] = texts[i]
-                _explain_cache.put(_cache_key(current_user, other, facts), texts[i])
+                _explain_cache.put(_cache_key(current_user, other, facts, data.lang), texts[i])
 
     return ExplainResponse(rides=result["rides"], requests=result["requests"], ai_available=available)

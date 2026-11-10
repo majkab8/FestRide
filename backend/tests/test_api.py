@@ -138,3 +138,14 @@ def test_genre_filter_matches_family(client, register, make_ride, engine):
         assert len(client.get("/rides", params={"genre": genre}).json()) == 1, genre
         assert len(client.get("/events", params={"genre": genre}).json()) == 1, genre
     assert client.get("/rides", params={"genre": "rock"}).json() == []
+
+
+def test_request_message_reaches_driver(client, register, make_ride):
+    driver = register()
+    ride = make_ride(driver)
+    passenger = register()
+    r = client.post(f"/rides/{ride}/requests", json={"message": "  One small backpack  "}, headers=passenger)
+    assert r.status_code == 201 and r.json()["message"] == "One small backpack"
+    [req] = client.get(f"/rides/{ride}/requests", headers=driver).json()
+    assert req["message"] == "One small backpack"
+    assert client.post(f"/rides/{ride}/requests", json={"message": "x" * 301}, headers=register()).status_code == 422

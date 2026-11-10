@@ -78,4 +78,5 @@ class RideRequest(SQLModel, table=True):
     ride_id: int = Field(foreign_key="ride.id", index=True)
     passenger_id: int = Field(foreign_key="user.id", index=True)
     status: RequestStatus = Field(default=RequestStatus.pending)
+    message: Optional[str] = None  # a line for the driver ("one small backpack")
     created_at: datetime = Field(default_factory=_utcnow)

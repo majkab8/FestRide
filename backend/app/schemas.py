@@ -153,11 +153,16 @@ class RideRead(BaseModel):
     match: Optional[MatchRead] = None  # viewer vs driver; only when logged in, not on own rides
 
 
+class RequestCreate(BaseModel):
+    message: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]] = None
+
+
 class RequestRead(BaseModel):
     id: int
     ride_id: int
     passenger: UserPublic
     status: RequestStatus
+    message: Optional[str] = None
     created_at: datetime
     match: Optional[MatchRead] = None  # driver vs passenger, shown to the driver
 

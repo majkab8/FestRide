@@ -67,6 +67,23 @@ pip install -r requirements-dev.txt
 python -m pytest -q tests     # in-memory DB, doesn't touch festride.db
 ```
 
+## Frontend (React + Vite + TypeScript)
+
+Requires Node 20+. Start the backend first (above), then:
+
+```bash
+cd frontend
+npm install
+cp .env.example .env    # optional: VITE_API_URL, defaults to http://127.0.0.1:8000
+npm run dev             # http://localhost:5173
+```
+
+- Polish / English switch in the header (remembered per browser); light and dark theme.
+- Log in with the demo account from `seed_demo.py` (`demo@example.com` / `festride-demo`)
+  to see rides ranked by match, AI explanations, and the driver dashboard.
+- The map uses Leaflet with OpenStreetMap tiles (no API key).
+- `npm run build` type-checks and builds to `frontend/dist/`.
+
 > **Schema changes:** there are no migrations in this MVP. If you pulled a
 > version that changed the models and see errors like `no such column`, delete
 > `backend/festride.db` and re-run `python import_events.py`.

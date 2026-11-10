@@ -32,9 +32,9 @@ DRIVERS = [
     ("Piotr", ["jazz", "blues"], "quiet", False, "Poznań", 45, False, "Quiet ride, leaving on time."),
     ("Marek", ["rock", "metal"], "quiet", True, "Wrocław", 25, True, "I smoke during breaks and in the car."),
 ]
-PASSENGERS = [
-    ("Tomek", ["house", "electronic"], "party", False),
-    ("Kasia", ["rock", "indie"], "chatty", True),
+PASSENGERS = [  # name, genres, style, smoker, message to the driver
+    ("Tomek", ["house", "electronic"], "party", False, "Hi! I can meet you at Łódź Fabryczna."),
+    ("Kasia", ["rock", "indie"], "chatty", True, "Is there room for a small backpack?"),
 ]
 
 
@@ -127,9 +127,9 @@ def main() -> int:
             _ride(session, driver, showcase, origin, price, smoking, note)
 
         own = _ride(session, demo, mine, "Łódź", 30, False, "Leaving from Łódź Fabryczna.", seats=2)
-        for name, genres, style, smoker in PASSENGERS:
+        for name, genres, style, smoker, message in PASSENGERS:
             passenger = _user(session, name, genres, style, smoker)
-            session.add(RideRequest(ride_id=own.id, passenger_id=passenger.id))
+            session.add(RideRequest(ride_id=own.id, passenger_id=passenger.id, message=message))
         session.commit()
 
         print(f"Log in as {DEMO_EMAIL} / {PASSWORD}")
