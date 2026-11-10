@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, type Ride } from "../api";
+import { billName } from "../geo";
 import { useAsync } from "../hooks";
 import { useI18n, parseLocal } from "../i18n";
 import "./landing.css";
@@ -73,8 +74,6 @@ function weekend(now = new Date()): [Date, Date, Date] {
 }
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
-/** Poster billing uses the act, not the tour: "REDZED: Darkside Europe Tour" -> "REDZED". */
-const billName = (name: string) => name.split(/\s[|–-]\s|:\s|\s\|/)[0].trim() || name;
 
 /** Rides grouped by event, most cars first: the line-up billing order. */
 function acts(rides: Ride[]): Act[] {

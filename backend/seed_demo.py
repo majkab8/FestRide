@@ -18,7 +18,7 @@ from sqlmodel import Session, col, select
 
 from app.clock import today_pl
 from app.database import engine, init_db
-from app.models import DrivingStyle, Event, Ride, RideRequest, User
+from app.models import DrivingStyle, Event, RequestStatus, Ride, RideRequest, User
 from app.security import hash_password
 
 PASSWORD = "festride-demo"
@@ -75,7 +75,7 @@ def _user(session: Session, name, genres, style, smoker, email=None) -> User:
     return user
 
 
-def _upcoming(session: Session, min_days: int, city=None, exclude=()) -> Event | None:
+def _upcoming(session: Session, min_days: int, city=None, exclude=(), genre=None) -> Event | None:
     stmt = (
         select(Event)
         .where(Event.event_date >= today_pl() + timedelta(days=min_days), col(Event.id).not_in(list(exclude) or [0]))
@@ -83,6 +83,8 @@ def _upcoming(session: Session, min_days: int, city=None, exclude=()) -> Event |
     )
     if city:
         stmt = stmt.where(Event.city == city)
+    if genre:
+        stmt = stmt.where(Event.genre == genre)
     return session.exec(stmt).first()
 
 
@@ -115,21 +117,39 @@ def main() -> int:
             print("Demo data already exists. Use --reset to recreate it.")
             return 0
 
-        showcase = _upcoming(session, 5, city="Kraków") or _upcoming(session, 5)
+        # An electronic event, so "techno ..." sentences find the showcase (Kuba = 100%).
+        showcase = (_upcoming(session, 5, city="Kraków", genre="Dance/Electronic")
+                    or _upcoming(session, 5, genre="Dance/Electronic")
+                    or _upcoming(session, 5, city="Kraków") or _upcoming(session, 5))
         mine = _upcoming(session, 3, city="Warszawa", exclude=[showcase.id]) if showcase else None
         if showcase is None or mine is None:
             print("No upcoming events found. Run `python import_events.py` first.")
             return 1
 
         demo = _user(session, "Ania (demo)", ["techno", "house"], "party", False, email=DEMO_EMAIL)
+        drivers = {}
         for name, genres, style, smoker, origin, price, smoking, note in DRIVERS:
-            driver = _user(session, name, genres, style, smoker)
-            _ride(session, driver, showcase, origin, price, smoking, note)
+            drivers[name] = _user(session, name, genres, style, smoker)
+            _ride(session, drivers[name], showcase, origin, price, smoking, note)
 
         own = _ride(session, demo, mine, "Łódź", 30, False, "Leaving from Łódź Fabryczna.", seats=2)
         for name, genres, style, smoker, message in PASSENGERS:
             passenger = _user(session, name, genres, style, smoker)
             session.add(RideRequest(ride_id=own.id, passenger_id=passenger.id, message=message))
+
+        # Ania as a passenger on two other events: one confirmed ride (Home's
+        # wristband card) and two requests still waiting for a yes.
+        used = [showcase.id, mine.id]
+        going = _upcoming(session, 4, exclude=used)
+        if going:
+            used.append(going.id)
+            ride = _ride(session, drivers["Kuba"], going, "Łódź", 35, False, "Techno all the way, bring snacks!")
+            session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, status=RequestStatus.accepted, message="Hi! Small backpack only."))
+        waiting = _upcoming(session, 6, exclude=used)
+        if waiting:
+            for name, origin, price in (("Ola", "Łódź", 30), ("Piotr", "Łódź", 40)):
+                ride = _ride(session, drivers[name], waiting, origin, price, False, None)
+                session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, message="Hi! Is there room for one?"))
         session.commit()
 
         print(f"Log in as {DEMO_EMAIL} / {PASSWORD}")

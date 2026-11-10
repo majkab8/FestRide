@@ -48,3 +48,8 @@ export function familyOf(genre: string | null | undefined): string {
 export function initials(name: string): string {
   return name.split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, "")[0]).filter(Boolean).join("").slice(0, 2).toUpperCase() || "?";
 }
+
+/** Poster billing uses the act, not the tour: "REDZED: Darkside Europe Tour" -> "REDZED". */
+export function billName(name: string): string {
+  return name.split(/\s[|–-]\s|:\s|\s\|/)[0].trim() || name;
+}

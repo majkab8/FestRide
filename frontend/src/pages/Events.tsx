@@ -13,7 +13,7 @@ const PAGE = 30;
 
 export default function Events() {
   const { t, month, day, plural } = useI18n();
-  const events = useAsync(() => api.events({ limit: 500 }), []);
+  const events = useAsync(() => api.events({ limit: 1000 }), []);
   const rides = useAsync(() => api.rides({ limit: 500, sort: "departure" }), []);
   const [monthKey, setMonthKey] = useState("all");
   const [query, setQuery] = useState("");

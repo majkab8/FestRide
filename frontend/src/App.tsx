@@ -8,6 +8,7 @@ import Drive from "./pages/Drive";
 import Events from "./pages/Events";
 import Home from "./pages/Home";
 import Landing from "./pages/Landing";
+import MyRides from "./pages/MyRides";
 import OfferRide from "./pages/OfferRide";
 import RideDetail from "./pages/RideDetail";
 import Search from "./pages/Search";
@@ -23,7 +24,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const { user, ready } = useAuth();
   const landing = pathname === "/" && (!ready || !user);
-  return <>{!landing && <Header />}{children}{!landing && <Footer />}</>;
+  return <>{!landing && <Header />}{children}{!landing && !user && <Footer />}</>;
 }
 
 /** "/" is the landing page for visitors; logged-in users go to their home. */
@@ -48,6 +49,7 @@ export default function App() {
             <Route path="/login" element={<Login />} />
             <Route path="/signup" element={<Signup />} />
             <Route path="/home" element={<RequireAuth><Home /></RequireAuth>} />
+            <Route path="/my-rides" element={<RequireAuth><MyRides /></RequireAuth>} />
             <Route path="/drive" element={<RequireAuth><Drive /></RequireAuth>} />
             <Route path="/drive/new" element={<RequireAuth><OfferRide /></RequireAuth>} />
             <Route path="*" element={<Navigate to="/" replace />} />
