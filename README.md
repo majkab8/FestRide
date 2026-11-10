@@ -25,6 +25,17 @@ python import_events.py --seed   # always use the 8-event sample seed
 The import upserts by event id, so re-running it refreshes events without
 duplicates. It is additive: events that disappear from Ticketmaster are kept.
 
+### Demo data (optional)
+
+```bash
+python seed_demo.py           # demo users, rides and join requests on real upcoming events
+python seed_demo.py --reset   # recreate it
+```
+
+Log in as `demo@example.com` / `festride-demo`. The script prints a showcase event with five
+drivers (ranked by match for the demo user) and the demo user's own ride with two pending
+requests.
+
 ### Run the API
 
 ```bash

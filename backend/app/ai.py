@@ -173,9 +173,9 @@ two people would or wouldn't enjoy a car ride to a music event together. Address
 you say "the driver"; if "other" is "passenger", the reader is the driver and you say "the
 passenger".
 
-Use only the given facts: shared or related music (same family = related), driving style
-(quiet / chatty / party) and smoking. Never mention anything not in the facts (volume, age,
-looks...). Lead with the strongest point; if one person smokes and the other doesn't (or smoking
+Use only the given facts and trust the precomputed "music", "driving_style" and "smoking"
+relations: never call styles shared unless it says "same style", and never call music shared
+unless shared_genres lists it. Never mention anything not in the facts (volume, age, looks...). Lead with the strongest point; if one person smokes and the other doesn't (or smoking
 is allowed in the car and the reader doesn't smoke), mention that. For a low match stay kind and
 neutral, never insulting. No names, no emojis, no percentages.
 

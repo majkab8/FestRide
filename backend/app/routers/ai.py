@@ -125,14 +125,30 @@ def _profile(user: User) -> dict:
     }
 
 
+def _music_relation(score: float) -> str:
+    if score >= 0.75:
+        return "very similar taste"
+    if score >= 0.4:
+        return "related taste"
+    return "somewhat related taste" if score > 0 else "different taste"
+
+
 def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> dict:
+    """Relations are computed here, in words, because the model misreads raw
+    scores (it called "party" vs "chatty" a shared style)."""
     m = match(you, them)
+    style = {1.0: "same style", 0.5: "close but not the same"}.get(m.style, "opposite styles")
     return {
         "other": other,
-        "music_score": m.music,  # 0-1 each
-        "style_score": m.style,
-        "smoking_score": m.smoking,
+        "music": _music_relation(m.music),
         "shared_genres": m.shared_genres,
+        "driving_style": f"you: {you.driving_style.value}, them: {them.driving_style.value} ({style})",
+        "smoking": (
+            "neither smokes" if not (you.smoker or them.smoker)
+            else "both smoke" if you.smoker and them.smoker
+            else "you smoke, they don't" if you.smoker
+            else "they smoke, you don't"
+        ),
         "you": _profile(you),
         "them": _profile(them),
         **(extra or {}),
