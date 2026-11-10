@@ -178,3 +178,24 @@ def test_explain_degrades_and_needs_login(client, register, make_ride, fake_mode
     assert r == {"rides": {}, "requests": {}, "ai_available": False}
     own = make_ride(me)
     assert client.post("/ai/explain", json={"ride_ids": [own]}, headers=me).json()["rides"] == {}
+
+
+def test_explain_language_reaches_prompt_and_cache(client, register, make_ride, monkeypatch):
+    from app import ai
+    from app.config import settings
+
+    monkeypatch.setattr(settings, "gemini_api_key", "k")
+    systems = []
+
+    def fake(system, user, schema, max_tokens):
+        systems.append(system)
+        return [{"id": 0, "text": "ok"}]
+
+    monkeypatch.setattr(ai, "_generate_json", fake)
+    ride = make_ride(register())
+    me = register()
+    for lang in ("pl", "pl", "en"):
+        client.post("/ai/explain", json={"ride_ids": [ride], "lang": lang}, headers=me)
+    assert len(systems) == 2  # second "pl" call served from cache
+    assert "Polish" in systems[0] and "English" in systems[1]
+    assert client.post("/ai/explain", json={"ride_ids": [ride], "lang": "de"}, headers=me).status_code == 422

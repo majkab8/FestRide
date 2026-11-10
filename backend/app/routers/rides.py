@@ -23,6 +23,7 @@ from ..schemas import (
     EventSummary,
     MatchRead,
     MyRequestRead,
+    RequestCreate,
     RequestDecision,
     RequestRead,
     RideCreate,
@@ -113,6 +114,7 @@ def _request_read(req: RideRequest, passenger: User, driver: Optional[User] = No
         ride_id=req.ride_id,
         passenger=_public(passenger),
         status=req.status,
+        message=req.message,
         created_at=req.created_at,
         match=_match(driver, passenger) if driver is not None else None,
     )
@@ -255,6 +257,7 @@ def get_ride(
 @router.post("/{ride_id}/requests", response_model=RequestRead, status_code=status.HTTP_201_CREATED)
 def request_to_join(
     ride_id: int,
+    data: Optional[RequestCreate] = None,
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
@@ -273,7 +276,8 @@ def request_to_join(
             detail="You already have an accepted ride to this event",
         )
 
-    req = RideRequest(ride_id=ride.id, passenger_id=current_user.id)
+    message = data.message if data and data.message else None
+    req = RideRequest(ride_id=ride.id, passenger_id=current_user.id, message=message)
     session.add(req)
     try:
         session.commit()

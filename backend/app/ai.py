@@ -167,11 +167,14 @@ _EXPLAIN_SCHEMA = {
     },
 }
 
-_EXPLAIN_SYSTEM = """You write one short, friendly sentence (max 20 words, English) explaining why
+_LANGUAGES = {"en": "English", "pl": "Polish (informal 'ty', the way friends text)"}
+
+_EXPLAIN_SYSTEM = """You write one short, friendly sentence (max 20 words, in {language}) explaining why
 two people would or wouldn't enjoy a car ride to a music event together. Address the reader as
 "you" and the other person by their role: if "other" is "driver", the reader is a passenger and
 you say "the driver"; if "other" is "passenger", the reader is the driver and you say "the
-passenger".
+passenger" (in Polish: "kierowca" / "pasażer"; the facts' style words map to "cicho",
+"rozmownie", "impreza").
 
 Use only the given facts and trust the precomputed "music", "driving_style" and "smoking"
 relations: never call styles shared unless it says "same style", and never call music shared
@@ -185,13 +188,13 @@ Return one item per input id."""
 _MAX_EXPLAIN_LEN = 200
 
 
-def explain_matches(items: list[dict]) -> dict[int, str]:
-    """items: [{"id": int, "other": "driver"|"passenger", "label": str,
-    "you": {...}, "them": {...}, "shared_genres": [...], ...}] -> {id: sentence}."""
+def explain_matches(items: list[dict], lang: str = "en") -> dict[int, str]:
+    """items: [{"id": int, "other": "driver"|"passenger", "music": ..., ...}]
+    -> {id: one sentence in `lang` ("en" or "pl")}."""
     if not items:
         return {}
     raw = _generate_json(
-        _EXPLAIN_SYSTEM,
+        _EXPLAIN_SYSTEM.format(language=_LANGUAGES.get(lang, "English")),
         json.dumps(items, ensure_ascii=False),
         _EXPLAIN_SCHEMA,
         max_tokens=200 * len(items) + 512,
