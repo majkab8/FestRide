@@ -42,9 +42,10 @@ class Event(SQLModel, table=True):
     id: Optional[int] = Field(default=None, primary_key=True)
     external_id: str = Field(index=True, unique=True)  # Ticketmaster id or seed slug
     name: str
-    city: str
+    city: str = Field(index=True)
     venue: Optional[str] = None
-    event_date: Optional[date] = None
+    genre: Optional[str] = None  # Ticketmaster genre, e.g. "Rock", "Dance/Electronic"
+    event_date: Optional[date] = Field(default=None, index=True)
     latitude: Optional[float] = None
     longitude: Optional[float] = None
     url: Optional[str] = None
