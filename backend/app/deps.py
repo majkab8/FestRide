@@ -32,3 +32,16 @@ def get_current_user(
             detail="User not found",
         )
     return user
+
+
+def get_optional_user(
+    credentials: Optional[HTTPAuthorizationCredentials] = Depends(bearer_scheme),
+    session: Session = Depends(get_session),
+) -> Optional[User]:
+    """The logged-in user for public endpoints that show extras when logged in
+    (e.g. match %). No Bearer header -> None (anonymous); a Bearer token that
+    is invalid/expired is still a 401, so the client learns it must log in
+    again (or drop the token) instead of silently losing the match data."""
+    if credentials is None:
+        return None
+    return get_current_user(credentials, session)

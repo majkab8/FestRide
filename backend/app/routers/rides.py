@@ -6,7 +6,7 @@ driver accepts or declines. Seats left = seats_total - accepted requests.
 
 from collections.abc import Iterable
 from datetime import date
-from typing import Optional
+from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func
@@ -16,10 +16,12 @@ from sqlmodel import Session, col, select
 from ..cities import fold, normalize_city
 from ..clock import now_pl
 from ..database import get_session
-from ..deps import get_current_user
+from ..deps import get_current_user, get_optional_user
+from ..matching import match
 from ..models import Event, RequestStatus, Ride, RideRequest, User
 from ..schemas import (
     EventSummary,
+    MatchRead,
     MyRequestRead,
     RequestDecision,
     RequestRead,
@@ -51,8 +53,13 @@ def _public(user: User) -> UserPublic:
     return UserPublic.model_validate(user, from_attributes=True)
 
 
-def _to_reads(session: Session, rides: list[Ride]) -> list[RideRead]:
-    """Build RideRead objects with batched lookups (no query per ride)."""
+def _match(a: User, b: User) -> MatchRead:
+    return MatchRead.model_validate(match(a, b), from_attributes=True)
+
+
+def _to_reads(session: Session, rides: list[Ride], viewer: Optional[User] = None) -> list[RideRead]:
+    """Build RideRead objects with batched lookups (no query per ride).
+    With a viewer, each ride carries the viewer-driver match (not on own rides)."""
     if not rides:
         return []
     events = {
@@ -68,6 +75,11 @@ def _to_reads(session: Session, rides: list[Ride]) -> list[RideRead]:
             event=EventSummary.model_validate(events[ride.event_id], from_attributes=True),
             driver=_public(drivers[ride.driver_id]),
             seats_left=ride.seats_total - taken.get(ride.id, 0),
+            match=(
+                _match(viewer, drivers[ride.driver_id])
+                if viewer is not None and viewer.id != ride.driver_id
+                else None
+            ),
         )
         for ride in rides
     ]
@@ -94,13 +106,15 @@ def _same_event_requests(session: Session, passenger_id: int, event_id: int, sta
     return list(session.exec(stmt).all())
 
 
-def _request_read(req: RideRequest, passenger: User) -> RequestRead:
+def _request_read(req: RideRequest, passenger: User, driver: Optional[User] = None) -> RequestRead:
+    """With the driver given, include driver-passenger match (for the driver's view)."""
     return RequestRead(
         id=req.id,
         ride_id=req.ride_id,
         passenger=_public(passenger),
         status=req.status,
         created_at=req.created_at,
+        match=_match(driver, passenger) if driver is not None else None,
     )
 
 
@@ -141,11 +155,18 @@ def list_rides(
     departure_date: Optional[date] = Query(None, description="Rides leaving on this day"),
     max_price: Optional[float] = Query(None, ge=0),
     min_seats: int = Query(1, ge=0, le=8, description="Minimum free seats (0 = include full rides)"),
+    sort: Optional[Literal["match", "departure"]] = Query(
+        None,
+        description="Default: best match first when logged in, else soonest first. "
+        "'match' needs login; anonymous requests are always sorted by departure.",
+    ),
     limit: int = Query(100, ge=1, le=500),
     offset: int = Query(0, ge=0),
+    viewer: Optional[User] = Depends(get_optional_user),
     session: Session = Depends(get_session),
 ) -> list[RideRead]:
-    """Upcoming rides, soonest first. Public, like event browsing."""
+    """Upcoming rides. Public; logged-in users also get a match % per ride
+    and, by default, a ranking by match (decision Q6)."""
     accepted = (
         select(RideRequest.ride_id, func.count().label("n"))
         .where(RideRequest.status == RequestStatus.accepted)
@@ -168,8 +189,17 @@ def list_rides(
     if max_price is not None:
         stmt = stmt.where(Ride.price <= max_price)
 
-    stmt = stmt.order_by(Ride.departure_time, Ride.id).offset(offset).limit(limit)
-    return _to_reads(session, list(session.exec(stmt).all()))
+    stmt = stmt.order_by(Ride.departure_time, Ride.id)
+    rank_by_match = viewer is not None and sort != "departure"
+    if not rank_by_match:
+        return _to_reads(session, list(session.exec(stmt.offset(offset).limit(limit)).all()), viewer)
+
+    # Match is computed in Python, so rank all filtered rides, then paginate.
+    # Fine at MVP scale (rides to upcoming events number in the hundreds).
+    reads = _to_reads(session, list(session.exec(stmt).all()), viewer)
+    # Own rides (no match) go last; ties keep the soonest-departure order.
+    reads.sort(key=lambda r: r.match.percent if r.match else -1, reverse=True)  # stable
+    return reads[offset : offset + limit]
 
 
 # Declared before /{ride_id} so "mine" isn't parsed as an id.
@@ -184,8 +214,12 @@ def my_rides(
 
 
 @router.get("/{ride_id}", response_model=RideRead)
-def get_ride(ride_id: int, session: Session = Depends(get_session)) -> RideRead:
-    return _to_reads(session, [_get_ride_or_404(session, ride_id)])[0]
+def get_ride(
+    ride_id: int,
+    viewer: Optional[User] = Depends(get_optional_user),
+    session: Session = Depends(get_session),
+) -> RideRead:
+    return _to_reads(session, [_get_ride_or_404(session, ride_id)], viewer)[0]
 
 
 # --- join requests -----------------------------------------------------------
@@ -242,7 +276,10 @@ def ride_requests(
         .where(RideRequest.ride_id == ride.id)
         .order_by(RideRequest.created_at, RideRequest.id)
     )
-    return [_request_read(req, passenger) for req, passenger in session.exec(stmt).all()]
+    return [
+        _request_read(req, passenger, driver=current_user)
+        for req, passenger in session.exec(stmt).all()
+    ]
 
 
 @requests_router.get("/mine", response_model=list[MyRequestRead])
@@ -259,7 +296,7 @@ def my_requests(
         ).all()
     )
     rides = list(session.exec(select(Ride).where(col(Ride.id).in_({q.ride_id for q in reqs}))))
-    ride_reads = {r.id: r for r in _to_reads(session, rides)}
+    ride_reads = {r.id: r for r in _to_reads(session, rides, viewer=current_user)}
     return [
         MyRequestRead(**_request_read(req, current_user).model_dump(), ride=ride_reads[req.ride_id])
         for req in reqs

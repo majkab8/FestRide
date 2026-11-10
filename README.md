@@ -34,6 +34,13 @@ uvicorn app.main:app --reload --port 8000
 - Health check: http://localhost:8000/health
 - Interactive API docs: http://localhost:8000/docs
 
+### Tests
+
+```bash
+pip install -r requirements-dev.txt
+python -m pytest -q tests     # in-memory DB, doesn't touch festride.db
+```
+
 > **Schema changes:** there are no migrations in this MVP. If you pulled a
 > version that changed the models and see errors like `no such column`, delete
 > `backend/festride.db` and re-run `python import_events.py`.

@@ -124,6 +124,16 @@ class RideCreate(BaseModel):
     note: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]] = None
 
 
+class MatchRead(BaseModel):
+    """How well the viewer matches the other person (decision Q7)."""
+
+    percent: int
+    music: float
+    style: float
+    smoking: float
+    shared_genres: list[str]
+
+
 class RideRead(BaseModel):
     id: int
     event: EventSummary
@@ -137,6 +147,7 @@ class RideRead(BaseModel):
     price: float
     note: Optional[str] = None
     created_at: datetime
+    match: Optional[MatchRead] = None  # viewer vs driver; only when logged in, not on own rides
 
 
 class RequestRead(BaseModel):
@@ -145,6 +156,7 @@ class RequestRead(BaseModel):
     passenger: UserPublic
     status: RequestStatus
     created_at: datetime
+    match: Optional[MatchRead] = None  # driver vs passenger, shown to the driver
 
 
 class MyRequestRead(RequestRead):
