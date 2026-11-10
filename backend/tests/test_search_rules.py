@@ -24,19 +24,19 @@ def test_typical_polish_sentence():
 
 def test_event_name_and_no_smoking():
     f = parse("szukam przejazdu z warszawy na open'er, tylko niepalący")
-    assert (f.origin_city, f.q, f.no_smoking) == ("Warszawa", "open'er", True)
+    assert (f.origin_city, f.no_smoking) == ("Warszawa", True)
+    assert f.q is None  # event names are left to AI / the form
 
 
 def test_specific_day_and_adjective_genre():
     f = parse("z Poznania do Wrocławia na koncert rockowy 21 listopada")
     assert (f.origin_city, f.event_city, f.genre) == ("Poznań", "Wrocław", "rock")
     assert f.date_from == f.date_to == date(2026, 11, 21)
-    assert f.q is None  # "koncert" is generic, not an event name
 
 
 def test_english_with_aliases():
     f = parse("need a ride to Kamelot from Warsaw, under 30 zł")
-    assert (f.origin_city, f.q, f.max_price) == ("Warszawa", "kamelot", 30)
+    assert (f.origin_city, f.max_price) == ("Warszawa", 30)
 
 
 @pytest.mark.parametrize(
@@ -67,8 +67,9 @@ def test_relative_dates(text, start, end):
     assert (f.date_from, f.date_to) == (start, end)
 
 
-def test_event_name_drops_trailing_date_words():
-    assert parse("na Kamelot za tydzien do 40 zl").q == "kamelot"
+def test_rules_never_guess_event_names():
+    f = parse("na Kamelot za tydzien do 40 zl")
+    assert (f.q, f.max_price, f.date_from) == (None, 40, date(2026, 11, 17))
 
 
 @pytest.mark.parametrize("q", ["; DROP TABLE user;--", "99999", "<script>"])

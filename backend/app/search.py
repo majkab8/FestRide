@@ -81,6 +81,8 @@ def describe(f: SearchFilters) -> list[str]:
 # --- rule-based fallback parser ---------------------------------------------------
 # Not meant to understand everything: it covers the typical sentence ("from X to
 # Y for <genre> in <month>, max N zł, 2 seats, non-smoking") when Gemini is down.
+# Deliberately frozen (decision Q16): it's a safety net, not a second AI - fix
+# real bugs here, but don't keep adding heuristics.
 
 _FROM = {"z", "ze", "from"}
 _TO = {"do", "w", "we", "to", "in"}
@@ -110,9 +112,6 @@ _EXACT_PL = {"maj", "maja", "maju", "luty", "lutego", "lutym", "marzec", "marca"
 _NUMBER_WORDS = {"jedno": 1, "jeden": 1, "one": 1, "dwa": 2, "dwie": 2, "two": 2, "trzy": 3, "three": 3,
                  "cztery": 4, "four": 4}
 
-_STOP = {"na", "z", "ze", "do", "w", "we", "to", "in", "from", "for", "max", "maks", "under", "and", "i"}
-
-
 def _stem(city: str) -> str:
     # Crude Polish declension: Kraków -> krakowa/krakowie, Warszawa -> warszawy,
     # Katowice -> katowic, Łódź -> lodzi. Dropping a final vowel covers most.
@@ -140,8 +139,6 @@ def _next_occurrence(month: int, day: Optional[int], today: date) -> tuple[date,
 _WEEKDAYS = [("poniedz", 0), ("monday", 0), ("wtor", 1), ("tuesday", 1), ("srod", 2), ("sroda", 2),
              ("wednesday", 2), ("czwart", 3), ("thursday", 3), ("piat", 4), ("friday", 4),
              ("sobot", 5), ("saturday", 5), ("niedziel", 6), ("sunday", 6)]
-_DATE_WORDS = {"jutro", "tomorrow", "dzis", "dzisiaj", "today", "tonight", "weekend", "tydzien",
-               "week", "za", "w", "ten", "this", "next", "przyszly", "przyszlym"}
 
 
 def _relative_dates(folded: str, today: date) -> Optional[tuple[date, date]]:
@@ -224,22 +221,6 @@ def parse_rules(text: str, today: date, cities: list[str]) -> SearchFilters:
         if relative:
             found["date_from"], found["date_to"] = relative
 
-    # Event name: words after "na"/"for"/"to" that weren't recognised as anything else.
-    m = re.search(r"\b(?:na|for|to)\s+([a-z0-9' ]+?)(?=\s+(?:z|ze|do|w|from|to|in|max|maks|under)\b|[,.!?]|$)", folded)
-    if m:
-        words = [w for w in m.group(1).split() if w not in _STOP]
-        while words and (words[-1] in _DATE_WORDS or words[-1].isdigit() or _month_of(words[-1])):
-            words.pop()  # "Kamelot za tydzien" -> "Kamelot"
-        candidate = " ".join(words)
-        known = [found.get("genre") or "", *(fold(found.get(k, "")) for k in ("event_city", "origin_city"))]
-        generic = {"koncert", "concert", "festiwal", "festival", "event", "impreze", "impreza", "gig"}
-        if (
-            candidate
-            and not any(k and (k in candidate or candidate.startswith(k[:4])) for k in known)
-            and not any(s in candidate for s, _ in _GENRE_STEMS)
-            and not set(words) <= generic
-            and _month_of(words[0]) is None
-        ):
-            found["q"] = candidate[:60]
-
+    # No event/artist name (q) here on purpose: guessing it from free text was
+    # the most fragile heuristic. Without AI, users type the name in the form.
     return SearchFilters(**found)

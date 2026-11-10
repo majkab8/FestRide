@@ -19,7 +19,7 @@ from ..clock import today_pl
 from ..config import settings
 from ..database import get_session
 from ..deps import get_current_user
-from ..matching import family_of, match
+from ..matching import match
 from ..models import Event, Ride, RideRequest, User
 from ..search import SearchFilters, describe, parse_rules
 
@@ -117,14 +117,6 @@ class ExplainResponse(BaseModel):
     ai_available: bool
 
 
-def _profile(user: User) -> dict:
-    return {
-        "genres": [{"name": g, "family": family_of(g)} for g in user.music_genres],
-        "driving_style": user.driving_style.value,
-        "smoker": user.smoker,
-    }
-
-
 def _music_relation(score: float) -> str:
     if score >= 0.75:
         return "very similar taste"
@@ -142,6 +134,10 @@ def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> d
         "other": other,
         "music": _music_relation(m.music),
         "shared_genres": m.shared_genres,
+        # Genre lists stay so the model can name related ones ("techno vs house");
+        # style and smoking are only given as the relations below/above.
+        "your_genres": you.music_genres,
+        "their_genres": them.music_genres,
         "driving_style": f"you: {you.driving_style.value}, them: {them.driving_style.value} ({style})",
         "smoking": (
             "neither smokes" if not (you.smoker or them.smoker)
@@ -149,8 +145,6 @@ def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> d
             else "you smoke, they don't" if you.smoker
             else "they smoke, you don't"
         ),
-        "you": _profile(you),
-        "them": _profile(them),
         **(extra or {}),
     }
 
