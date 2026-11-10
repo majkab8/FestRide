@@ -77,7 +77,12 @@
 .home3 .wait .car small { font-size: 13px; color: var(--muted); }
 .home3 .wait p { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
 .home3 .rcol { display: flex; flex-direction: column; gap: 20px; }
-.home3 .sound { background: var(--inv-bg); color: var(--inv-fg); border-radius: 32px; padding: 28px; text-align: center; }
+.home3 .sound { background: var(--inv-bg); color: var(--inv-fg); border-radius: 32px; padding: 28px; text-align: center;
+  position: relative; overflow: hidden; isolation: isolate; }
+/* the headliner's poster under the black, which stays slightly see-through */
+.home3 .sound .bg { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; z-index: -2; filter: grayscale(0.3); }
+.home3 .sound:has(.bg)::before { content: ""; position: absolute; inset: 0; z-index: -1;
+  background: linear-gradient(180deg, color-mix(in srgb, var(--inv-bg) 72%, transparent), color-mix(in srgb, var(--inv-bg) 88%, transparent)); }
 .home3 .sound .eyebrow { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--lime); text-transform: uppercase; }
 .home3 .sound .tier a { text-decoration: none; transition: color 0.2s; }
 .home3 .sound .tier a:hover { color: var(--pink); }

@@ -104,6 +104,7 @@ export default function Home() {
         {/* right column */}
         <div className="rcol">
           <div className="sound">
+            {sound.data?.[0]?.image_url && <img className="bg" src={sound.data[0].image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />}
             <div className="eyebrow">{t("home.forSound")} · {genres.join(", ")}</div>
             {sound.loading && <Loading />}
             {sound.data?.[0] && <>
