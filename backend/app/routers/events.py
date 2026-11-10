@@ -8,7 +8,8 @@ from pydantic import BaseModel
 from sqlalchemy import func, or_, true
 from sqlmodel import Session, col, select
 
-from ..cities import fold, normalize_city
+from ..cities import contains_pattern as _contains
+from ..cities import fold, genre_clause, normalize_city
 from ..clock import today_pl
 from ..database import get_session
 from ..models import Event
@@ -19,13 +20,6 @@ router = APIRouter(prefix="/events", tags=["events"])
 class CityCount(BaseModel):
     city: str
     events: int
-
-
-def _contains(text: str) -> str:
-    """LIKE pattern for a case/diacritic-insensitive substring match against
-    fold(column). User-typed % and _ are escaped so they match literally."""
-    escaped = fold(text).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
-    return f"%{escaped}%"
 
 
 def _upcoming(include_past: bool):
@@ -62,7 +56,7 @@ def list_events(
         # English names ("Warsaw") to the stored Polish ones.
         stmt = stmt.where(func.fold(Event.city) == fold(normalize_city(city)))
     if genre and genre.strip():
-        stmt = stmt.where(func.fold(Event.genre).like(_contains(genre), escape="\\"))
+        stmt = stmt.where(genre_clause(session, Event.genre, genre))
     if date_from:
         stmt = stmt.where(col(Event.event_date) >= date_from)
     if date_to:

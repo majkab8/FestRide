@@ -25,6 +25,17 @@ python import_events.py --seed   # always use the 8-event sample seed
 The import upserts by event id, so re-running it refreshes events without
 duplicates. It is additive: events that disappear from Ticketmaster are kept.
 
+### Demo data (optional)
+
+```bash
+python seed_demo.py           # demo users, rides and join requests on real upcoming events
+python seed_demo.py --reset   # recreate it
+```
+
+Log in as `demo@example.com` / `festride-demo`. The script prints a showcase event with five
+drivers (ranked by match for the demo user) and the demo user's own ride with two pending
+requests.
+
 ### Run the API
 
 ```bash
@@ -33,6 +44,21 @@ uvicorn app.main:app --reload --port 8000
 
 - Health check: http://localhost:8000/health
 - Interactive API docs: http://localhost:8000/docs
+
+### AI features (optional)
+
+With `GEMINI_API_KEY` set (free key from https://aistudio.google.com):
+
+- `POST /ai/search` turns a sentence like *"z Łodzi na techno do Krakowa w grudniu, max 50 zł"*
+  into `GET /rides` filters plus a preview of how it was understood.
+- `POST /ai/explain` writes a one-line "why you'd get along" for up to 5 rides or requests.
+
+Without a key, or when the free tier is overloaded, search falls back to a simple rule-based
+parser (`"source": "rules"`) and explanations are just omitted; match % and labels always work.
+After a failure the app pauses AI calls for 30 s, so searches fall back instantly.
+
+> On Windows, call the API at `http://127.0.0.1:8000` rather than `localhost`, which can add
+> ~2 s per request (IPv6 lookup first).
 
 ### Tests
 

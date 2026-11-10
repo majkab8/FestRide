@@ -37,3 +37,30 @@ def normalize_city(name: str) -> str:
     """Return the canonical (Polish) spelling of a city name."""
     cleaned = " ".join(name.split())
     return _ALIASES.get(fold(cleaned), cleaned)
+
+
+def alias_pairs() -> list[tuple[str, str]]:
+    """(fold()ed alias, canonical name), e.g. ("warsaw", "Warszawa")."""
+    return list(_ALIASES.items())
+
+
+def genre_clause(session, column, genre: str):
+    """WHERE clause for a genre filter on Event.genre: substring match, or any
+    stored genre of the same family ("techno" -> "Dance/Electronic")."""
+    from sqlalchemy import func, or_
+    from sqlmodel import select
+
+    from .matching import same_family  # local import: matching imports this module
+
+    stored = [g for g in session.exec(select(column).distinct()).all() if g]
+    return or_(
+        func.fold(column).like(contains_pattern(genre), escape="\\"),
+        column.in_(same_family(genre, stored)),
+    )
+
+
+def contains_pattern(text: str) -> str:
+    """LIKE pattern for a case/diacritic-insensitive substring match against
+    fold(column), used with escape="\\". User-typed % and _ match literally."""
+    escaped = fold(text).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
+    return f"%{escaped}%"

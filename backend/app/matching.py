@@ -131,6 +131,18 @@ def smoking_similarity(a: bool, b: bool) -> float:
     return 1.0 if a == b else 0.0
 
 
+def family_of(genre: str) -> str | None:
+    """Genre family name, e.g. "techno" -> "electronic"; None if unknown."""
+    return _FAMILY_OF.get(_norm(genre))
+
+
+def same_family(genre: str, candidates: list[str]) -> list[str]:
+    """Candidates (e.g. Ticketmaster genres in the DB) in the same family as
+    `genre`, so a search for "techno" finds "Dance/Electronic" events."""
+    family = family_of(genre)
+    return [c for c in candidates if family is not None and family_of(c) == family]
+
+
 def label_for(percent: int) -> str:
     return next(label for threshold, label in _LABELS if percent >= threshold)
 

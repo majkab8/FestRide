@@ -12,7 +12,11 @@ class Settings(BaseSettings):
     frontend_origin: str = "http://localhost:5173"
 
     gemini_api_key: str = ""
-    gemini_model: str = "gemini-2.5-flash"
+    # Lite models: enough for filter extraction / one-liners, and on the free
+    # tier noticeably more available than the bigger ones (see decision Q16).
+    gemini_model: str = "gemini-3.5-flash-lite"
+    gemini_fallback_model: str = "gemini-flash-lite-latest"  # tried once on 429/5xx/timeout
+    ai_timeout_seconds: float = 10.0  # total budget per AI call, both models together
 
     ticketmaster_api_key: str = ""
 

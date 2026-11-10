@@ -15,6 +15,43 @@ from app.main import app
 from app.models import Event
 
 
+@pytest.fixture(autouse=True)
+def no_real_ai(monkeypatch):
+    """Tests never call Gemini: AI is off unless a test fakes the model reply."""
+    from app.config import settings
+    from app.routers import ai as ai_router
+
+    from app import ai
+
+    monkeypatch.setattr(settings, "gemini_api_key", "")
+    monkeypatch.setattr(ai, "_down_until", 0.0)  # reset the circuit breaker
+    ai_router._search_cache.clear()
+    ai_router._explain_cache.clear()
+
+
+@pytest.fixture
+def fake_model(monkeypatch):
+    """Enable AI and make the model return `reply` (a value, or an exception to raise)."""
+    from app import ai
+    from app.config import settings
+
+    calls = []
+
+    def install(reply):
+        monkeypatch.setattr(settings, "gemini_api_key", "test-key")
+
+        def fake(system, user, schema, max_tokens):
+            calls.append(user)
+            if isinstance(reply, Exception):
+                raise reply
+            return reply(user) if callable(reply) else reply
+
+        monkeypatch.setattr(ai, "_generate_json", fake)
+        return calls
+
+    return install
+
+
 @pytest.fixture
 def engine():
     # StaticPool: one shared connection, so the in-memory DB survives across sessions.
