@@ -29,9 +29,8 @@ def register(data: UserCreate, session: Session = Depends(get_session)) -> Token
             detail="Email already registered",
         )
     user = User(
-        email=data.email,
+        **data.model_dump(exclude={"password"}),
         hashed_password=hash_password(data.password),
-        display_name=data.display_name,
     )
     session.add(user)
     try:

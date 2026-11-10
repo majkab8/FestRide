@@ -15,6 +15,7 @@ Dokument powstaje w trakcie "grillowania" planu (skill grill-me). Każda pozycja
 - **Q11 Mapa:** Must-have. Leaflet + OpenStreetMap (bez klucza): pinezki eventów na widoku przeglądania + mapka lokalizacji na szczegółach eventu/przejazdu (venue + miasto wyjazdu). Rysowanie trasy linią (OSRM) opcjonalne na koniec. — Mocny wizualnie element dla aplikacji transportowej; dane mają współrzędne (20/20 w teście).
 - **Q10 Uruchamianie:** Lokalnie, z jasnym README (osobno backend i frontend). CORS skonfigurowany od początku (`CORSMiddleware` w FastAPI, dozwolony origin frontendu z `.env`). Deploy poza zakresem MVP (wzmianka w README jako rozszerzenie). — Front (Vite :5173) i back (FastAPI :8000) to różne originy, więc CORS konieczny nawet lokalnie.
 - **Q12 Bonus #3 (AI-generated ogłoszenia):** Stretch na koniec — kierowca wpisuje skrót, AI tworzy ładny opis ogłoszenia (reużywa `ai.py`). Robimy tylko jeśli rdzeń działa i zostanie czas. — Tani dodatek, ale nie-krytyczny; rdzeń ma priorytet.
+- **Q13 Profil przy rejestracji:** Rejestracja wymaga kompletnego profilu (gatunki min. 1, styl jazdy, palenie; płeć opcjonalna), wysyłanego jednym `POST /auth/register`. Na froncie formularz dwuetapowy (krok 1: konto, krok 2: profil), ale konto powstaje dopiero po kroku 2. Edycja profilu nie pozwala wyczyścić gatunków ani ustawić `null` w polach wymaganych. — Brak kont z pustym/zgadniętym profilem (0% muzyki w rankingu, fałszywe „niepalący”), bez flagi `profile_complete` i strażników we froncie; UX jak onboarding.
 
 ---
 
