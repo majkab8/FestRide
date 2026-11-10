@@ -18,6 +18,14 @@ function ScrollToTop() {
   return null;
 }
 
+/** The v3 landing brings its own nav and footer; every other page gets the app's. */
+function Chrome({ children }: { children: React.ReactNode }) {
+  const { pathname } = useLocation();
+  const { user, ready } = useAuth();
+  const landing = pathname === "/" && (!ready || !user);
+  return <>{!landing && <Header />}{children}{!landing && <Footer />}</>;
+}
+
 /** "/" is the landing page for visitors; logged-in users go to their home. */
 function Root() {
   const { user, ready } = useAuth();
@@ -31,7 +39,7 @@ export default function App() {
       <AuthProvider>
         <BrowserRouter>
           <ScrollToTop />
-          <Header />
+          <Chrome>
           <Routes>
             <Route path="/" element={<Root />} />
             <Route path="/events" element={<Events />} />
@@ -44,7 +52,7 @@ export default function App() {
             <Route path="/drive/new" element={<RequireAuth><OfferRide /></RequireAuth>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
-          <Footer />
+          </Chrome>
         </BrowserRouter>
       </AuthProvider>
     </I18nProvider>

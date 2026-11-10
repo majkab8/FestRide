@@ -1,122 +1,355 @@
-import { useMemo, useState, type FormEvent } from "react";
+import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
-import { api, type Event, type Ride } from "../api";
-import { Page } from "../components/Layout";
-import { Icon } from "../components/ui";
+import { api, type Ride } from "../api";
 import { useAsync } from "../hooks";
-import { useI18n } from "../i18n";
+import { useI18n, parseLocal } from "../i18n";
+import "./landing.css";
 
-/** Group rides by event, most cars first, for the line-up poster. */
-function lineup(rides: Ride[]) {
-  const by = new Map<number, { ev: Ride["event"]; n: number }>();
+/* Copy of the v3 Landing board, in both languages. */
+const COPY = {
+  en: {
+    nav: ["Events", "Rides", "Drive"], login: "Log in", langLabel: "Language",
+    eyebrow: "Carpools to Polish gigs & festivals · winter 2026", title: ["Every road ends", "at a stage."],
+    askLabel: "Describe your trip", ask: "from Łódź to techno in Kraków in December, max 50 zł", find: "Find a car",
+    record: "A spinning vinyl record", gigs: "GIGS LOADED", gigsShort: "GIGS", side: "SIDE A", byMusic: "match by music ♫",
+    lineup: "Cars leaving for this weekend's line-up", lineupSoon: "Cars leaving for the next shows", together: "together",
+    allOnMap: (n: number) => `See all ${n} events on the map`,
+    howTitle: ["Sofa to barrier,", "in three moves."],
+    how: [
+      ["Say it like a text", "“Gdańsk to Wiatr on Friday, two of us.” We turn the sentence into city, date, genre and budget."],
+      ["Pick by match", "Every car shows a percentage: the music you both play, how loud the ride is, smoking or not."],
+      ["Split the fuel", "Ask a few cars at once. The first driver who says yes gets you, the other requests close."],
+    ],
+    matchTitle: "Four hours is long with the wrong DJ.",
+    matchText: "Kasia drives Łódź to Kraków and plays techno and house. You do too. That's most of a 91.",
+    bars: ["music", "ride style", "smoking"], great: "GREAT MATCH", bandDay: "SAT 12.12",
+    filterNote: ["no smoking", "is a filter,", "not a score"],
+    photo1: "Campervans parked at a festival field", photo2: "Tents on a festival campsite",
+    driveTitle: "Three empty seats? That's 135 zł of fuel.",
+    driveText: "Post your route and time. People who like your music ask for a seat, you pick who comes.",
+    offer: "Offer a ride", perSeat: "45 zł / seat",
+    footTitle: "See you at the gate.", help: "Help",
+    credit: "Photos: Thesupermat (CC BY-SA 3.0), Nathan (CC BY-SA 2.0), via Wikimedia Commons.",
+  },
+  pl: {
+    nav: ["Wydarzenia", "Przejazdy", "Kierowca"], login: "Zaloguj się", langLabel: "Język",
+    eyebrow: "Wspólne dojazdy na koncerty i festiwale · zima 2026", title: ["Każda droga kończy się", "pod sceną."],
+    askLabel: "Opisz swoją trasę", ask: "z Łodzi na techno do Krakowa w grudniu, max 50 zł", find: "Znajdź auto",
+    record: "Kręcąca się płyta winylowa", gigs: "KONCERTÓW", gigsShort: "KONCERTÓW", side: "STRONA A", byMusic: "dopasowanie po muzyce ♫",
+    lineup: "Auta jadą na line-up tego weekendu", lineupSoon: "Auta jadą na najbliższe koncerty", together: "razem",
+    allOnMap: (n: number) => `Wszystkie wydarzenia na mapie (${n})`,
+    howTitle: ["Z kanapy pod barierki", "w trzech ruchach."],
+    how: [
+      ["Napisz jak SMS-a", "„Z Gdańska na Wiatr w piątek, jedziemy we dwójkę.” Zamienimy to zdanie na miasto, datę, gatunek i budżet."],
+      ["Wybierz po dopasowaniu", "Każde auto ma procent: wspólna muzyka, jak głośno jest w trasie, palenie albo nie."],
+      ["Podzielcie się paliwem", "Poproś kilka aut naraz. Pierwszy kierowca, który się zgodzi, zabiera cię, a reszta próśb się zamyka."],
+    ],
+    matchTitle: "Cztery godziny to długo ze złym DJ-em.",
+    matchText: "Kasia jedzie z Łodzi do Krakowa i puszcza techno i house. Ty też. To większość z 91.",
+    bars: ["muzyka", "styl jazdy", "palenie"], great: "ŚWIETNE DOPASOWANIE", bandDay: "SOB 12.12",
+    filterNote: ["bez palenia", "to filtr,", "nie punkty"],
+    photo1: "Kampery zaparkowane na polu festiwalowym", photo2: "Namioty na festiwalowym polu namiotowym",
+    driveTitle: "Trzy wolne miejsca? To 135 zł na paliwo.",
+    driveText: "Dodaj trasę i godzinę. Osoby, które lubią twoją muzykę, poproszą o miejsce, a ty wybierasz, kto jedzie.",
+    offer: "Zaproponuj przejazd", perSeat: "45 zł / miejsce",
+    footTitle: "Do zobaczenia pod bramą.", help: "Pomoc",
+    credit: "Zdjęcia: Thesupermat (CC BY-SA 3.0), Nathan (CC BY-SA 2.0), Wikimedia Commons.",
+  },
+};
+
+interface Act { id: number; name: string; city: string; venue: string | null; cars: number; date: string | null; }
+
+/** This weekend's Friday..Sunday (the coming one on Mon-Thu). */
+function weekend(now = new Date()): [Date, Date, Date] {
+  const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  const day = d.getDay(); // 0 = Sunday
+  const fri = new Date(d);
+  fri.setDate(d.getDate() + (day === 6 ? -1 : day === 0 ? -2 : 5 - day));
+  const plus = (n: number) => { const x = new Date(fri); x.setDate(fri.getDate() + n); return x; };
+  return [fri, plus(1), plus(2)];
+}
+const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+
+/** Poster billing uses the act, not the tour: "REDZED: Darkside Europe Tour" -> "REDZED". */
+const billName = (name: string) => name.split(/\s[|–-]\s|:\s|\s\|/)[0].trim() || name;
+
+/** Rides grouped by event, most cars first: the line-up billing order. */
+function acts(rides: Ride[]): Act[] {
+  const by = new Map<number, Act>();
   for (const r of rides) {
-    const cur = by.get(r.event.id) ?? { ev: r.event, n: 0 };
-    cur.n += 1;
-    by.set(r.event.id, cur);
+    const a = by.get(r.event.id) ?? { id: r.event.id, name: r.event.name, city: r.event.city, venue: r.event.venue, cars: 0, date: r.event.event_date };
+    a.cars += 1;
+    by.set(r.event.id, a);
   }
-  return [...by.values()].sort((a, b) => b.n - a.n);
+  return [...by.values()].sort((a, b) => b.cars - a.cars || (a.date ?? "").localeCompare(b.date ?? ""));
 }
 
+/** The record spins slowly, follows the pointer's angle and nudges with scroll. */
+function useRecordSpin() {
+  const rec = useRef<SVGSVGElement>(null);
+  const st = useRef({ cur: 0, target: 0, grab: null as null | { a: number; r: number }, lastY: null as null | number });
+  useEffect(() => {
+    const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const onScroll = () => {
+      const y = window.scrollY;
+      if (st.current.lastY !== null) st.current.target += (y - st.current.lastY) * 0.35;
+      st.current.lastY = y;
+    };
+    window.addEventListener("scroll", onScroll, { passive: true });
+    let prev = performance.now();
+    let raf = 0;
+    const tick = (now: number) => {
+      const dt = Math.min(now - prev, 50) / 1000;
+      prev = now;
+      const s = st.current;
+      if (!s.grab && !calm) s.target += 8 * dt;
+      s.cur += (s.target - s.cur) * 0.14;
+      if (rec.current) rec.current.style.transform = `rotate(${s.cur.toFixed(2)}deg)`;
+      raf = requestAnimationFrame(tick);
+    };
+    raf = requestAnimationFrame(tick);
+    return () => { cancelAnimationFrame(raf); window.removeEventListener("scroll", onScroll); };
+  }, []);
+  const angle = (e: MouseEvent<HTMLDivElement>) => {
+    const r = e.currentTarget.getBoundingClientRect();
+    return (Math.atan2(e.clientY - (r.top + r.height / 2), e.clientX - (r.left + r.width / 2)) * 180) / Math.PI;
+  };
+  const onMove = (e: MouseEvent<HTMLDivElement>) => {
+    const s = st.current;
+    const a = angle(e);
+    if (!s.grab) { s.grab = { a, r: s.target }; return; }
+    let d = a - s.grab.a;
+    if (d > 180) d -= 360;
+    if (d < -180) d += 360;
+    s.target = s.grab.r + d;
+    s.grab = { a, r: s.target };
+  };
+  const onLeave = () => { st.current.grab = null; };
+  return { rec, onMove, onLeave };
+}
+
+const DATE_PILLS = [{ background: "#FF4F8B", color: "#FFFAF2" }, { background: "#1E1B18", color: "#F7EBD8" }, { background: "#D7FF4A" }];
+const TILES = [
+  { background: "#FF4F8B", color: "#FFFAF2", minHeight: 420 },
+  { background: "#2D5BFF", color: "#FFFAF2", minHeight: 480 },
+  { background: "#D7FF4A", color: "#1E1B18", minHeight: 540 },
+];
+
 export default function Landing() {
-  const { t, plural, day } = useI18n();
+  const { lang, setLang } = useI18n();
+  const c = COPY[lang];
   const nav = useNavigate();
   const [text, setText] = useState("");
-  const rides = useAsync(() => api.rides({ limit: 100, sort: "departure", min_seats: 0 }), []);
-  const events = useAsync(() => api.events({ limit: 9 }), []);
-  const cities = useAsync(() => api.cities(), []);
-  const total = cities.data?.reduce((n, c) => n + c.events, 0);
+  const { rec, onMove, onLeave } = useRecordSpin();
 
-  const tiers = useMemo(() => {
-    const fromRides = lineup(rides.data ?? []).map((x) => ({ id: x.ev.id, name: x.ev.name, sub: `${x.ev.city.toLowerCase()} · ${plural(x.n, "car")}` }));
-    if (fromRides.length >= 3) return { title: t("landing.lineupTitle"), items: fromRides };
-    const evs = (events.data ?? []).slice(0, 9).map((e: Event) => ({ id: e.id, name: e.name, sub: `${e.city.toLowerCase()} · ${e.event_date ? day(e.event_date) : ""}` }));
-    return { title: t("landing.lineupEmpty"), items: [...fromRides, ...evs.filter((e) => !fromRides.some((f) => f.id === e.id))].slice(0, 9) };
-  }, [rides.data, events.data, t, plural, day]);
+  const rides = useAsync(() => api.rides({ limit: 200, sort: "departure", min_seats: 0 }), []);
+  const cities = useAsync(() => api.cities(), []);
+  const soon = useAsync(() => api.events({ limit: 20 }), []);
+  const total = cities.data?.reduce((n, x) => n + x.events, 0) ?? 574;
+
+  const [fri, sat, sun] = useMemo(() => weekend(), []);
+  const lineup = useMemo(() => {
+    const all = acts(rides.data ?? []);
+    const days = new Set([fri, sat, sun].map(isoDay));
+    const thisWeekend = all.filter((a) => a.date && days.has(a.date));
+    const base = thisWeekend.length >= 2 ? thisWeekend : all;
+    // Fill the lower tiers with the next shows, so the poster always has a full bill.
+    const fill: Act[] = (soon.data ?? []).filter((e) => !base.some((a) => a.id === e.id))
+      .map((e) => ({ id: e.id, name: e.name, city: e.city, venue: e.venue, cars: 0, date: e.event_date }));
+    const seen = new Set<string>();
+    const items = [...base, ...fill].filter((a) => { const k = billName(a.name).toLowerCase(); if (seen.has(k)) return false; seen.add(k); return true; });
+    return { weekend: thisWeekend.length >= 2, items: items.slice(0, 11) };
+  }, [rides.data, soon.data, fri, sat, sun]);
+
+  const carWord = (n: number) => {
+    if (lang === "en") return `${n} ${n === 1 ? "car" : "cars"}`;
+    const cat = new Intl.PluralRules("pl").select(n);
+    return `${n} ${cat === "one" ? "auto" : cat === "few" ? "auta" : "aut"}`;
+  };
+  const pill = (d: Date) => {
+    const wd = new Intl.DateTimeFormat(lang === "pl" ? "pl-PL" : "en-GB", { weekday: "short" }).format(d).replace(".", "");
+    return `${wd} ${String(d.getDate()).padStart(2, "0")}.${String(d.getMonth() + 1).padStart(2, "0")}`;
+  };
+  const place = (a: Act) => [a.city, a.venue].filter(Boolean).join(", ").toLowerCase();
+  const sub = (a: Act) => (a.cars ? `${place(a)} · ${carWord(a.cars)}` : place(a));
+  const [t1, t2, t3] = [lineup.items.slice(0, 2), lineup.items.slice(2, 5), lineup.items.slice(5, 11)];
+  const upcomingDays = [...new Set(lineup.items.map((a) => a.date).filter(Boolean) as string[])].sort().slice(0, 3).map(parseLocal);
+  const dateRow = lineup.weekend || upcomingDays.length < 3 ? [fri, sat, sun] : upcomingDays;
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    nav(`/search?text=${encodeURIComponent(text.trim() || t("landing.example"))}`);
+    nav(`/search?text=${encodeURIComponent(text.trim() || c.ask)}`);
   };
 
-  const [top, mid, rest] = [tiers.items.slice(0, 2), tiers.items.slice(2, 5), tiers.items.slice(5, 9)];
-
   return (
-    <Page>
-      <section className="sky">
-        <div className="stickers" aria-hidden="true">
-          <span className="sticker" style={{ left: "7%", top: "62%", background: "var(--lime)", color: "var(--on-bright)", transform: "rotate(-7deg)" }}>{t("landing.sticker1")}</span>
-          <svg className="burst" viewBox="0 0 200 200" width="170" height="170" style={{ right: "7%", top: "48%", transform: "rotate(12deg)" }}>
-            <polygon points="100,0 116,38 154,16 148,58 192,60 162,92 200,118 158,130 172,172 130,160 118,200 100,166 82,200 70,160 28,172 42,130 0,118 38,92 8,60 52,58 46,16 84,38" fill="var(--blue)" />
-            <text x="100" y="104" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontWeight="700" fontSize="48" fill="var(--lime)">{total ?? "…"}</text>
-            <text x="100" y="128" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="13" fill="var(--on-blue)">{t("landing.sticker2").toUpperCase()}</text>
+    <div className="v3">
+      {/* HERO: sunset sky, striped sun with the crowd inside */}
+      <section className="hero">
+        <div className="in">
+          <nav aria-label="Main">
+            <Link className="logo3" to="/">festride</Link>
+            <div className="navpill">
+              <Link to="/events" className="on">{c.nav[0]}</Link>
+              <a href="#rides">{c.nav[1]}</a>
+              <a href="#drive">{c.nav[2]}</a>
+            </div>
+            <div className="navright">
+              <div className="langpill" role="group" aria-label={c.langLabel}>
+                <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
+                <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+              </div>
+              <Link to="/login" className="btn3 login3">{c.login}</Link>
+            </div>
+          </nav>
+
+          <div className="hero-copy">
+            <div className="hero-eyebrow">{c.eyebrow}</div>
+            <h1>{c.title[0]}<br />{c.title[1]}</h1>
+            <form className="ask3" role="search" onSubmit={submit}>
+              <label htmlFor="q3" className="sr-only">{c.askLabel}</label>
+              <input id="q3" value={text} placeholder={c.ask} onChange={(e) => setText(e.target.value)} />
+              <button className="btn3" type="submit">{c.find}</button>
+            </form>
+          </div>
+        </div>
+
+        {/* the record, spinning where the sun used to rise */}
+        <div className="deck" onMouseMove={onMove} onMouseLeave={onLeave}>
+          <svg ref={rec} className="rec" viewBox="0 0 200 200" role="img" aria-label={c.record}>
+            <defs><path id="lbl3" d="M100,100 m-25,0 a25,25 0 1,1 50,0 a25,25 0 1,1 -50,0" /></defs>
+            <circle cx="100" cy="100" r="99" fill="#1E1B18" />
+            {[92, 85, 71, 64, 50].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="#3A3530" strokeWidth=".6" />)}
+            {[78, 57].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="#34302B" strokeWidth="1.4" />)}
+            <circle cx="100" cy="100" r="88" fill="none" stroke="#4A453E" strokeWidth="1" strokeDasharray="70 8 24 8 120 10 40 9" />
+            <circle cx="100" cy="100" r="74" fill="none" stroke="#4A453E" strokeWidth="1" strokeDasharray="30 7 90 7 50 8 60 8" />
+            <circle cx="100" cy="100" r="60" fill="none" stroke="#4A453E" strokeWidth="1" strokeDasharray="55 6 20 6 80 7 40 6" />
+            <path d="M100,14 A86,86 0 0 1 150,30" fill="none" stroke="rgba(255,196,142,.35)" strokeWidth="2.4" strokeLinecap="round" />
+            <path d="M40,150 A72,72 0 0 1 30,118" fill="none" stroke="rgba(255,79,139,.4)" strokeWidth="2.2" strokeLinecap="round" />
+            <path d="M160,130 A66,66 0 0 1 140,155" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.6" strokeLinecap="round" />
+            <circle cx="100" cy="100" r="38" fill="#FF4F8B" />
+            <circle cx="100" cy="100" r="38" fill="none" stroke="#D7FF4A" strokeWidth="2" strokeDasharray="3 5" />
+            <text fontFamily="DM Mono, monospace" fontSize="6.2" letterSpacing="1.2" fill="#FFFAF2">
+              <textPath href="#lbl3">FESTRIDE ✶ {c.side} ✶ ŁÓDŹ → KRAKÓW ✶ {total} {c.gigsShort} ✶</textPath>
+            </text>
+            <text x="100" y="106" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontWeight="700" fontSize="17" fill="#1E1B18">fr</text>
+            <circle cx="100" cy="100" r="2.6" fill="#FFC48E" />
+          </svg>
+          <svg viewBox="0 0 200 200" aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
+            <path d="M38,48 A80,80 0 0 1 92,21" fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="7" strokeLinecap="round" />
+            <path d="M162,152 A80,80 0 0 1 120,178" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="5" strokeLinecap="round" />
           </svg>
         </div>
-        <div className="eyebrow">{t("landing.eyebrow")}</div>
-        <h1 className="disp">{t("landing.title")}</h1>
-        <form className="ask" role="search" onSubmit={submit}>
-          <label htmlFor="landing-q" className="sr-only">{t("landing.ask")}</label>
-          <Icon name="spark" />
-          <input id="landing-q" value={text} placeholder={t("landing.example")} onChange={(e) => setText(e.target.value)} />
-          <button className="btn" type="submit">{t("landing.cta")}</button>
-        </form>
+
+        {/* burst sticker */}
+        <svg className="burst" viewBox="0 0 200 200" role="img" aria-label={`${total} ${c.gigs.toLowerCase()}`}>
+          <polygon points="100,0 116,38 154,16 148,58 192,60 162,92 200,118 158,130 172,172 130,160 118,200 100,166 82,200 70,160 28,172 42,130 0,118 38,92 8,60 52,58 46,16 84,38" fill="#2D5BFF" />
+          <text x="100" y="104" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontWeight="700" fontSize="50" fill="#D7FF4A">{total}</text>
+          <text x="100" y="128" textAnchor="middle" fontFamily="DM Mono, monospace" fontSize="14" fill="#FFFAF2">{c.gigs}</text>
+        </svg>
+        <div className="tag-lime">{c.byMusic}</div>
       </section>
 
-      <section className="lineup" aria-labelledby="lineup-title">
-        <h2 id="lineup-title" className="disp" style={{ fontSize: "clamp(28px,3.6vw,40px)" }}>{tiers.title}</h2>
-        {top.length > 0 && (
-          <div className="tier poster" style={{ fontSize: "clamp(48px,10vw,150px)" }}>
-            {top.map((x, i) => <span key={x.id}>{i > 0 && <span style={{ color: "var(--pink)" }}> ✶ </span>}<Link to={`/search?event_id=${x.id}`}>{x.name}</Link></span>)}
+      {/* LINE-UP POSTER: rides leaving this weekend */}
+      <section id="rides" className="lineup3">
+        <div className="in">
+          <div className="dates">
+            {dateRow.map((d, i) => <span key={i} className="poster" style={DATE_PILLS[i]}>{pill(d)}</span>)}
           </div>
-        )}
-        {top.length > 0 && <div className="note">{top.map((x) => x.sub).join("  ·  ")}</div>}
-        {mid.length > 0 && (
-          <div className="tier poster" style={{ fontSize: "clamp(32px,6vw,84px)", color: "var(--blue)", marginTop: 18 }}>
-            {mid.map((x, i) => <span key={x.id}>{i > 0 && " · "}<Link to={`/search?event_id=${x.id}`}>{x.name}</Link></span>)}
-          </div>
-        )}
-        {rest.length > 0 && (
-          <div className="tier poster" style={{ fontSize: "clamp(22px,3.4vw,42px)", maxWidth: 1100, marginTop: 18, lineHeight: 1.1 }}>
-            {rest.map((x, i) => <span key={x.id}>{i > 0 && " · "}<Link to={`/search?event_id=${x.id}`}>{x.name}</Link></span>)}
-          </div>
-        )}
-        <Link className="btn" to="/events" style={{ marginTop: 24 }}>{t("landing.allEvents")}</Link>
-      </section>
+          <h2>{lineup.weekend ? c.lineup : c.lineupSoon}</h2>
 
-      <section aria-labelledby="how-title" style={{ display: "flex", flexDirection: "column", gap: 32 }}>
-        <h2 id="how-title" className="disp" style={{ fontSize: "clamp(40px,6vw,72px)", maxWidth: 760 }}>{t("landing.howTitle")}</h2>
-        <div className="tiles3">
-          <div className="tile3" style={{ background: "var(--pink)", color: "var(--on-bright)", minHeight: 380 }}>
-            <span className="big">1</span><h3>{t("landing.how1")}</h3><p>{t("landing.how1p")}</p>
-          </div>
-          <div className="tile3" style={{ background: "var(--blue)", color: "var(--on-blue)", minHeight: 430 }}>
-            <span className="big">2</span><h3>{t("landing.how2")}</h3><p>{t("landing.how2p")}</p>
-          </div>
-          <div className="tile3" style={{ background: "var(--lime)", color: "var(--on-bright)", minHeight: 480 }}>
-            <span className="big">3</span><h3>{t("landing.how3")}</h3><p>{t("landing.how3p")}</p>
-          </div>
-        </div>
-      </section>
-
-      <section className="wide-band" aria-labelledby="match-title">
-        <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
-          <h2 id="match-title" className="disp">{t("landing.matchTitle")}</h2>
-          <p style={{ fontSize: 19, maxWidth: 520 }}>{t("landing.matchText")}</p>
-        </div>
-        <div className="bars" style={{ maxWidth: 520, width: "100%", fontSize: 15 }}>
-          {[["landing.music", 60, "var(--lime)"], ["landing.style", 25, "var(--pink)"], ["landing.smoking", 15, "var(--peach)"]].map(([k, w, c]) => (
-            <div key={k as string}>
-              <div className="row"><span>{t(k as "landing.music")}</span><span>{w}%</span></div>
-              <div className="bar" style={{ background: "rgba(255,255,255,.22)", height: 14 }}><i style={{ width: `${(w as number) / 0.6}%`, background: c as string }} /></div>
+          {t1.length > 0 && <>
+            <div className="tier poster t1">
+              {t1.map((a, i) => <span key={a.id}>{i > 0 && <> <span style={{ color: "#FF4F8B" }}>✶</span> </>}<Link to={`/search?event_id=${a.id}`} title={a.name}>{billName(a.name)}</Link></span>)}
             </div>
-          ))}
+            <div className="sub3">{t1.map(sub).join("  ·  ")}</div>
+          </>}
+          {t2.length > 0 && <>
+            <div className="tier poster t2">
+              {t2.map((a, i) => <span key={a.id}>{i > 0 && " · "}<Link to={`/search?event_id=${a.id}`} title={a.name}>{billName(a.name)}</Link></span>)}
+            </div>
+            <div className="sub3">{[...new Set(t2.map((a) => a.city.toLowerCase()))].join(" · ")}{t2.some((a) => a.cars) ? ` · ${carWord(t2.reduce((n, a) => n + a.cars, 0))} ${c.together}` : ""}</div>
+          </>}
+          {t3.length > 0 && (
+            <div className="tier poster t3">
+              {t3.map((a, i) => <span key={a.id}>{i > 0 && " · "}<Link to={`/search?event_id=${a.id}`} title={a.name}>{billName(a.name)}</Link></span>)}
+            </div>
+          )}
+
+          <Link to="/events" className="btn3 cta-ink">{c.allOnMap(total)}</Link>
         </div>
       </section>
 
-      <section className="card" style={{ padding: "48px clamp(22px,5vw,64px)", borderRadius: 48, background: "var(--blush)", color: "var(--on-bright)" }}>
-        <h2 className="disp" style={{ fontSize: "clamp(36px,5vw,72px)", maxWidth: 820 }}>{t("landing.driveTitle")}</h2>
-        <p style={{ fontSize: 19, maxWidth: 560 }}>{t("landing.driveText")}</p>
-        <div><Link className="btn" to="/drive/new">{t("landing.driveCta")}</Link></div>
+      {/* HOW IT WORKS: three colour tiles with scalloped tops */}
+      <section className="how">
+        <div className="in">
+          <h2>{c.howTitle[0]}<br />{c.howTitle[1]}</h2>
+          <div className="tiles">
+            {c.how.map(([h, p], i) => (
+              <div key={h} className="tile" style={TILES[i]}>
+                <span className="n">{i + 1}</span>
+                <h3>{h}</h3>
+                <p>{p}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </section>
-    </Page>
+
+      {/* MATCH: a festival wristband */}
+      <section className="match3">
+        <div className="in grid">
+          <div>
+            <h2>{c.matchTitle}</h2>
+            <p>{c.matchText}</p>
+            <div className="bars3">
+              {([[c.bars[0], "53 / 60", 88, "#D7FF4A"], [c.bars[1], "25 / 25", 100, "#FF4F8B"], [c.bars[2], "13 / 15", 87, "#FFC48E"]] as const).map(([label, val, w, col]) => (
+                <div key={label}>
+                  <div className="row3"><span>{label}</span><span>{val}</span></div>
+                  <div className="track"><i style={{ width: `${w}%`, background: col }} /></div>
+                </div>
+              ))}
+            </div>
+          </div>
+          <div className="bandwrap">
+            <div className="band3">
+              <div className="stub3">
+                <b>91%</b>
+                <span>{c.great}<br />KASIA W. · {c.bandDay}<br />ŁÓDŹ → KRAKÓW</span>
+              </div>
+              <span className="poster">Nocny Rejs ✶ Nocny Rejs ✶</span>
+            </div>
+            <div className="note-lime">{c.filterNote[0]}<br />{c.filterNote[1]}<br />{c.filterNote[2]}</div>
+          </div>
+        </div>
+      </section>
+
+      {/* DRIVE: photos over the sunset */}
+      <section id="drive" className="drive3">
+        <div className="in grid">
+          <div className="photos">
+            <div className="ph arch"><img src="/img/campervans.jpg" alt={c.photo1} /></div>
+            <div className="ph round"><img src="/img/tents.jpg" alt={c.photo2} /></div>
+          </div>
+          <div>
+            <h2>{c.driveTitle}</h2>
+            <p>{c.driveText}</p>
+            <Link to="/drive/new" className="btn3 cta-offer">{c.offer} <span>{c.perSeat}</span></Link>
+          </div>
+        </div>
+      </section>
+
+      {/* FOOTER: striped sun setting */}
+      <footer>
+        <div className="sun3" aria-hidden="true" />
+        <div className="in">
+          <h2>{c.footTitle}</h2>
+          <div className="links">
+            <Link to="/events">{c.nav[0]}</Link><a href="#rides">{c.nav[1]}</a><a href="#drive">{c.nav[2]}</a><Link to="/search">{c.help}</Link>
+            <span>hello@festride.example</span>
+          </div>
+          <p className="credit">{c.credit}</p>
+        </div>
+      </footer>
+    </div>
   );
 }

@@ -1,0 +1,142 @@
+/* v3 Landing, "sunset poster": a faithful build of the Main3 board.
+   Values are the board's own (1440 px artboard); sizes scale down with
+   clamp() below that width. The poster keeps its own fixed palette in both
+   themes, like a printed poster would. */
+.v3 {
+  --sand: #f7ebd8; --cream: #fffaf2; --ink: #1e1b18; --muted: #6e655a; --pink: #ff4f8b; --blue: #2d5bff;
+  --lime: #d7ff4a; --peach: #ffc48e; --apricot: #ffe7c2; --dust: #f3dcc8;
+  background: var(--sand); color: var(--ink); font-family: "Bricolage Grotesque", ui-sans-serif, system-ui, sans-serif;
+  overflow: hidden; color-scheme: light;
+}
+.v3 a { color: inherit; }
+.v3 .serif { font-family: "Fraunces", Georgia, serif; font-style: italic; }
+.v3 .mono { font-family: "DM Mono", ui-monospace, monospace; }
+.v3 .poster { font-family: "Bricolage Grotesque", sans-serif; font-stretch: 75%; font-variation-settings: "wdth" 75; font-weight: 800; text-transform: uppercase; letter-spacing: -0.01em; }
+.v3 .btn3 { display: inline-flex; align-items: center; justify-content: center; gap: 14px; text-decoration: none; border: 0; border-radius: 999px; cursor: pointer; transition: transform 0.18s ease, background-color 0.18s ease; }
+.v3 .btn3:hover { transform: translateY(-2px); }
+.v3 .btn3:active { transform: translateY(1px) scale(0.98); }
+.v3 :focus-visible { outline: 2px solid var(--blue); outline-offset: 3px; }
+.v3 .in { max-width: 1440px; margin: 0 auto; padding-left: max(16px, env(safe-area-inset-left, 0px), min(64px, 4.4vw)); padding-right: max(16px, env(safe-area-inset-right, 0px), min(64px, 4.4vw)); }
+
+/* HERO: sunset sky, the record rising where the sun would */
+.v3 .hero { position: relative; min-height: min(920px, 64vw + 280px); background: linear-gradient(180deg, #ffe7c2 0%, #ffc48e 38%, #ff8f7a 70%, #ff5c8e 100%); overflow: hidden; }
+.v3 .hero nav { position: relative; z-index: 3; display: flex; align-items: center; justify-content: space-between; gap: 16px; padding-block: 28px; flex-wrap: wrap; }
+.v3 .logo3 { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 34px; letter-spacing: -0.03em; text-decoration: none; }
+.v3 .navpill { display: flex; gap: 6px; background: rgba(255, 255, 255, 0.45); padding: 6px; border-radius: 999px; font-size: 16px; font-weight: 500; }
+.v3 .navpill a { padding: 10px 18px; border-radius: 999px; text-decoration: none; }
+.v3 .navpill a.on { background: var(--ink); color: var(--apricot); }
+.v3 .navright { display: flex; align-items: center; gap: 10px; }
+.v3 .langpill { display: inline-flex; gap: 2px; background: rgba(255, 255, 255, 0.45); padding: 4px; border-radius: 999px; }
+.v3 .langpill button { border: 0; background: none; border-radius: 999px; padding: 9px 12px; font: 500 13px "DM Mono", monospace; letter-spacing: 0.06em; color: var(--ink); cursor: pointer; }
+.v3 .langpill button[aria-pressed="true"] { background: var(--ink); color: var(--apricot); }
+.v3 .login3 { font-weight: 600; font-size: 16px; padding: 14px 24px; box-shadow: inset 0 0 0 2px var(--ink); color: var(--ink); background: transparent; }
+.v3 .hero-copy { position: relative; z-index: 3; text-align: center; margin-top: 40px; }
+.v3 .hero-eyebrow { font-family: "DM Mono", monospace; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
+.v3 .hero h1 { margin: 18px auto 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(54px, 9.17vw, 132px); line-height: 0.9; letter-spacing: -0.045em; max-width: 1100px; }
+.v3 .ask3 { position: relative; margin: 40px auto 0; width: min(760px, 100%); display: flex; align-items: center; background: var(--cream); border-radius: 999px; padding: 8px 8px 8px 30px; box-shadow: 0 18px 40px -18px rgba(120, 30, 40, 0.45); }
+.v3 .ask3 input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 19px "Bricolage Grotesque", sans-serif; color: var(--ink); outline: none; }
+.v3 .ask3 input::placeholder { color: #8a8073; }
+.v3 .ask3 button { background: var(--ink); color: var(--apricot); font: 600 17px "Bricolage Grotesque", sans-serif; padding: 18px 28px; }
+.v3 .deck { position: absolute; left: 50%; bottom: calc(min(800px, 56vw) * -0.475); width: min(800px, 56vw); height: min(800px, 56vw); transform: translateX(-50%); cursor: grab; z-index: 1; }
+.v3 .deck svg { display: block; width: 100%; height: 100%; }
+.v3 .rec { transform-origin: 50% 50%; will-change: transform; filter: drop-shadow(0 30px 40px rgba(90, 20, 40, 0.35)); }
+.v3 .burst { position: absolute; z-index: 3; right: 10.4%; top: 520px; width: 190px; height: 190px; transform: rotate(12deg); }
+.v3 .tag-lime { position: absolute; z-index: 3; left: 10.4%; top: 600px; background: var(--lime); border-radius: 999px; padding: 14px 22px; transform: rotate(-7deg); font-weight: 700; font-size: 18px; }
+
+/* LINE-UP POSTER */
+.v3 .lineup3 { padding-block: 110px 120px; text-align: center; position: relative; }
+.v3 .dates { display: inline-flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.v3 .dates span { border-radius: 999px; padding: 10px 22px; font-size: 22px; }
+.v3 .lineup3 h2 { margin: 34px 0 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 500; font-size: clamp(28px, 2.8vw, 40px); letter-spacing: -0.03em; }
+.v3 .tier { line-height: 0.86; }
+.v3 .tier a { text-decoration: none; transition: color 0.2s ease; }
+.v3 .tier a:hover { color: var(--pink); }
+.v3 .t1 { margin-top: 50px; font-size: clamp(52px, 11.67vw, 168px); }
+.v3 .t2 { margin-top: 46px; font-size: clamp(34px, 6.39vw, 92px); line-height: 0.9; color: var(--blue); }
+.v3 .t3 { margin: 46px auto 0; font-size: clamp(22px, 3.19vw, 46px); line-height: 1.1; max-width: 1100px; }
+.v3 .sub3 { font-family: "DM Mono", monospace; font-size: 15px; margin-top: 14px; color: var(--muted); }
+.v3 .cta-ink { margin-top: 60px; background: var(--ink); color: var(--sand); font-weight: 600; font-size: 18px; padding: 20px 32px; }
+
+/* HOW IT WORKS: scalloped colour tiles */
+.v3 .how { padding-block: 0 120px; }
+.v3 .how h2 { margin: 0 0 40px; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(42px, 5vw, 72px); letter-spacing: -0.04em; line-height: 0.95; }
+.v3 .tiles { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 20px; align-items: end; }
+.v3 .tile { padding: 60px 36px 40px; border-radius: 0 0 36px 36px; display: flex; flex-direction: column; transition: transform 0.25s ease;
+  -webkit-mask: radial-gradient(16px at 50% 0, #0000 97%, #000) 50% 0/32px 100%; mask: radial-gradient(16px at 50% 0, #0000 97%, #000) 50% 0/32px 100%; }
+.v3 .tile:hover { transform: translateY(-4px) rotate(-0.4deg); }
+.v3 .tile .n { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 150px; line-height: 0.8; }
+.v3 .tile h3 { margin: auto 0 10px; font-size: 32px; font-weight: 700; letter-spacing: -0.02em; }
+.v3 .tile p { margin: 0; font-size: 18px; line-height: 1.45; }
+
+/* MATCH: a festival wristband */
+.v3 .match3 { background: var(--blue); color: var(--cream); padding-block: 120px; border-radius: 64px 64px 0 0; }
+.v3 .match3 .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 40px; align-items: center; }
+.v3 .match3 h2 { margin: 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(44px, 5.56vw, 80px); letter-spacing: -0.045em; line-height: 0.92; }
+.v3 .match3 p { margin: 26px 0 0; font-size: 20px; line-height: 1.5; max-width: 520px; }
+.v3 .bars3 { margin-top: 36px; display: grid; gap: 14px; max-width: 520px; font-family: "DM Mono", monospace; font-size: 15px; }
+.v3 .bars3 .row3 { display: flex; justify-content: space-between; }
+.v3 .bars3 .track { height: 14px; border-radius: 999px; background: rgba(255, 255, 255, 0.22); margin-top: 6px; }
+.v3 .bars3 .track i { display: block; height: 100%; border-radius: 999px; }
+.v3 .bandwrap { position: relative; height: 520px; }
+.v3 .band3 { position: absolute; left: -20px; right: -100px; top: 190px; height: 140px; transform: rotate(-7deg); border-radius: 22px;
+  background: repeating-linear-gradient(0deg, #ff4f8b 0 10px, #ff6fa0 10px 14px), #ff4f8b; box-shadow: 0 30px 50px -20px rgba(0, 0, 40, 0.55); display: flex; align-items: center; transition: transform 0.4s ease; }
+.v3 .band3:hover { transform: rotate(-3deg) translateY(-4px); }
+.v3 .band3::before { content: ""; position: absolute; inset: 0; border-radius: 22px; background: repeating-linear-gradient(90deg, transparent 0 60px, rgba(255, 255, 255, 0.14) 60px 62px); }
+.v3 .stub3 { position: relative; margin-left: 40px; background: var(--cream); color: var(--ink); border-radius: 16px; padding: 14px 24px; display: flex; align-items: center; gap: 18px; flex: none; }
+.v3 .stub3 b { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 64px; line-height: 1; }
+.v3 .stub3 span { font-family: "DM Mono", monospace; font-size: 13px; line-height: 1.5; }
+.v3 .band3 .poster { position: relative; margin-left: 34px; font-size: 54px; color: var(--cream); white-space: nowrap; }
+.v3 .note-lime { position: absolute; right: 30px; top: 30px; width: 150px; height: 150px; border-radius: 50%; background: var(--lime); color: var(--ink);
+  display: flex; align-items: center; justify-content: center; text-align: center; transform: rotate(10deg); font-weight: 700; font-size: 19px; line-height: 1.15; }
+
+/* DRIVE: photos over the sunset */
+.v3 .drive3 { background: var(--dust); padding-block: 120px 140px; position: relative; }
+.v3 .drive3 .grid { display: grid; grid-template-columns: 1.1fr 1fr; gap: 60px; align-items: center; }
+.v3 .photos { position: relative; height: 600px; }
+.v3 .ph { position: absolute; overflow: hidden; }
+.v3 .ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
+.v3 .ph:hover img { transform: scale(1.03); }
+.v3 .ph.arch { left: 0; top: 0; width: 400px; height: 520px; border-radius: 999px 999px 40px 40px; }
+.v3 .ph.round { left: 330px; top: 230px; width: 340px; height: 340px; border-radius: 50%; box-shadow: 0 0 0 10px var(--peach); }
+.v3 .drive3 h2 { margin: 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(44px, 5.83vw, 84px); letter-spacing: -0.045em; line-height: 0.92; }
+.v3 .drive3 p { margin: 26px 0 0; font-size: 20px; line-height: 1.5; max-width: 500px; }
+.v3 .cta-offer { margin-top: 36px; background: var(--ink); color: var(--apricot); font-weight: 600; font-size: 18px; padding: 10px 10px 10px 30px; }
+.v3 .cta-offer span { background: var(--pink); color: var(--cream); border-radius: 999px; padding: 12px 18px; font-family: "DM Mono", monospace; font-size: 15px; }
+
+/* FOOTER: striped sun setting */
+.v3 footer { position: relative; background: var(--ink); color: var(--sand); padding-block: 100px 50px; overflow: hidden; }
+.v3 footer .sun3 { position: absolute; right: -60px; top: -260px; width: 560px; height: 560px; border-radius: 50%; background: linear-gradient(180deg, #ffc48e, #ff4f8b);
+  -webkit-mask: linear-gradient(#0000 0 50%, #000 50% 58%, #0000 58% 63%, #000 63% 72%, #0000 72% 78%, #000 78%);
+  mask: linear-gradient(#0000 0 50%, #000 50% 58%, #0000 58% 63%, #000 63% 72%, #0000 72% 78%, #000 78%); }
+.v3 footer h2 { position: relative; margin: 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(52px, 7.64vw, 110px); letter-spacing: -0.045em; line-height: 0.9; }
+.v3 footer .links { position: relative; display: flex; gap: 32px; margin-top: 50px; font-size: 17px; flex-wrap: wrap; }
+.v3 footer .credit { position: relative; margin: 40px 0 0; font-size: 12px; color: #a39d90; }
+
+@media (max-width: 1100px) {
+  .v3 .burst { top: auto; bottom: 22%; width: 150px; height: 150px; right: 4%; }
+  .v3 .tag-lime { top: auto; bottom: 18%; left: 4%; }
+  .v3 .photos { height: 520px; }
+  .v3 .ph.arch { width: 62%; height: 460px; }
+  .v3 .ph.round { left: 48%; top: 200px; width: 52%; height: auto; aspect-ratio: 1; }
+}
+@media (max-width: 860px) {
+  .v3 .hero { min-height: 0; padding-bottom: calc(56vw * 0.6); }
+  .v3 .burst, .v3 .tag-lime { display: none; }
+  .v3 .tiles, .v3 .match3 .grid, .v3 .drive3 .grid { grid-template-columns: minmax(0, 1fr); }
+  .v3 .tile { min-height: 0 !important; }
+  .v3 .bandwrap { height: 300px; }
+  .v3 .band3 { top: 90px; left: -16px; right: -16px; }
+  .v3 .note-lime { top: 0; right: 10px; width: 120px; height: 120px; font-size: 15px; }
+  .v3 .photos { height: 420px; }
+}
+@media (max-width: 600px) {
+  .v3 .hero nav { justify-content: center; }
+  .v3 .ask3 { flex-direction: column; align-items: stretch; border-radius: 28px; padding: 12px; gap: 8px; }
+  .v3 .ask3 input { padding: 10px 12px; font-size: 17px; }
+  .v3 .stub3 b { font-size: 40px; }
+  .v3 .band3 .poster { font-size: 34px; }
+  .v3 .match3, .v3 .drive3 { padding-block: 72px; }
+  .v3 .match3 { border-radius: 36px 36px 0 0; }
+  .v3 .tile .n { font-size: 110px; }
+}
+@media (prefers-reduced-motion: reduce) { .v3 * { transition: none !important; } }
