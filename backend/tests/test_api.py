@@ -121,3 +121,20 @@ def test_driver_sees_match_on_requests(client, register, make_ride):
     [req] = client.get(f"/rides/{ride}/requests", headers=driver).json()
     assert req["match"]["percent"] == 100
     assert "email" not in req["passenger"] and "gender" not in req["passenger"]
+
+
+def test_genre_filter_matches_family(client, register, make_ride, engine):
+    from sqlmodel import Session, select
+
+    from app.models import Event
+
+    with Session(engine) as s:
+        ev = s.exec(select(Event).where(Event.name == "Test Fest")).one()
+        ev.genre = "Dance/Electronic"
+        s.add(ev)
+        s.commit()
+    make_ride(register())
+    for genre in ("techno", "house", "electronic", "dance"):
+        assert len(client.get("/rides", params={"genre": genre}).json()) == 1, genre
+        assert len(client.get("/events", params={"genre": genre}).json()) == 1, genre
+    assert client.get("/rides", params={"genre": "rock"}).json() == []

@@ -9,11 +9,11 @@ from datetime import date
 from typing import Literal, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
-from sqlalchemy import func
+from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
 
-from ..cities import fold, normalize_city
+from ..cities import contains_pattern, fold, genre_clause, normalize_city
 from ..clock import now_pl
 from ..database import get_session
 from ..deps import get_current_user, get_optional_user
@@ -151,8 +151,12 @@ def create_ride(
 @router.get("", response_model=list[RideRead])
 def list_rides(
     event_id: Optional[int] = None,
+    q: Optional[str] = Query(None, max_length=100, description="Text in the event name or venue"),
+    event_city: Optional[str] = Query(None, max_length=60),
+    genre: Optional[str] = Query(None, max_length=40, description="Event genre, e.g. rock"),
     origin_city: Optional[str] = Query(None, max_length=60),
-    departure_date: Optional[date] = Query(None, description="Rides leaving on this day"),
+    date_from: Optional[date] = Query(None, description="Leaving on or after this day"),
+    date_to: Optional[date] = Query(None, description="Leaving on or before this day"),
     max_price: Optional[float] = Query(None, ge=0),
     no_smoking: bool = Query(False, description="Only rides where smoking in the car isn't allowed"),
     min_seats: int = Query(1, ge=0, le=8, description="Minimum free seats (0 = include full rides)"),
@@ -183,10 +187,27 @@ def list_rides(
     )
     if event_id is not None:
         stmt = stmt.where(Ride.event_id == event_id)
+    q, event_city, genre = (v.strip() if v else None for v in (q, event_city, genre))
+    if q or event_city or genre:
+        stmt = stmt.join(Event, Event.id == Ride.event_id)
+        if q:
+            pattern = contains_pattern(q)
+            stmt = stmt.where(
+                or_(
+                    func.fold(Event.name).like(pattern, escape="\\"),
+                    func.fold(Event.venue).like(pattern, escape="\\"),
+                )
+            )
+        if event_city:
+            stmt = stmt.where(func.fold(Event.city) == fold(normalize_city(event_city)))
+        if genre:
+            stmt = stmt.where(genre_clause(session, Event.genre, genre))
     if origin_city and origin_city.strip():
         stmt = stmt.where(func.fold(Ride.origin_city) == fold(normalize_city(origin_city)))
-    if departure_date:
-        stmt = stmt.where(func.date(Ride.departure_time) == departure_date.isoformat())
+    if date_from:
+        stmt = stmt.where(func.date(Ride.departure_time) >= date_from.isoformat())
+    if date_to:
+        stmt = stmt.where(func.date(Ride.departure_time) <= date_to.isoformat())
     if max_price is not None:
         stmt = stmt.where(Ride.price <= max_price)
     if no_smoking:

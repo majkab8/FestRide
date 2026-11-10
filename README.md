@@ -34,6 +34,21 @@ uvicorn app.main:app --reload --port 8000
 - Health check: http://localhost:8000/health
 - Interactive API docs: http://localhost:8000/docs
 
+### AI features (optional)
+
+With `GEMINI_API_KEY` set (free key from https://aistudio.google.com):
+
+- `POST /ai/search` turns a sentence like *"z Łodzi na techno do Krakowa w grudniu, max 50 zł"*
+  into `GET /rides` filters plus a preview of how it was understood.
+- `POST /ai/explain` writes a one-line "why you'd get along" for up to 5 rides or requests.
+
+Without a key, or when the free tier is overloaded, search falls back to a simple rule-based
+parser (`"source": "rules"`) and explanations are just omitted; match % and labels always work.
+After a failure the app pauses AI calls for 30 s, so searches fall back instantly.
+
+> On Windows, call the API at `http://127.0.0.1:8000` rather than `localhost`, which can add
+> ~2 s per request (IPv6 lookup first).
+
 ### Tests
 
 ```bash
