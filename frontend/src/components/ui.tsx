@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
 import type { Match, Ride } from "../api";
 import { familyOf, initials } from "../geo";
 import { useI18n } from "../i18n";
@@ -84,6 +84,28 @@ export function Wristband({ ride, small = false }: { ride: Ride; small?: boolean
 }
 
 /* ---------- status ---------- */
+/** A number that counts up from 0 when it first shows (static with reduced motion). */
+export function CountUp({ to, suffix = "", ms = 900 }: { to: number; suffix?: string; ms?: number }) {
+  const [still] = useState(() => typeof matchMedia !== "function" || matchMedia("(prefers-reduced-motion: reduce)").matches);
+  const [n, setN] = useState(still ? to : 0);
+  const shown = useRef(n);
+  shown.current = n;
+  useEffect(() => {
+    if (still) { setN(to); return; }
+    let raf = 0;
+    const from = shown.current;
+    const t0 = performance.now();
+    const step = (now: number) => {
+      const p = Math.min(1, (now - t0) / ms);
+      setN(Math.round(from + (to - from) * (1 - (1 - p) ** 3)));
+      if (p < 1) raf = requestAnimationFrame(step);
+    };
+    raf = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(raf);
+  }, [to, ms, still]);
+  return <>{n}{suffix}</>;
+}
+
 export function Loading() {
   const { t } = useI18n();
   return <div className="loading" role="status"><span className="spinner" aria-hidden="true" />{t("common.loading")}</div>;

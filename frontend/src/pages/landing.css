@@ -102,6 +102,9 @@
 .v3 .ph { position: absolute; overflow: hidden; }
 .v3 .ph img { width: 100%; height: 100%; object-fit: cover; display: block; transition: transform 0.5s ease; }
 .v3 .ph:hover img { transform: scale(1.03); }
+/* credit sits right under the arch photo, one small line that clears the circle */
+.v3 .photos .credit { position: absolute; left: 0; top: 532px; margin: 0; white-space: nowrap; font-family: "DM Mono", ui-monospace, monospace; font-size: 10px; letter-spacing: 0; opacity: 0.75; }
+.v3 .photos .credit a { color: inherit; }
 .v3 .ph.arch { left: 0; top: 0; width: 400px; height: 520px; border-radius: 999px 999px 40px 40px; }
 .v3 .ph.round { left: 330px; top: 230px; width: 340px; height: 340px; border-radius: 50%; box-shadow: 0 0 0 10px var(--peach); }
 .v3 .drive3 h2 { margin: 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(44px, 5.83vw, 84px); letter-spacing: -0.045em; line-height: 0.92; }
@@ -123,6 +126,7 @@
   .v3 .tag-lime { top: auto; bottom: 18%; left: 4%; }
   .v3 .photos { height: 520px; }
   .v3 .ph.arch { width: 62%; height: 460px; }
+  .v3 .photos .credit { top: 472px; }
   .v3 .ph.round { left: 48%; top: 200px; width: 52%; height: auto; aspect-ratio: 1; }
 }
 @media (max-width: 860px) {
@@ -133,7 +137,10 @@
   .v3 .bandwrap { height: 300px; }
   .v3 .band3 { top: 90px; left: -16px; right: -16px; }
   .v3 .note-lime { top: 0; right: 10px; width: 120px; height: 120px; font-size: 15px; }
-  .v3 .photos { height: 420px; }
+  .v3 .photos { height: 400px; }
+  .v3 .ph.arch { height: 380px; }
+  .v3 .photos .credit { top: 390px; white-space: normal; }
+  .v3 .ph.round { top: 180px; }
 }
 @media (max-width: 600px) {
   .v3 .hero nav { justify-content: center; }

@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError, errorKey } from "../api";
 import { useAuth } from "../auth";
 import { Screen } from "../components/Layout";
-import { Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
+import { CountUp, Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
 import { initials } from "../geo";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n, type Key } from "../i18n";
@@ -88,7 +88,7 @@ export default function RideDetail() {
           {m && (
             <div className="band-row" aria-hidden="true">
               <div className="wb">
-                <div className="stub"><span className="num">{m.percent}%</span><span>{t(`match.${k}`).split(" ").join("\n")}</span></div>
+                <div className="stub"><span className="num"><CountUp to={m.percent} suffix="%" /></span><span>{t(`match.${k}`).split(" ").join("\n")}</span></div>
                 <span className="poster">{bandBits.join(" ✶ ")}</span>
               </div>
             </div>

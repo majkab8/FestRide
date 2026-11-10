@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
+import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, type MouseEvent } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { api, type Ride } from "../api";
 import { billName } from "../geo";
@@ -28,7 +28,8 @@ const COPY = {
     matchText: "Kasia drives Łódź to Kraków and plays techno and house. You do too. That's most of a 91.",
     bars: ["music", "ride style", "smoking"], great: "GREAT MATCH", bandDay: "SAT 12.12",
     filterNote: ["no smoking", "is a filter,", "not a score"],
-    photo1: "Campervans parked at a festival field", photo2: "Tents on a festival campsite",
+    photo1: "Crowd with flags in front of the main stage at Pol'and'Rock 2024", photo2: "Festival field with the main stage and a Ferris wheel at Pol'and'Rock 2024",
+    photoBy: "Photos:", cropped: "cropped",
     driveTitle: "Three empty seats? That's 135 zł of fuel.",
     driveText: "Post your route and time. People who like your music ask for a seat, you pick who comes.",
     offer: "Offer a ride", perSeat: "45 zł / seat",
@@ -52,7 +53,8 @@ const COPY = {
     matchText: "Kasia jedzie z Łodzi do Krakowa i puszcza techno i house. Ty też. To większość z 91.",
     bars: ["muzyka", "styl jazdy", "palenie"], great: "ŚWIETNE DOPASOWANIE", bandDay: "SOB 12.12",
     filterNote: ["bez palenia", "to filtr,", "nie punkty"],
-    photo1: "Kampery zaparkowane na polu festiwalowym", photo2: "Namioty na festiwalowym polu namiotowym",
+    photo1: "Tłum z flagami pod dużą sceną na Pol'and'Rock 2024", photo2: "Pole festiwalowe z dużą sceną i diabelskim młynem na Pol'and'Rock 2024",
+    photoBy: "fot.", cropped: "kadr",
     driveTitle: "Trzy wolne miejsca? To 135 zł na paliwo.",
     driveText: "Dodaj trasę i godzinę. Osoby, które lubią twoją muzykę, poproszą o miejsce, a ty wybierasz, kto jedzie.",
     offer: "Zaproponuj przejazd", perSeat: "45 zł / miejsce",
@@ -151,12 +153,30 @@ const TILES = [
   { background: "#D7FF4A", color: "#1E1B18", minHeight: 540 },
 ];
 
+/** Sections below the hero slide in as they scroll into view (motion.css).
+    Layout effect: the classes go on before the first paint, so nothing flashes.
+    Sections keep static classNames, so React never wipes rv/seen. */
+function useScrollReveal() {
+  const root = useRef<HTMLDivElement>(null);
+  useLayoutEffect(() => {
+    const el = root.current;
+    if (!el || typeof IntersectionObserver !== "function" || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const io = new IntersectionObserver((entries) => {
+      for (const e of entries) if (e.isIntersecting) { e.target.classList.add("seen"); io.unobserve(e.target); }
+    }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
+    el.querySelectorAll(":scope > section:not(.hero)").forEach((s) => { s.classList.add("rv"); io.observe(s); });
+    return () => io.disconnect();
+  }, []);
+  return root;
+}
+
 export default function Landing() {
   const { lang, setLang } = useI18n();
   const c = COPY[lang];
   const nav = useNavigate();
   const [text, setText] = useState("");
   const { rec, car, onMove, onLeave } = useRecordSpin();
+  const revealRoot = useScrollReveal();
 
   const rides = useAsync(() => api.rides({ limit: 200, sort: "departure", min_seats: 0 }), []);
   const cities = useAsync(() => api.cities(), []);
@@ -198,7 +218,7 @@ export default function Landing() {
   };
 
   return (
-    <div className="v3">
+    <div className="v3" ref={revealRoot}>
       {/* HERO: sunset sky, striped sun with the crowd inside */}
       <section className="hero">
         <div className="in">
@@ -343,8 +363,11 @@ export default function Landing() {
       <section id="drive" className="drive3">
         <div className="in grid">
           <div className="photos">
-            <div className="ph arch"><img src="/img/campervans.jpg" alt={c.photo1} /></div>
-            <div className="ph round"><img src="/img/tents.jpg" alt={c.photo2} /></div>
+            <div className="ph arch"><img src="/img/festival-crowd.jpg" alt={c.photo1} /></div>
+            <div className="ph round"><img src="/img/festival-field.jpg" alt={c.photo2} /></div>
+            <p className="credit">
+              {c.photoBy} Krzysztof Popławski (<a href="https://commons.wikimedia.org/wiki/File:30_PolAndRock_Festival,_2024,_du%C5%BCa_scena,_Coma,_widok_od_zaplecza_na_scen%C4%99_i_publiczno%C5%9B%C4%87,_KsP_265.jpg" target="_blank" rel="noreferrer">1</a>, <a href="https://commons.wikimedia.org/wiki/File:30_Pol%27and%27Rock_2024,_widok_ca%C5%82ej_przestrzeni_podczas_koncertu_PFK_Live_0018.jpg" target="_blank" rel="noreferrer">2</a>), <a href={lang === "pl" ? "https://creativecommons.org/licenses/by/4.0/deed.pl" : "https://creativecommons.org/licenses/by/4.0/"} target="_blank" rel="noreferrer">CC BY 4.0</a>, {c.cropped}
+            </p>
           </div>
           <div>
             <h2>{c.driveTitle}</h2>
