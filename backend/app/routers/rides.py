@@ -80,6 +80,20 @@ def _get_ride_or_404(session: Session, ride_id: int) -> Ride:
     return ride
 
 
+def _same_event_requests(session: Session, passenger_id: int, event_id: int, status_: RequestStatus):
+    """A passenger's requests with the given status on any ride to this event."""
+    stmt = (
+        select(RideRequest)
+        .join(Ride, Ride.id == RideRequest.ride_id)
+        .where(
+            RideRequest.passenger_id == passenger_id,
+            Ride.event_id == event_id,
+            RideRequest.status == status_,
+        )
+    )
+    return list(session.exec(stmt).all())
+
+
 def _request_read(req: RideRequest, passenger: User) -> RequestRead:
     return RequestRead(
         id=req.id,
@@ -190,6 +204,13 @@ def request_to_join(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This ride has already left")
     if _accepted_counts(session, [ride.id]).get(ride.id, 0) >= ride.seats_total:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This ride is full")
+    # Passengers may ask several drivers at once, but once one accepts they're
+    # set for this event (see decide_request).
+    if _same_event_requests(session, current_user.id, ride.event_id, RequestStatus.accepted):
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="You already have an accepted ride to this event",
+        )
 
     req = RideRequest(ride_id=ride.id, passenger_id=current_user.id)
     session.add(req)
@@ -252,7 +273,8 @@ def decide_request(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    """Driver accepts or declines a pending request."""
+    """Driver accepts or declines a pending request. Accepting also declines
+    the passenger's other pending requests for the same event."""
     req = session.get(RideRequest, request_id)
     if req is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
@@ -273,6 +295,13 @@ def decide_request(
 
     req.status = data.status
     session.add(req)
+    if data.status == RequestStatus.accepted:
+        # The passenger now has a seat to this event: decline their other
+        # pending requests for it, so no other driver holds a seat for them.
+        for other in _same_event_requests(session, req.passenger_id, ride.event_id, RequestStatus.pending):
+            if other.id != req.id:
+                other.status = RequestStatus.declined
+                session.add(other)
     session.commit()
     session.refresh(req)
     return _request_read(req, session.get(User, req.passenger_id))
