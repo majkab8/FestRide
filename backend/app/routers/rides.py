@@ -191,6 +191,9 @@ def list_rides(
         stmt = stmt.where(Ride.price <= max_price)
     if no_smoking:
         stmt = stmt.where(Ride.smoking_allowed == False)  # noqa: E712 (SQL expression)
+    if viewer is not None:
+        # A search is for rides to join; your own are under GET /rides/mine.
+        stmt = stmt.where(Ride.driver_id != viewer.id)
 
     stmt = stmt.order_by(Ride.departure_time, Ride.id)
     rank_by_match = viewer is not None and sort != "departure"
@@ -200,8 +203,8 @@ def list_rides(
     # Match is computed in Python, so rank all filtered rides, then paginate.
     # Fine at MVP scale (rides to upcoming events number in the hundreds).
     reads = _to_reads(session, list(session.exec(stmt).all()), viewer)
-    # Own rides (no match) go last; ties keep the soonest-departure order.
-    reads.sort(key=lambda r: r.match.percent if r.match else -1, reverse=True)  # stable
+    # Stable sort: ties keep the soonest-departure order.
+    reads.sort(key=lambda r: r.match.percent, reverse=True)
     return reads[offset : offset + limit]
 
 

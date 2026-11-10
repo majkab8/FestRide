@@ -86,13 +86,14 @@ def test_ranking_by_match_when_logged_in(client, register, make_ride):
     make_ride(register(["house"], "chatty", name="House"), hours_before=1)
     make_ride(register(["techno", "house"], "party", name="Twin"), hours_before=0)
     me = register(["techno", "house"], "party", name="Me")
-    make_ride(me, hours_before=3)  # my own ride: no match, ranked last
+    make_ride(me, hours_before=3)  # my own ride: hidden from my search
 
     assert names(client.get("/rides").json()) == ["Me", "Jazz", "House", "Twin"]  # anonymous
     ranked = client.get("/rides", headers=me).json()
-    assert names(ranked) == ["Twin", "House", "Jazz", "Me"]
-    assert [r["match"]["percent"] if r["match"] else None for r in ranked] == [100, 80, 0, None]
-    assert names(client.get("/rides", params={"sort": "departure"}, headers=me).json())[0] == "Me"
+    assert names(ranked) == ["Twin", "House", "Jazz"]
+    assert [r["match"]["percent"] for r in ranked] == [100, 80, 0]
+    assert names(client.get("/rides", params={"sort": "departure"}, headers=me).json()) == ["Jazz", "House", "Twin"]
+    assert names(client.get("/rides/mine", headers=me).json()) == ["Me"]
     assert names(client.get("/rides", params={"limit": 1, "offset": 1}, headers=me).json()) == ["House"]
 
 
