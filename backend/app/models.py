@@ -64,6 +64,7 @@ class Ride(SQLModel, table=True):
     departure_time: datetime = Field(index=True)  # naive, Polish local time
     seats_total: int
     price: float = 0.0
+    smoking_allowed: bool = False  # in the car, during the ride (decision Q15)
     note: Optional[str] = None
 
     created_at: datetime = Field(default_factory=_utcnow)

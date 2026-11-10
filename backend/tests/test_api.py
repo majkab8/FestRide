@@ -96,6 +96,19 @@ def test_ranking_by_match_when_logged_in(client, register, make_ride):
     assert names(client.get("/rides", params={"limit": 1, "offset": 1}, headers=me).json()) == ["House"]
 
 
+def test_no_smoking_filter(client, register, make_ride):
+    make_ride(register(name="Smoky"), smoking_allowed=True)
+    make_ride(register(name="Clean"))
+    assert sorted(names(client.get("/rides").json())) == ["Clean", "Smoky"]
+    assert names(client.get("/rides", params={"no_smoking": True}).json()) == ["Clean"]
+
+
+def test_match_has_label(client, register, make_ride):
+    make_ride(register(["techno"], "party"))
+    [ride] = client.get("/rides", headers=register(["techno"], "party")).json()
+    assert ride["match"] == {**ride["match"], "percent": 100, "label": "Great match"}
+
+
 def test_bad_token_on_public_endpoint_is_401(client):
     assert client.get("/rides", headers={"Authorization": "Bearer garbage"}).status_code == 401
 

@@ -1,10 +1,11 @@
-"""Deterministic passenger-driver match score (decision Q7).
+"""Deterministic passenger-driver match score (decisions Q7, Q15).
 
     score = 60% music + 25% driving style + 15% smoking
 
 Music: each genre is compared with the other person's genres. The same genre
-scores 1.0, the same family (e.g. techno ~ house, both "electronic") 0.5,
-anything else 0. A person's music score is the average of their genres' best
+scores 1.0, the same family (e.g. techno ~ house, both "electronic") 0.5, a
+neighbouring family (pop ~ electronic, pop ~ urban) 0.25, anything else 0.
+A person's music score is the average of their genres' best
 matches, and the result is the mean of both directions, so A~B == B~A and one
 person's long list doesn't swamp the other's.
 
@@ -24,6 +25,7 @@ WEIGHT_SMOKING = 0.15
 
 SAME_GENRE = 1.0
 SAME_FAMILY = 0.5
+NEIGHBOUR_FAMILY = 0.25
 
 # Family -> genre names. Covers the Ticketmaster genres in our data plus
 # common names users type, in English and Polish. Names go through _norm()
@@ -69,6 +71,13 @@ def _norm(genre: str) -> str:
 
 _FAMILY_OF: dict[str, str] = {_norm(g): fam for fam, genres in _FAMILIES.items() for g in genres}
 
+# Families whose audiences overlap a lot (disco/dance pop ~ house, pop ~ rap
+# in Polish charts). Kept deliberately short so rankings stay distinct.
+_NEIGHBOURS = {frozenset({"pop", "electronic"}), frozenset({"pop", "urban"})}
+
+# (minimum percent, label), checked from the top.
+_LABELS = [(85, "Great match"), (60, "Good match"), (30, "Something in common"), (0, "Different vibes")]
+
 # quiet - chatty - party: neighbours are half compatible, opposite ends are not.
 _STYLE_ORDER = [DrivingStyle.quiet, DrivingStyle.chatty, DrivingStyle.party]
 
@@ -76,6 +85,7 @@ _STYLE_ORDER = [DrivingStyle.quiet, DrivingStyle.chatty, DrivingStyle.party]
 @dataclass(frozen=True)
 class Match:
     percent: int  # 0-100, weighted total
+    label: str  # human-readable band for the percent
     music: float  # 0-1 component scores, for the UI / AI explanation
     style: float
     smoking: float
@@ -92,8 +102,12 @@ def genre_similarity(a: str, b: str) -> float:
     if a == b:
         return SAME_GENRE
     fam_a, fam_b = _FAMILY_OF.get(a), _FAMILY_OF.get(b)
-    if fam_a is not None and fam_a == fam_b:
+    if fam_a is None or fam_b is None:
+        return 0.0
+    if fam_a == fam_b:
         return SAME_FAMILY
+    if frozenset({fam_a, fam_b}) in _NEIGHBOURS:
+        return NEIGHBOUR_FAMILY
     return 0.0
 
 
@@ -117,6 +131,10 @@ def smoking_similarity(a: bool, b: bool) -> float:
     return 1.0 if a == b else 0.0
 
 
+def label_for(percent: int) -> str:
+    return next(label for threshold, label in _LABELS if percent >= threshold)
+
+
 def match(a, b) -> Match:
     """Score two users (anything with music_genres, driving_style, smoker)."""
     music = music_similarity(a.music_genres, b.music_genres)
@@ -126,8 +144,10 @@ def match(a, b) -> Match:
     # Matched on normalised keys, shown in a's own spelling ("hip-hop", not "hip hop").
     b_keys = set(_unique(b.music_genres))
     shared = sorted({_norm(g): g for g in a.music_genres if _norm(g) in b_keys}.values())
+    percent = round(total * 100)
     return Match(
-        percent=round(total * 100),
+        percent=percent,
+        label=label_for(percent),
         music=round(music, 3),
         style=style,
         smoking=smoking,

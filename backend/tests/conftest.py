@@ -72,7 +72,7 @@ def event_id(client):
 
 @pytest.fixture
 def make_ride(client, event_id):
-    def _make(headers, hours_before=0, seats=3, price=0):
+    def _make(headers, hours_before=0, seats=3, price=0, smoking_allowed=False):
         departure = (today_pl() + timedelta(days=10)).isoformat() + f"T{12 - hours_before:02d}:00"
         r = client.post(
             "/rides",
@@ -82,6 +82,7 @@ def make_ride(client, event_id):
                 "departure_time": departure,
                 "seats_total": seats,
                 "price": price,
+                "smoking_allowed": smoking_allowed,
             },
             headers=headers,
         )

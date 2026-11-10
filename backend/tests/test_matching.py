@@ -4,7 +4,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from app.matching import genre_similarity, match, music_similarity, style_similarity
+from app.matching import genre_similarity, label_for, match, music_similarity, style_similarity
 from app.models import DrivingStyle
 
 
@@ -26,6 +26,9 @@ def person(genres, style=DrivingStyle.chatty, smoker=False):
         ("rap", "Hip-Hop/Rap", 0.5),
         ("elektronika", "techno", 0.5),  # Polish name
         ("techno", "jazz", 0.0),
+        ("pop", "house", 0.25),  # neighbouring families
+        ("disco", "rap", 0.25),
+        ("rock", "pop", 0.0),  # not neighbours
         ("shoegaze", "shoegaze", 1.0),  # unknown genre still matches itself
         ("shoegaze", "rock", 0.0),  # ...but has no family
     ],
@@ -111,6 +114,15 @@ def test_match_is_symmetric_and_reports_shared_genres():
     # Scores are symmetric; shared_genres uses the first person's spelling.
     assert (ab.percent, ab.music, ab.style, ab.smoking) == (ba.percent, ba.music, ba.style, ba.smoking)
     assert ab.shared_genres == ["Techno"] and ba.shared_genres == ["techno"]
+
+
+@pytest.mark.parametrize(
+    ("percent", "label"),
+    [(0, "Different vibes"), (29, "Different vibes"), (30, "Something in common"),
+     (59, "Something in common"), (60, "Good match"), (84, "Good match"), (85, "Great match"), (100, "Great match")],
+)
+def test_labels(percent, label):
+    assert label_for(percent) == label
 
 
 def test_ranking_is_sensible():

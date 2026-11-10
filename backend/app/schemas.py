@@ -121,6 +121,7 @@ class RideCreate(BaseModel):
     departure_time: Annotated[datetime, AfterValidator(to_pl_naive)]
     seats_total: int = Field(ge=1, le=8)
     price: float = Field(default=0.0, ge=0, le=1000)  # PLN per seat
+    smoking_allowed: StrictBool = False  # smoking in the car during the ride
     note: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]] = None
 
 
@@ -128,6 +129,7 @@ class MatchRead(BaseModel):
     """How well the viewer matches the other person (decision Q7)."""
 
     percent: int
+    label: str  # "Different vibes" ... "Great match"; same wording for UI and AI
     music: float
     style: float
     smoking: float
@@ -145,6 +147,7 @@ class RideRead(BaseModel):
     seats_total: int
     seats_left: int
     price: float
+    smoking_allowed: bool
     note: Optional[str] = None
     created_at: datetime
     match: Optional[MatchRead] = None  # viewer vs driver; only when logged in, not on own rides

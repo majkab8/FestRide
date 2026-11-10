@@ -154,6 +154,7 @@ def list_rides(
     origin_city: Optional[str] = Query(None, max_length=60),
     departure_date: Optional[date] = Query(None, description="Rides leaving on this day"),
     max_price: Optional[float] = Query(None, ge=0),
+    no_smoking: bool = Query(False, description="Only rides where smoking in the car isn't allowed"),
     min_seats: int = Query(1, ge=0, le=8, description="Minimum free seats (0 = include full rides)"),
     sort: Optional[Literal["match", "departure"]] = Query(
         None,
@@ -188,6 +189,8 @@ def list_rides(
         stmt = stmt.where(func.date(Ride.departure_time) == departure_date.isoformat())
     if max_price is not None:
         stmt = stmt.where(Ride.price <= max_price)
+    if no_smoking:
+        stmt = stmt.where(Ride.smoking_allowed == False)  # noqa: E712 (SQL expression)
 
     stmt = stmt.order_by(Ride.departure_time, Ride.id)
     rank_by_match = viewer is not None and sort != "departure"
