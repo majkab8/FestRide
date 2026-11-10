@@ -107,16 +107,16 @@
 .search3 .src.rules { background: var(--sand); color: var(--muted); }
 .search3 .grid { display: grid; grid-template-columns: minmax(0, 600px) minmax(0, 1fr); gap: 24px; padding-top: 22px; align-items: start; }
 .search3 .rows { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
-.row3 { display: flex; align-items: center; gap: 16px; padding: 12px 18px 12px 12px; border-radius: 999px; text-decoration: none; transition: background-color 0.2s ease, transform 0.2s ease; min-width: 0; }
-.row3:hover { background: var(--surface); transform: translateX(3px); }
-.row3.on { background: var(--surface); box-shadow: inset 0 0 0 2px var(--fg); }
-.row3.dim { color: var(--faint); }
-.row3 .sc { width: 64px; height: 64px; font-size: 30px; }
-.row3 .who { flex: 1; min-width: 0; }
-.row3 .who b { font-size: 18px; font-weight: 700; }
-.row3 .who span { display: block; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.row3.dim .who span { color: inherit; }
-.row3 .pr { font-family: var(--font-mono); font-size: 16px; white-space: nowrap; }
+.app3 .row3 { display: flex; align-items: center; gap: 16px; padding: 12px 18px 12px 12px; border-radius: 999px; text-decoration: none; transition: background-color 0.2s ease, transform 0.2s ease; min-width: 0; }
+.app3 .row3:hover { background: var(--surface); transform: translateX(3px); }
+.app3 .row3.on { background: var(--surface); box-shadow: inset 0 0 0 2px var(--fg); }
+.app3 .row3.dim { color: var(--faint); }
+.app3 .row3 .sc { width: 64px; height: 64px; font-size: 30px; }
+.app3 .row3 .who { flex: 1; min-width: 0; }
+.app3 .row3 .who b { font-size: 18px; font-weight: 700; }
+.app3 .row3 .who span { display: block; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.app3 .row3.dim .who span { color: inherit; }
+.app3 .row3 .pr { font-family: var(--font-mono); font-size: 16px; white-space: nowrap; }
 .search3 .mapwrap { position: sticky; top: 110px; height: 580px; border-radius: 40px; overflow: hidden; background: var(--sand); }
 .search3 .mapwrap .map-box { position: absolute; inset: 0; height: 100%; border-radius: 0; top: 0; }
 .search3 .float { position: absolute; z-index: 500; left: 50%; top: 42%; background: var(--inv-bg); color: var(--inv-fg); border-radius: 24px; padding: 16px 20px; width: 260px; text-decoration: none; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5); }
@@ -173,46 +173,46 @@
 .ride3 aside .err { margin-top: 12px; color: var(--pink-2); font-size: 14px; }
 
 /* ---------- Driver (AppDriver3) ---------- */
-.drive3 { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 32px; padding-top: 10px; align-items: start; }
-.drive3 .side3 { display: flex; flex-direction: column; gap: 6px; }
-.drive3 .side3 .lbl { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--muted); padding: 0 16px 6px; text-transform: uppercase; }
-.drive3 .side3 a.item { border-radius: 26px; padding: 16px 18px; text-decoration: none; display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; transition: background-color 0.2s ease; }
-.drive3 .side3 a.item:hover { background: var(--surface); }
-.drive3 .side3 a.item.on { background: var(--surface); box-shadow: inset 0 0 0 2px var(--fg); }
-.drive3 .side3 a.item.past { color: var(--faint); }
-.drive3 .side3 a.item b { font-weight: 700; font-size: 17px; }
-.drive3 .side3 a.item small { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
-.drive3 .side3 a.item.past small { color: inherit; }
-.drive3 .side3 .new { background: var(--pink); color: var(--on-bright); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; }
-.drive3 .side3 .offer { margin-top: 12px; background: var(--fg); color: var(--bg); padding: 16px 20px; font-weight: 600; font-size: 16px; }
-.drive3 .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
-.drive3 .head .mono { font-size: 13px; color: var(--muted); }
-.drive3 .h1 { margin-top: 10px; font-size: clamp(38px, 4.6vw, 66px); }
-.drive3 .fill { background: var(--lime); color: var(--on-bright); border-radius: 999px; padding: 14px 22px; transform: rotate(-3deg); font-weight: 700; font-size: 17px; white-space: nowrap; }
-.drive3 .seatbar { margin-top: 26px; display: flex; gap: 12px; }
-.drive3 .seatbar div { flex: 1; height: 78px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 18px; min-width: 0; padding: 0 10px; }
-.drive3 .seatbar .t { background: var(--blue); color: var(--on-blue); }
-.drive3 .seatbar .t span { font-family: var(--font-mono); font-size: 12px; font-weight: 400; opacity: 0.8; }
-.drive3 .seatbar .f { box-shadow: inset 0 0 0 2px var(--line); font-family: var(--font-mono); font-size: 13px; font-weight: 400; color: var(--faint); }
-.drive3 .want { margin: 34px 0 16px; font-size: clamp(30px, 2.8vw, 40px); }
-.drive3 .tix3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.drive3 .tk { background: var(--surface); border-radius: 26px; display: flex; flex-direction: column; transition: transform 0.2s ease;
+.driver3 { display: grid; grid-template-columns: minmax(0, 300px) minmax(0, 1fr); gap: 32px; padding-top: 10px; align-items: start; }
+.driver3 .side3 { display: flex; flex-direction: column; gap: 6px; }
+.driver3 .side3 .lbl { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; color: var(--muted); padding: 0 16px 6px; text-transform: uppercase; }
+.driver3 .side3 a.item { border-radius: 26px; padding: 16px 18px; text-decoration: none; display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; transition: background-color 0.2s ease; }
+.driver3 .side3 a.item:hover { background: var(--surface); }
+.driver3 .side3 a.item.on { background: var(--surface); box-shadow: inset 0 0 0 2px var(--fg); }
+.driver3 .side3 a.item.past { color: var(--faint); }
+.driver3 .side3 a.item b { font-weight: 700; font-size: 17px; }
+.driver3 .side3 a.item small { font-family: var(--font-mono); font-size: 12px; color: var(--muted); }
+.driver3 .side3 a.item.past small { color: inherit; }
+.driver3 .side3 .new { background: var(--pink); color: var(--on-bright); border-radius: 999px; padding: 2px 9px; font-size: 12px; font-weight: 700; white-space: nowrap; }
+.driver3 .side3 .offer { margin-top: 12px; background: var(--fg); color: var(--bg); padding: 16px 20px; font-weight: 600; font-size: 16px; }
+.driver3 .head { display: flex; justify-content: space-between; align-items: flex-end; gap: 16px; flex-wrap: wrap; }
+.driver3 .head .mono { font-size: 13px; color: var(--muted); }
+.driver3 .h1 { margin-top: 10px; font-size: clamp(38px, 4.6vw, 66px); }
+.driver3 .fill { background: var(--lime); color: var(--on-bright); border-radius: 999px; padding: 14px 22px; transform: rotate(-3deg); font-weight: 700; font-size: 17px; white-space: nowrap; }
+.driver3 .seatbar { margin-top: 26px; display: flex; gap: 12px; }
+.driver3 .seatbar div { flex: 1; height: 78px; border-radius: 999px; display: flex; align-items: center; justify-content: center; gap: 10px; font-weight: 600; font-size: 18px; min-width: 0; padding: 0 10px; }
+.driver3 .seatbar .t { background: var(--blue); color: var(--on-blue); }
+.driver3 .seatbar .t span { font-family: var(--font-mono); font-size: 12px; font-weight: 400; opacity: 0.8; }
+.driver3 .seatbar .f { box-shadow: inset 0 0 0 2px var(--line); font-family: var(--font-mono); font-size: 13px; font-weight: 400; color: var(--faint); }
+.driver3 .want { margin: 34px 0 16px; font-size: clamp(30px, 2.8vw, 40px); }
+.driver3 .tix3 { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
+.driver3 .tk { background: var(--surface); border-radius: 26px; display: flex; flex-direction: column; transition: transform 0.2s ease;
   -webkit-mask: radial-gradient(circle 12px at 0 62%, #0000 98%, #000) left/51% 100% no-repeat, radial-gradient(circle 12px at 100% 62%, #0000 98%, #000) right/51% 100% no-repeat;
   mask: radial-gradient(circle 12px at 0 62%, #0000 98%, #000) left/51% 100% no-repeat, radial-gradient(circle 12px at 100% 62%, #0000 98%, #000) right/51% 100% no-repeat; }
-.drive3 .tk:hover { transform: translateY(-3px); }
-.drive3 .tk .b { padding: 22px 24px 18px; flex: 1; }
-.drive3 .tk .who { display: flex; align-items: center; gap: 14px; }
-.drive3 .tk .who .num { font-size: 54px; line-height: 1; }
-.drive3 .tk .who b { font-weight: 700; font-size: 19px; }
-.drive3 .tk .who small { font-size: 13px; color: var(--muted); }
-.drive3 .tk q { display: block; margin: 14px 0 0; font-family: var(--font-display); font-style: italic; font-size: 16px; line-height: 1.4; min-height: 46px; quotes: "“" "”"; }
-.drive3 .tk .ai { margin-top: 10px; display: flex; gap: 8px; font-size: 13.5px; color: var(--muted); line-height: 1.4; }
-.drive3 .tk .ai .ic { color: var(--pink); width: 15px; height: 15px; margin-top: 2px; }
-.drive3 .tk .cut { border-top: 2px dashed var(--line); margin: 0 24px; }
-.drive3 .tk .acts { display: flex; gap: 8px; padding: 16px; }
-.drive3 .tk .acts button { flex: 1; font: 500 15px var(--font-body); border: 0; border-radius: 999px; min-height: 48px; }
-.drive3 .tk .acts .no { background: var(--bg); color: var(--fg); }
-.drive3 .tk .acts .yes { background: var(--fg); color: var(--bg); font-weight: 700; }
+.driver3 .tk:hover { transform: translateY(-3px); }
+.driver3 .tk .b { padding: 22px 24px 18px; flex: 1; }
+.driver3 .tk .who { display: flex; align-items: center; gap: 14px; }
+.driver3 .tk .who .num { font-size: 54px; line-height: 1; }
+.driver3 .tk .who b { font-weight: 700; font-size: 19px; }
+.driver3 .tk .who small { font-size: 13px; color: var(--muted); }
+.driver3 .tk q { display: block; margin: 14px 0 0; font-family: var(--font-display); font-style: italic; font-size: 16px; line-height: 1.4; min-height: 46px; quotes: "“" "”"; }
+.driver3 .tk .ai { margin-top: 10px; display: flex; gap: 8px; font-size: 13.5px; color: var(--muted); line-height: 1.4; }
+.driver3 .tk .ai .ic { color: var(--pink); width: 15px; height: 15px; margin-top: 2px; }
+.driver3 .tk .cut { border-top: 2px dashed var(--line); margin: 0 24px; }
+.driver3 .tk .acts { display: flex; gap: 8px; padding: 16px; }
+.driver3 .tk .acts button { flex: 1; font: 500 15px var(--font-body); border: 0; border-radius: 999px; min-height: 48px; }
+.driver3 .tk .acts .no { background: var(--bg); color: var(--fg); }
+.driver3 .tk .acts .yes { background: var(--fg); color: var(--bg); font-weight: 700; }
 .c-great { color: var(--pink); } .c-good { color: var(--blue); } .c-some { color: var(--muted); } .c-diff { color: var(--faint); }
 
 /* ---------- My rides ---------- */
@@ -228,14 +228,14 @@
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .home3, .ride3, .search3 .grid { grid-template-columns: minmax(0, 1fr); }
-  .drive3 .tix3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .driver3 .tix3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .search3 .mapwrap { position: relative; top: auto; height: 380px; order: -1; }
   .ride3 aside { position: relative; top: auto; margin-top: 0; }
 }
 @media (max-width: 860px) {
-  .drive3 { grid-template-columns: minmax(0, 1fr); }
+  .driver3 { grid-template-columns: minmax(0, 1fr); }
   .ride3 .cards { grid-template-columns: minmax(0, 1fr); }
-  .drive3 .tix3 { grid-template-columns: minmax(0, 1fr); }
+  .driver3 .tix3 { grid-template-columns: minmax(0, 1fr); }
   .app-head .in { flex-wrap: wrap; }
   .app-head .tabs3 { order: 3; width: 100%; }
 }
@@ -248,7 +248,7 @@
   .app-head .mini { padding: 3px; }
   .app-head .mini button { min-height: 34px; min-width: 34px; padding: 0 8px; }
   .search3 .float { left: 12px; right: 12px; top: auto; bottom: 12px; width: auto; }
-  .drive3 .seatbar div { flex: none; }
+  .driver3 .seatbar div { flex: none; }
   .app-head .tabs3 a { padding: 9px 13px; font-size: 15px; }
   .app-head .bell, .app-head .avatar { width: 42px; height: 42px; }
   .home3 .next { height: 230px; }
@@ -258,13 +258,13 @@
   .search3 .sbar { flex-direction: column; align-items: stretch; border-radius: 28px; padding: 12px 14px; font-size: 18px; }
   .search3 .sbar .go { justify-content: center; }
   .search3 .chips3 .count { margin-left: 0; width: 100%; }
-  .row3 { border-radius: 32px; gap: 12px; padding-right: 12px; }
-  .row3 .sc { width: 54px; height: 54px; font-size: 25px; }
+  .app3 .row3 { border-radius: 32px; gap: 12px; padding-right: 12px; }
+  .app3 .row3 .sc { width: 54px; height: 54px; font-size: 25px; }
   .ride3 .who3 { gap: 16px; }
   .ride3 .who3 .ava { width: 84px; height: 98px; font-size: 26px; }
   .ride3 .band-row { margin: 10px -16px 0; height: 110px; }
   .ride3 .band-row .wb .stub { margin-left: 30px; }
   .ride3 .band-row .wb .poster { font-size: 30px; }
-  .drive3 .seatbar { flex-direction: column; }
-  .drive3 .seatbar div { height: 60px; }
+  .driver3 .seatbar { flex-direction: column; }
+  .driver3 .seatbar div { height: 60px; }
 }

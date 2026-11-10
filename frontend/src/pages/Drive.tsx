@@ -66,7 +66,7 @@ export default function Drive() {
 
   return (
     <Screen>
-      <div className="drive3">
+      <div className="driver3">
         {/* rides I offer */}
         <aside className="side3" aria-label={t("drive.yours")}>
           <div className="lbl">{t("drive.yours")}</div>
