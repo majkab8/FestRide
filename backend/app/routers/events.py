@@ -37,7 +37,7 @@ def list_events(
     date_from: Optional[date] = None,
     date_to: Optional[date] = None,
     include_past: bool = False,
-    limit: int = Query(100, ge=1, le=500),
+    limit: int = Query(100, ge=1, le=1000),
     offset: int = Query(0, ge=0),
     session: Session = Depends(get_session),
 ) -> list[Event]:

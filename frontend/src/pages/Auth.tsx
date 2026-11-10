@@ -1,5 +1,5 @@
 import { useState, type FormEvent } from "react";
-import { Link, useNavigate, useSearchParams } from "react-router-dom";
+import { Link, Navigate, useNavigate, useSearchParams } from "react-router-dom";
 import { ApiError, type DrivingStyle } from "../api";
 import { useAuth } from "../auth";
 import { Page } from "../components/Layout";
@@ -15,13 +15,15 @@ function useNext() {
 
 export function Login() {
   const { t } = useI18n();
-  const { login } = useAuth();
+  const { login, user } = useAuth();
   const nav = useNavigate();
   const next = useNext();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+
+  if (user && !busy) return <Navigate to={next} replace />; // already logged in
 
   const submit = async (e: FormEvent) => {
     e.preventDefault();
@@ -66,7 +68,7 @@ const STYLE_DOT: Record<DrivingStyle, React.CSSProperties> = {
 /** Two-step sign-up (decision Q13): the account is created only after the profile step. */
 export function Signup() {
   const { t } = useI18n();
-  const { register } = useAuth();
+  const { register, user } = useAuth();
   const nav = useNavigate();
   const next = useNext();
   const [step, setStep] = useState(1);
@@ -89,6 +91,7 @@ export function Signup() {
   };
 
   const toStep2 = (e: FormEvent) => { e.preventDefault(); setStep(2); };
+  if (user && !busy) return <Navigate to={next} replace />; // already logged in
 
   const create = async () => {
     setBusy(true);

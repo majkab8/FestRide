@@ -18,7 +18,7 @@ from sqlmodel import Session, col, select
 
 from app.clock import today_pl
 from app.database import engine, init_db
-from app.models import DrivingStyle, Event, Ride, RideRequest, User
+from app.models import DrivingStyle, Event, RequestStatus, Ride, RideRequest, User
 from app.security import hash_password
 
 PASSWORD = "festride-demo"
@@ -122,14 +122,29 @@ def main() -> int:
             return 1
 
         demo = _user(session, "Ania (demo)", ["techno", "house"], "party", False, email=DEMO_EMAIL)
+        drivers = {}
         for name, genres, style, smoker, origin, price, smoking, note in DRIVERS:
-            driver = _user(session, name, genres, style, smoker)
-            _ride(session, driver, showcase, origin, price, smoking, note)
+            drivers[name] = _user(session, name, genres, style, smoker)
+            _ride(session, drivers[name], showcase, origin, price, smoking, note)
 
         own = _ride(session, demo, mine, "Łódź", 30, False, "Leaving from Łódź Fabryczna.", seats=2)
         for name, genres, style, smoker, message in PASSENGERS:
             passenger = _user(session, name, genres, style, smoker)
             session.add(RideRequest(ride_id=own.id, passenger_id=passenger.id, message=message))
+
+        # Ania as a passenger on two other events: one confirmed ride (Home's
+        # wristband card) and two requests still waiting for a yes.
+        used = [showcase.id, mine.id]
+        going = _upcoming(session, 4, exclude=used)
+        if going:
+            used.append(going.id)
+            ride = _ride(session, drivers["Kuba"], going, "Łódź", 35, False, "Techno all the way, bring snacks!")
+            session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, status=RequestStatus.accepted, message="Hi! Small backpack only."))
+        waiting = _upcoming(session, 6, exclude=used)
+        if waiting:
+            for name, origin, price in (("Ola", "Łódź", 30), ("Piotr", "Łódź", 40)):
+                ride = _ride(session, drivers[name], waiting, origin, price, False, None)
+                session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, message="Hi! Is there room for one?"))
         session.commit()
 
         print(f"Log in as {DEMO_EMAIL} / {PASSWORD}")

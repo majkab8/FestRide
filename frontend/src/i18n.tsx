@@ -3,6 +3,16 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 export type Lang = "pl" | "en";
 
 const pl = {
+  "nav.myRides": "Moje przejazdy", "nav.newRequests": "Nowe prośby: {n}", "nav.noRequests": "Brak nowych próśb",
+  "home.nextLine": "{event} {when}. {driver} rusza z: {from} o {time}.", "home.trySentence": "Napisz, dokąd jedziesz",
+  "mine.title": "Moje przejazdy", "mine.going": "Jedziesz", "mine.waiting": "Czekasz na odpowiedź", "mine.past": "Minione i odrzucone",
+  "mine.none": "Nie prosiłeś jeszcze o miejsce w żadnym aucie.",
+  "search.again": "Szukaj ponownie", "search.addFilter": "+ dodaj filtr",
+  "ride.carsTo": "{cars} na {event}", "ride.drives": "styl jazdy: {style}",
+  "ride.carStyle.quiet": "cichy przejazd", "ride.carStyle.chatty": "pogaduchy w trasie", "ride.carStyle.party": "impreza w aucie",
+  "ride.lineFor": "Kilka słów dla: {name}", "ride.askName": "Poproś o miejsce: {name}",
+  "ride.askedOthers": "Na to wydarzenie prosisz też inne auta ({n}). Pierwsze „tak” wygrywa, a reszta próśb zamknie się sama.",
+  "drive.seatsTaken": "{taken}/{total} miejsc", "drive.fresh": "nowe: {n}", "drive.perSeat": "{n} zł za miejsce", "drive.title": "{from} → {event}",
   "nav.home": "Start", "nav.find": "Znajdź przejazd", "nav.events": "Wydarzenia", "nav.drive": "Kierowca",
   "nav.login": "Zaloguj się", "nav.signup": "Załóż konto", "nav.logout": "Wyloguj się", "nav.signedIn": "Zalogowano jako",
   "lang.label": "Język", "theme.toLight": "Włącz jasny motyw", "theme.toDark": "Włącz ciemny motyw", "menu.open": "Menu konta",
@@ -98,6 +108,16 @@ type Dict = typeof pl;
 export type Key = keyof Dict;
 
 const en: Dict = {
+  "nav.myRides": "My rides", "nav.newRequests": "{n} new requests", "nav.noRequests": "No new requests",
+  "home.nextLine": "{event} is {when}. {driver} leaves {from} at {time}.", "home.trySentence": "Say where you're going",
+  "mine.title": "My rides", "mine.going": "You're going", "mine.waiting": "Waiting for a yes", "mine.past": "Past and declined",
+  "mine.none": "You haven't asked any car for a seat yet.",
+  "search.again": "Search again", "search.addFilter": "+ add filter",
+  "ride.carsTo": "{cars} to {event}", "ride.drives": "drives {style}",
+  "ride.carStyle.quiet": "quiet car", "ride.carStyle.chatty": "chatty car", "ride.carStyle.party": "party car",
+  "ride.lineFor": "A line for {name}", "ride.askName": "Ask {name} for a seat",
+  "ride.askedOthers": "You've asked {n} other cars for this event. The first yes wins and the others close on their own.",
+  "drive.seatsTaken": "{taken}/{total} seats", "drive.fresh": "{n} new", "drive.perSeat": "{n} zł a seat", "drive.title": "{from} to {event}",
   "nav.home": "Home", "nav.find": "Find a ride", "nav.events": "Events", "nav.drive": "Drive",
   "nav.login": "Log in", "nav.signup": "Sign up", "nav.logout": "Log out", "nav.signedIn": "Signed in as",
   "lang.label": "Language", "theme.toLight": "Switch to light theme", "theme.toDark": "Switch to dark theme", "menu.open": "Account menu",
@@ -198,6 +218,7 @@ const NOUNS = {
   seatLeft: { pl: { one: "wolne miejsce", few: "wolne miejsca", many: "wolnych miejsc", other: "wolnego miejsca" }, en: { one: "seat left", other: "seats left" } },
   event: { pl: { one: "wydarzenie", few: "wydarzenia", many: "wydarzeń", other: "wydarzenia" }, en: { one: "event", other: "events" } },
   person: { pl: { one: "osoba", few: "osoby", many: "osób", other: "osoby" }, en: { one: "person", other: "people" } },
+  request: { pl: { one: "prośba", few: "prośby", many: "próśb", other: "prośby" }, en: { one: "request", other: "requests" } },
 } as const;
 export type Noun = keyof typeof NOUNS;
 
