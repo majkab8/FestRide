@@ -30,16 +30,22 @@
 .v3 .langpill button { border: 0; background: none; border-radius: 999px; padding: 9px 12px; font: 500 13px "DM Mono", monospace; letter-spacing: 0.06em; color: var(--ink); cursor: pointer; }
 .v3 .langpill button[aria-pressed="true"] { background: var(--ink); color: var(--apricot); }
 .v3 .login3 { font-weight: 600; font-size: 16px; padding: 14px 24px; box-shadow: inset 0 0 0 2px var(--ink); color: var(--ink); background: transparent; }
-.v3 .hero-copy { position: relative; z-index: 3; text-align: center; margin-top: 40px; }
+.v3 .hero-copy { position: relative; z-index: 3; text-align: center; margin-top: 18px; }
 .v3 .hero-eyebrow { font-family: "DM Mono", monospace; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
-.v3 .hero h1 { margin: 18px auto 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(54px, 9.17vw, 132px); line-height: 0.9; letter-spacing: -0.045em; max-width: 1100px; }
-.v3 .ask3 { position: relative; margin: 40px auto 0; width: min(760px, 100%); display: flex; align-items: center; background: var(--cream); border-radius: 999px; padding: 8px 8px 8px 30px; box-shadow: 0 18px 40px -18px rgba(120, 30, 40, 0.45); }
+.v3 .hero h1 { margin: 18px auto 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(46px, 7.22vw, 104px); line-height: 0.9; letter-spacing: -0.045em; max-width: 1100px; }
+.v3 .ask3 { position: relative; margin: 34px auto 0; width: min(760px, 100%); display: flex; align-items: center; background: var(--cream); border-radius: 999px; padding: 8px 8px 8px 30px; box-shadow: 0 18px 40px -18px rgba(120, 30, 40, 0.45); }
 .v3 .ask3 input { flex: 1; min-width: 0; border: 0; background: transparent; font: 500 19px "Bricolage Grotesque", sans-serif; color: var(--ink); outline: none; }
 .v3 .ask3 input::placeholder { color: #8a8073; }
 .v3 .ask3 button { background: var(--ink); color: var(--apricot); font: 600 17px "Bricolage Grotesque", sans-serif; padding: 18px 28px; }
 .v3 .deck { position: absolute; left: 50%; bottom: calc(min(800px, 56vw) * -0.475); width: min(800px, 56vw); height: min(800px, 56vw); transform: translateX(-50%); cursor: grab; z-index: 1; }
 .v3 .deck svg { display: block; width: 100%; height: 100%; }
 .v3 .rec { transform-origin: 50% 50%; will-change: transform; filter: drop-shadow(0 30px 40px rgba(90, 20, 40, 0.35)); }
+/* soft reflections on the grooves: two opposite light wedges, fixed while the record spins */
+.v3 .sheen { position: absolute; inset: 0; border-radius: 50%; pointer-events: none;
+  background: conic-gradient(from -58deg, rgba(255, 255, 255, 0) 0deg, rgba(255, 255, 255, 0.13) 20deg, rgba(255, 255, 255, 0.02) 42deg, rgba(255, 255, 255, 0) 60deg,
+    rgba(255, 255, 255, 0) 180deg, rgba(255, 255, 255, 0.09) 200deg, rgba(255, 255, 255, 0.015) 222deg, rgba(255, 255, 255, 0) 240deg);
+  -webkit-mask: radial-gradient(circle closest-side, transparent 0 39%, #000 40% 98.4%, transparent 99%);
+  mask: radial-gradient(circle closest-side, transparent 0 39%, #000 40% 98.4%, transparent 99%); }
 .v3 .burst { position: absolute; z-index: 3; right: 10.4%; top: 520px; width: 190px; height: 190px; transform: rotate(12deg); }
 .v3 .tag-lime { position: absolute; z-index: 3; left: 10.4%; top: 600px; background: var(--lime); border-radius: 999px; padding: 14px 22px; transform: rotate(-7deg); font-weight: 700; font-size: 18px; }
 

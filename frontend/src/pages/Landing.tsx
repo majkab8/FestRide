@@ -4,12 +4,15 @@ import { api, type Ride } from "../api";
 import { useAsync } from "../hooks";
 import { useI18n, parseLocal } from "../i18n";
 import "./landing.css";
+import RecordCar, { CAR_START_ANGLE, stepCar } from "./RecordCar"; // EXPERIMENT: car on the record
+
+const SHOW_RECORD_CAR = true; // EXPERIMENT: set to false (or delete RecordCar) to remove
 
 /* Copy of the v3 Landing board, in both languages. */
 const COPY = {
   en: {
     nav: ["Events", "Rides", "Drive"], login: "Log in", langLabel: "Language",
-    eyebrow: "Carpools to Polish gigs & festivals · winter 2026", title: ["Every road ends", "at a stage."],
+    eyebrow: "Carpools to Polish gigs & festivals", title: ["Every road ends", "at a stage."],
     askLabel: "Describe your trip", ask: "from Łódź to techno in Kraków in December, max 50 zł", find: "Find a car",
     record: "A spinning vinyl record", gigs: "GIGS LOADED", gigsShort: "GIGS", side: "SIDE A", byMusic: "match by music ♫",
     lineup: "Cars leaving for this weekend's line-up", lineupSoon: "Cars leaving for the next shows", together: "together",
@@ -33,7 +36,7 @@ const COPY = {
   },
   pl: {
     nav: ["Wydarzenia", "Przejazdy", "Kierowca"], login: "Zaloguj się", langLabel: "Język",
-    eyebrow: "Wspólne dojazdy na koncerty i festiwale · zima 2026", title: ["Każda droga kończy się", "pod sceną."],
+    eyebrow: "Wspólne dojazdy na koncerty i festiwale", title: ["Każda droga kończy się", "pod sceną."],
     askLabel: "Opisz swoją trasę", ask: "z Łodzi na techno do Krakowa w grudniu, max 50 zł", find: "Znajdź auto",
     record: "Kręcąca się płyta winylowa", gigs: "KONCERTÓW", gigsShort: "KONCERTÓW", side: "STRONA A", byMusic: "dopasowanie po muzyce ♫",
     lineup: "Auta jadą na line-up tego weekendu", lineupSoon: "Auta jadą na najbliższe koncerty", together: "razem",
@@ -87,6 +90,8 @@ function acts(rides: Ride[]): Act[] {
 /** The record spins slowly, follows the pointer's angle and nudges with scroll. */
 function useRecordSpin() {
   const rec = useRef<SVGSVGElement>(null);
+  const car = useRef<SVGGElement>(null); // EXPERIMENT: car rides the record
+  const carAngle = useRef(CAR_START_ANGLE);
   const st = useRef({ cur: 0, target: 0, grab: null as null | { a: number; r: number }, lastY: null as null | number });
   useEffect(() => {
     const calm = matchMedia("(prefers-reduced-motion: reduce)").matches;
@@ -103,8 +108,13 @@ function useRecordSpin() {
       prev = now;
       const s = st.current;
       if (!s.grab && !calm) s.target += 8 * dt;
+      const before = s.cur;
       s.cur += (s.target - s.cur) * 0.14;
       if (rec.current) rec.current.style.transform = `rotate(${s.cur.toFixed(2)}deg)`;
+      if (car.current) { // EXPERIMENT: the car follows the record's spin (faster, or backwards)
+        carAngle.current = stepCar(carAngle.current, dt, s.cur - before, calm);
+        car.current.style.transform = `rotate(${carAngle.current.toFixed(2)}deg)`;
+      }
       raf = requestAnimationFrame(tick);
     };
     raf = requestAnimationFrame(tick);
@@ -125,8 +135,15 @@ function useRecordSpin() {
     s.grab = { a, r: s.target };
   };
   const onLeave = () => { st.current.grab = null; };
-  return { rec, onMove, onLeave };
+  return { rec, car, onMove, onLeave };
 }
+
+/** Groove rings for the record: radius and a shade that drifts a little, like real vinyl. */
+const GROOVES: [number, string][] = Array.from({ length: 41 }, (_, i) => {
+  const r = 43 + i * 1.32;
+  const shades = ["#2B2723", "#25211D", "#2F2B26", "#221F1B"];
+  return [Number(r.toFixed(2)), shades[(i * 7 + (i >> 2)) % shades.length]];
+});
 
 const DATE_PILLS = [{ background: "#FF4F8B", color: "#FFFAF2" }, { background: "#1E1B18", color: "#F7EBD8" }, { background: "#D7FF4A" }];
 const TILES = [
@@ -140,7 +157,7 @@ export default function Landing() {
   const c = COPY[lang];
   const nav = useNavigate();
   const [text, setText] = useState("");
-  const { rec, onMove, onLeave } = useRecordSpin();
+  const { rec, car, onMove, onLeave } = useRecordSpin();
 
   const rides = useAsync(() => api.rides({ limit: 200, sort: "departure", min_seats: 0 }), []);
   const cities = useAsync(() => api.cities(), []);
@@ -218,25 +235,25 @@ export default function Landing() {
           <svg ref={rec} className="rec" viewBox="0 0 200 200" role="img" aria-label={c.record}>
             <defs><path id="lbl3" d="M100,100 m-25,0 a25,25 0 1,1 50,0 a25,25 0 1,1 -50,0" /></defs>
             <circle cx="100" cy="100" r="99" fill="#1E1B18" />
-            {[92, 85, 71, 64, 50].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="#3A3530" strokeWidth=".6" />)}
-            {[78, 57].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="#34302B" strokeWidth="1.4" />)}
-            <circle cx="100" cy="100" r="88" fill="none" stroke="#4A453E" strokeWidth="1" strokeDasharray="70 8 24 8 120 10 40 9" />
-            <circle cx="100" cy="100" r="74" fill="none" stroke="#4A453E" strokeWidth="1" strokeDasharray="30 7 90 7 50 8 60 8" />
-            <circle cx="100" cy="100" r="60" fill="none" stroke="#4A453E" strokeWidth="1" strokeDasharray="55 6 20 6 80 7 40 6" />
-            <path d="M100,14 A86,86 0 0 1 150,30" fill="none" stroke="rgba(255,196,142,.35)" strokeWidth="2.4" strokeLinecap="round" />
-            <path d="M40,150 A72,72 0 0 1 30,118" fill="none" stroke="rgba(255,79,139,.4)" strokeWidth="2.2" strokeLinecap="round" />
-            <path d="M160,130 A66,66 0 0 1 140,155" fill="none" stroke="rgba(255,255,255,.18)" strokeWidth="1.6" strokeLinecap="round" />
+            {/* smooth lead-in at the rim and run-out by the label */}
+            <circle cx="100" cy="100" r="96.6" fill="none" stroke="#16130F" strokeWidth="3.2" />
+            <circle cx="100" cy="100" r="98.6" fill="none" stroke="#3A3530" strokeWidth=".6" />
+            <circle cx="100" cy="100" r="40.6" fill="none" stroke="#16130F" strokeWidth="3.6" />
+            {/* fine grooves, a slightly different shade each, with three track gaps */}
+            {GROOVES.map(([r, shade]) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke={shade} strokeWidth=".38" />)}
+            {[57.5, 71, 84].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="#141210" strokeWidth="1.5" />)}
             <circle cx="100" cy="100" r="38" fill="#FF4F8B" />
             <circle cx="100" cy="100" r="38" fill="none" stroke="#D7FF4A" strokeWidth="2" strokeDasharray="3 5" />
             <text fontFamily="DM Mono, monospace" fontSize="6.2" letterSpacing="1.2" fill="#FFFAF2">
               <textPath href="#lbl3">FESTRIDE ✶ {c.side} ✶ ŁÓDŹ → KRAKÓW ✶ {total} {c.gigsShort} ✶</textPath>
             </text>
             <text x="100" y="106" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontWeight="700" fontSize="17" fill="#1E1B18">fr</text>
-            <circle cx="100" cy="100" r="2.6" fill="#FFC48E" />
+            <circle cx="100" cy="100" r="2.6" fill="#FFFFFF" />
           </svg>
-          <svg viewBox="0 0 200 200" aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none" }}>
-            <path d="M38,48 A80,80 0 0 1 92,21" fill="none" stroke="rgba(255,255,255,.16)" strokeWidth="7" strokeLinecap="round" />
-            <path d="M162,152 A80,80 0 0 1 120,178" fill="none" stroke="rgba(255,255,255,.08)" strokeWidth="5" strokeLinecap="round" />
+          {/* light catching the grooves: stays put while the record turns under it */}
+          <div className="sheen" aria-hidden="true" />
+          <svg viewBox="0 0 200 200" aria-hidden="true" style={{ position: "absolute", inset: 0, pointerEvents: "none", overflow: "visible" }}>
+            {SHOW_RECORD_CAR && <RecordCar carRef={car} />}
           </svg>
         </div>
 
