@@ -9,6 +9,7 @@ from sqlalchemy import func, or_, true
 from sqlmodel import Session, col, select
 
 from ..cities import fold, normalize_city
+from ..clock import today_pl
 from ..database import get_session
 from ..models import Event
 
@@ -31,7 +32,7 @@ def _upcoming(include_past: bool):
     """Filter clause: events today or later (undated events are kept)."""
     if include_past:
         return true()
-    return or_(col(Event.event_date).is_(None), col(Event.event_date) >= date.today())
+    return or_(col(Event.event_date).is_(None), col(Event.event_date) >= today_pl())
 
 
 @router.get("", response_model=list[Event])

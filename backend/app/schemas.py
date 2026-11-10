@@ -1,6 +1,7 @@
 """Request/response schemas for the API (kept separate from DB models)."""
 
-from typing import Annotated, Optional
+from datetime import date, datetime
+from typing import Annotated, Literal, Optional
 
 from pydantic import (
     AfterValidator,
@@ -12,7 +13,8 @@ from pydantic import (
     field_validator,
 )
 
-from .models import DrivingStyle
+from .clock import to_pl_naive
+from .models import DrivingStyle, RequestStatus
 
 # bcrypt only hashes the first 72 bytes; reject longer passwords up front so we
 # return a clear 422 instead of a 500 from the hashing layer.
@@ -87,3 +89,67 @@ class Token(BaseModel):
     access_token: str
     token_type: str = "bearer"
     user: UserRead
+
+
+# --- Rides ---------------------------------------------------------------
+
+
+class UserPublic(BaseModel):
+    """What other users may see about someone (no email, no gender)."""
+
+    id: int
+    display_name: str
+    music_genres: list[str]
+    driving_style: DrivingStyle
+    smoker: bool
+
+
+class EventSummary(BaseModel):
+    id: int
+    name: str
+    city: str
+    venue: Optional[str] = None
+    event_date: Optional[date] = None
+
+
+class RideCreate(BaseModel):
+    event_id: int
+    origin_city: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
+    origin_lat: Optional[float] = Field(default=None, ge=-90, le=90)
+    origin_lng: Optional[float] = Field(default=None, ge=-180, le=180)
+    # Polish local time; naive input (from a datetime-local field) is taken as-is.
+    departure_time: Annotated[datetime, AfterValidator(to_pl_naive)]
+    seats_total: int = Field(ge=1, le=8)
+    price: float = Field(default=0.0, ge=0, le=1000)  # PLN per seat
+    note: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=500)]] = None
+
+
+class RideRead(BaseModel):
+    id: int
+    event: EventSummary
+    driver: UserPublic
+    origin_city: str
+    origin_lat: Optional[float] = None
+    origin_lng: Optional[float] = None
+    departure_time: datetime
+    seats_total: int
+    seats_left: int
+    price: float
+    note: Optional[str] = None
+    created_at: datetime
+
+
+class RequestRead(BaseModel):
+    id: int
+    ride_id: int
+    passenger: UserPublic
+    status: RequestStatus
+    created_at: datetime
+
+
+class MyRequestRead(RequestRead):
+    ride: RideRead
+
+
+class RequestDecision(BaseModel):
+    status: Literal[RequestStatus.accepted, RequestStatus.declined]

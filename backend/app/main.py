@@ -7,7 +7,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 from .config import settings
 from .database import init_db
-from .routers import auth, events
+from .routers import auth, events, rides
 
 
 @asynccontextmanager
@@ -28,6 +28,8 @@ app.add_middleware(
 
 app.include_router(auth.router)
 app.include_router(events.router)
+app.include_router(rides.router)
+app.include_router(rides.requests_router)
 
 
 @app.get("/health", tags=["meta"])

@@ -4,6 +4,7 @@ from datetime import date, datetime, timezone
 from enum import Enum
 from typing import Optional
 
+from sqlalchemy import UniqueConstraint
 from sqlmodel import JSON, Column, Field, SQLModel
 
 
@@ -60,7 +61,7 @@ class Ride(SQLModel, table=True):
     origin_city: str
     origin_lat: Optional[float] = None
     origin_lng: Optional[float] = None
-    departure_time: datetime
+    departure_time: datetime = Field(index=True)  # naive, Polish local time
     seats_total: int
     price: float = 0.0
     note: Optional[str] = None
@@ -69,6 +70,9 @@ class Ride(SQLModel, table=True):
 
 
 class RideRequest(SQLModel, table=True):
+    # One request per passenger per ride; a declined request is final.
+    __table_args__ = (UniqueConstraint("ride_id", "passenger_id"),)
+
     id: Optional[int] = Field(default=None, primary_key=True)
     ride_id: int = Field(foreign_key="ride.id", index=True)
     passenger_id: int = Field(foreign_key="user.id", index=True)
