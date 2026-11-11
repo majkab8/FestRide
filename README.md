@@ -9,6 +9,19 @@ Search works in plain language: type *"z Łodzi na techno do Krakowa w grudniu, 
 into filters you can see and adjust. The whole UI switches between Polish and English, and has a light
 and a dark theme.
 
+## Screenshots
+
+![Landing page: "Every road ends at a stage", sentence search with the AI badge](docs/screenshots/landing.webp)
+
+| | |
+|---|---|
+| ![Start: the next ride as a wristband card, requests waiting for a yes, picks for you](docs/screenshots/home.webp) | ![Search: six drivers to one show, ranked by match, routes on a map of Poland](docs/screenshots/search.webp) |
+| **Start**: your next ride, requests still waiting, suggestions | **Find a ride**: drivers ranked by match, routes on the map |
+| ![Ride detail: 69 % good match, score breakdown, AI line on why you'd get along](docs/screenshots/ride.webp) | ![Driver panel: two passengers asking, each with their match score](docs/screenshots/drive.webp) |
+| **A ride**: why the score is what it is, with a one-line AI summary | **Drive**: passengers waiting for a yes, with their match |
+| ![Offer a ride: one sentence filled in the event, city, departure, seats and price](docs/screenshots/offer.webp) | <img src="docs/screenshots/phone-home.webp" width="49%" alt="Start on a phone"> <img src="docs/screenshots/phone-search.webp" width="49%" alt="Search on a phone, with the pinned map"> |
+| **Offer a ride**: one sentence fills the whole form | **On a phone**: Start and search with the pinned map |
+
 ## What's inside
 
 - **Events** imported from the Ticketmaster Discovery API (or a built-in sample of 8 Polish festivals)
