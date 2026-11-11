@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { Link, useSearchParams } from "react-router-dom";
 import { api, errorKey, type JoinRequest } from "../api";
 import { REQUESTS_CHANGED, Screen } from "../components/Layout";
-import { Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
+import { AiBadge, Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n, type Key } from "../i18n";
 
@@ -118,7 +118,7 @@ export default function Drive() {
                             <small>{q.passenger.music_genres.slice(0, 3).join(", ")} · {t(`style.${q.passenger.driving_style}`)}</small></div>
                         </div>
                         {q.message ? <q>{q.message}</q> : <div style={{ minHeight: 46 }} />}
-                        {why[String(q.id)] && <div className="ai"><Icon name="spark" /><span>{why[String(q.id)]}</span></div>}
+                        {why[String(q.id)] && <div className="ai"><Icon name="spark" /><span>{why[String(q.id)]} <AiBadge /></span></div>}
                       </div>
                       <div className="cut" />
                       <div className="acts">

@@ -50,7 +50,7 @@ export default function Events() {
             <label htmlFor="ev-q" className="sr-only">{t("events.search")}</label>
             <input id="ev-q" type="search" placeholder={t("events.search")} value={query} onChange={(e) => { setQuery(e.target.value); setShown(PAGE); }} />
           </div>
-          <div className="chips" style={{ padding: "0 6px 12px" }}>
+          <div className="chips months" style={{ padding: "0 6px 12px" }}>
             <button className="chip" type="button" aria-pressed={monthKey === "all"} onClick={() => { setMonthKey("all"); setShown(PAGE); }}>{t("events.all")}</button>
             {months.map((m) => <button key={m} className="chip" type="button" aria-pressed={monthKey === m} onClick={() => { setMonthKey(m); setShown(PAGE); }}>{month(`${m}-01`)}</button>)}
           </div>

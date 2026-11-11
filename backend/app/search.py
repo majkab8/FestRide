@@ -161,8 +161,27 @@ def _relative_dates(folded: str, today: date) -> Optional[tuple[date, date]]:
     return None
 
 
-def parse_rules(text: str, today: date, cities: list[str]) -> SearchFilters:
-    """Best-effort parse without AI. `cities` = known canonical city names."""
+def _event_q(folded_text: str, event_names: list[str]) -> Optional[str]:
+    """Name of a known event that the sentence mentions, e.g. "...na koncert chopinowski" -> "Koncert Chopinowski".
+
+    Only names that really exist in the database are matched (whole words, at least 6 letters
+    or two words), so nothing is guessed from free text. The longest match wins; a name's main
+    part before " - ", ":" or " | " (and without a trailing year) also counts, so
+    "Open'er Festival 2027" matches "open'er festival"."""
+    best: Optional[str] = None
+    for name in event_names:
+        main = re.split(r"\s[|–-]\s|:\s|\s\|", name)[0].strip() or name
+        for cand in {name.strip(), main, re.sub(r"\s+(19|20)\d\d$", "", main)}:  # also without a trailing year
+            f = fold(cand).strip()
+            if (len(f) >= 6 or " " in f) and re.search(rf"(?<![a-z0-9]){re.escape(f)}(?![a-z0-9])", folded_text):
+                if best is None or len(cand) > len(best):
+                    best = cand
+    return best
+
+
+def parse_rules(text: str, today: date, cities: list[str], event_names: Optional[list[str]] = None) -> SearchFilters:
+    """Best-effort parse without AI. `cities` = known canonical city names; `event_names` = known
+    event names, used to recognise an event mentioned by name (nothing is guessed beyond those)."""
     folded = fold(text)
     tokens = re.findall(r"[a-z0-9']+", folded)
     found: dict = {}
@@ -221,6 +240,10 @@ def parse_rules(text: str, today: date, cities: list[str]) -> SearchFilters:
         if relative:
             found["date_from"], found["date_to"] = relative
 
-    # No event/artist name (q) here on purpose: guessing it from free text was
-    # the most fragile heuristic. Without AI, users type the name in the form.
+    # Event name only when the sentence contains a name that exists in the database:
+    # guessing names from free text was the most fragile heuristic, so we don't.
+    if event_names:
+        q = _event_q(folded, event_names)
+        if q:
+            found["q"] = q
     return SearchFilters(**found)

@@ -1,4 +1,5 @@
-"""AI endpoints (decisions Q7, Q8, Q16): sentence search and match explanations.
+"""AI endpoints (decisions Q7, Q8, Q16): sentence search, match explanations, and for drivers:
+a ride offer from one sentence and a "write it for me" note.
 
 Both degrade gracefully: search falls back to the rule parser (source="rules"),
 explanations come back empty when AI is unavailable - the UI then shows just
@@ -6,7 +7,9 @@ the match % and label.
 """
 
 import json
+import re
 import threading
+from datetime import date as date_cls
 from collections import OrderedDict
 from typing import Annotated, Literal, Optional
 
@@ -21,6 +24,7 @@ from ..database import get_session
 from ..deps import get_current_user
 from ..matching import match
 from ..models import Event, Ride, RideRequest, User
+from ..cities import fold, normalize_city
 from ..search import SearchFilters, describe, parse_rules
 
 router = APIRouter(prefix="/ai", tags=["ai"])
@@ -72,6 +76,11 @@ class SearchResponse(BaseModel):
     understood: bool  # False -> nothing recognised; show the filter form
 
 
+def _known_event_names(session: Session, today) -> list[str]:
+    names = session.exec(select(Event.name).where(Event.event_date >= today).distinct()).all()
+    return [n for n in names if n]
+
+
 def _known_cities(session: Session) -> list[str]:
     events = session.exec(select(Event.city).distinct()).all()
     origins = session.exec(select(Ride.origin_city).distinct()).all()
@@ -91,7 +100,7 @@ def search(data: SearchRequest, session: Session = Depends(get_session)) -> Sear
         filters = ai.parse_search(data.text, today)
         source = "ai"
     except ai.AIUnavailable:
-        filters = parse_rules(data.text, today, _known_cities(session))
+        filters = parse_rules(data.text, today, _known_cities(session), _known_event_names(session, today))
         source = "rules"
 
     chips = describe(filters)
@@ -209,3 +218,201 @@ def explain(
                 _explain_cache.put(_cache_key(current_user, other, facts, data.lang), texts[i])
 
     return ExplainResponse(rides=result["rides"], requests=result["requests"], ai_available=available)
+
+
+# --- offer a ride from one sentence (AI #3) ------------------------------------------------
+
+
+class OfferParseRequest(BaseModel):
+    text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=400)]
+
+
+class OfferDraft(BaseModel):
+    """Values for the "offer a ride" form; every field may be missing. The form stays editable."""
+
+    event: Optional[Event] = None  # resolved to a real upcoming event, or None
+    event_hint: Optional[str] = None  # what the sentence called it, when no event matched
+    origin_city: Optional[str] = None
+    departure: Optional[str] = None  # "YYYY-MM-DDTHH:MM", local time (for a datetime-local field)
+    seats: Optional[int] = None
+    price: Optional[float] = None
+    smoking_allowed: Optional[bool] = None
+    note: Optional[str] = None
+    source: Literal["ai", "rules"]
+    understood: bool
+
+
+def _upcoming_events(session: Session, today) -> list[Event]:
+    stmt = select(Event).where(Event.event_date >= today).order_by(Event.event_date, Event.id)
+    return list(session.exec(stmt).all())
+
+
+def _resolve_event(events: list[Event], hint: Optional[str], day) -> Optional[Event]:
+    """The upcoming event the driver means: its name contains the hint (or the hint contains the
+    name's main part); on the given day if there is one, else the soonest."""
+    if not hint or len(fold(hint).strip()) < 3:
+        return None
+    h = fold(hint).strip()
+    found = []
+    for ev in events:
+        name = fold(ev.name)
+        main = fold(re.split(r"\s[|–-]\s|:\s|\s\|", ev.name)[0]).strip()
+        if h in name or (len(main) >= 4 and main in h):
+            found.append(ev)
+    if not found:
+        return None
+    if day:
+        same_day = [ev for ev in found if ev.event_date == day]
+        if same_day:
+            return same_day[0]
+    return found[0]
+
+
+def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dict:
+    """No-AI fallback: reuse the search parser (cities, price, seats, dates, known event names)
+    and add the departure hour and "smoking allowed"."""
+    f = parse_rules(text, today, _known_cities(session), sorted({e.name for e in events}))
+    folded = fold(text)
+    out: dict = {
+        "origin_city": f.origin_city,
+        "price": f.max_price,
+        "seats": f.min_seats,
+        "event_date": f.date_from if f.date_from and f.date_from == f.date_to else None,
+        "event": f.q,
+    }
+    m = re.search(r"\b(?:o|at|godz\.?|godzinie)\s*(\d{1,2})(?:[:.](\d{2}))?", folded)
+    if m and 0 <= int(m.group(1)) <= 23:
+        out["departure_time"] = f"{int(m.group(1)):02d}:{m.group(2) or '00'}"
+    if f.no_smoking:
+        out["smoking_allowed"] = False
+    elif re.search(r"mozna palic|palenie dozwolone|smoking (is )?(ok|allowed)|palacy", folded):
+        out["smoking_allowed"] = True
+    return out
+
+
+def _pick(raw: dict, key: str, cast, ok=lambda v: True):
+    """One validated value from the model (or rule) output; a bad value is dropped, not fatal."""
+    value = raw.get(key)
+    if value in (None, ""):
+        return None
+    try:
+        value = cast(value)
+    except (TypeError, ValueError):
+        return None
+    return value if value is not None and ok(value) else None
+
+
+@router.post("/offer", response_model=OfferDraft)
+def parse_offer(
+    data: OfferParseRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> OfferDraft:
+    """Fill the "offer a ride" form from a sentence like "jadę z Łodzi na Föllakzoid 4 grudnia o 10,
+    3 miejsca po 35 zł". Falls back to rule-based parsing when AI is unavailable."""
+    today = today_pl()
+    events = _upcoming_events(session, today)
+    try:
+        raw, source = ai.parse_offer(data.text, today), "ai"
+    except ai.AIUnavailable:
+        raw, source = _offer_rules(data.text, today, session, events), "rules"
+
+    day = _pick(raw, "event_date", lambda v: v if isinstance(v, date_cls) else date_cls.fromisoformat(str(v)), lambda d: d >= today)
+    hint = _pick(raw, "event", lambda v: " ".join(str(v).split())[:100])
+    event = _resolve_event(events, hint, day)
+    hhmm = _pick(raw, "departure_time", str, lambda v: re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", v) is not None)
+    when = day or (event.event_date if event else None)
+    departure = None
+    if when and hhmm:
+        hh, mm = hhmm.split(":")
+        departure = f"{when.isoformat()}T{int(hh):02d}:{mm}"
+    draft = OfferDraft(
+        event=event,
+        event_hint=hint if not event else None,
+        origin_city=_pick(raw, "origin_city", lambda v: normalize_city(str(v))[:60]),
+        departure=departure,
+        seats=_pick(raw, "seats", int, lambda n: 1 <= n <= 8),
+        price=_pick(raw, "price", float, lambda p: 0 <= p <= 1000),
+        smoking_allowed=_pick(raw, "smoking_allowed", lambda v: v if isinstance(v, bool) else None),
+        note=_pick(raw, "note", lambda v: " ".join(str(v).split())[:300]) if source == "ai" else None,
+        source=source,
+        understood=False,
+    )
+    filled = draft.model_dump(exclude={"source", "understood"})
+    draft.understood = any(v is not None for v in filled.values())
+    return draft
+
+
+# --- "write it for me": a ride note for passengers (AI #4) -----------------------------------
+
+
+class NoteRequest(BaseModel):
+    event_id: Optional[int] = None
+    origin_city: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=60)]] = None
+    departure: Optional[str] = Field(default=None, max_length=20)  # "YYYY-MM-DDTHH:MM"
+    smoking_allowed: bool = False
+    hint: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]] = None  # the driver's own words
+    lang: Literal["en", "pl"] = "pl"
+
+
+class NoteResponse(BaseModel):
+    text: str
+    source: Literal["ai", "template"]
+
+
+_STYLE_WORDS = {
+    "pl": {"quiet": "raczej w ciszy", "chatty": "chętnie pogadam", "party": "z muzyką na full"},
+    "en": {"quiet": "a quiet ride", "chatty": "happy to chat", "party": "music loud, party mode"},
+}
+
+
+def _note_template(facts: dict, lang: str) -> str:
+    """No-AI fallback: a plain note from the same facts."""
+    genres = ", ".join(facts["driver_genres"][:2])
+    style = _STYLE_WORDS[lang][facts["driver_style"]]
+    if lang == "pl":
+        head = f"Jadę na {facts['event']}" if facts.get("event") else "Jadę na koncert"
+        if facts.get("from"):
+            head += f", ruszam z: {facts['from']}"
+        if facts.get("leaves_at"):
+            head += f" o {facts['leaves_at']}"
+        text = f"{head}. W aucie {genres or 'dobra muzyka'}, {style}"
+        text += ", bez palenia." if not facts["smoking_allowed"] else ", palenie dozwolone."
+    else:
+        head = f"Driving to {facts['event']}" if facts.get("event") else "Driving to the show"
+        if facts.get("from"):
+            head += f", leaving from {facts['from']}"
+        if facts.get("leaves_at"):
+            head += f" at {facts['leaves_at']}"
+        text = f"{head}. {genres or 'Good music'} in the car, {style}"
+        text += ", no smoking." if not facts["smoking_allowed"] else ", smoking allowed."
+    if facts.get("driver_words"):
+        text += " " + facts["driver_words"]
+    return text[:300]
+
+
+@router.post("/ride-note", response_model=NoteResponse)
+def ride_note(
+    data: NoteRequest,
+    current_user: User = Depends(get_current_user),
+    session: Session = Depends(get_session),
+) -> NoteResponse:
+    """Write the note for a ride being offered, in the driver's voice. Template when AI is down."""
+    event = session.get(Event, data.event_id) if data.event_id else None
+    leaves = data.departure[11:16] if data.departure and len(data.departure) >= 16 else None
+    facts = {
+        "event": event.name if event else None,
+        "event_city": event.city if event else None,
+        "venue": event.venue if event else None,
+        "event_date": event.event_date.isoformat() if event and event.event_date else None,
+        "from": normalize_city(data.origin_city) if data.origin_city else None,
+        "leaves_at": leaves,
+        "driver_genres": list(current_user.music_genres),
+        "driver_style": current_user.driving_style.value,
+        "smoking_allowed": data.smoking_allowed,
+        "driver_words": data.hint or None,
+    }
+    try:
+        return NoteResponse(text=ai.write_ride_note(facts, data.lang), source="ai")
+    except ai.AIUnavailable:
+        return NoteResponse(text=_note_template(facts, data.lang), source="template")

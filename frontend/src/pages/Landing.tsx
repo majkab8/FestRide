@@ -2,8 +2,9 @@ import { useEffect, useLayoutEffect, useMemo, useRef, useState, type FormEvent, 
 import { Link, useNavigate } from "react-router-dom";
 import { api, type Ride } from "../api";
 import { billName } from "../geo";
-import { useAsync } from "../hooks";
+import { useAsync, useFittingPlaceholder } from "../hooks";
 import { useI18n, parseLocal } from "../i18n";
+import { AiBadge } from "../components/ui";
 import "./landing.css";
 import RecordCar, { CAR_START_ANGLE, stepCar } from "./RecordCar"; // EXPERIMENT: car on the record
 
@@ -14,7 +15,7 @@ const COPY = {
   en: {
     nav: ["Events", "Rides", "Drive"], start: "Home", menu: "Menu", login: "Log in", langLabel: "Language",
     eyebrow: "Carpools to Polish gigs & festivals", title: ["Every road ends", "at a stage."],
-    askLabel: "Describe your trip", ask: "from Łódź to techno in Kraków in December, max 50 zł", find: "Find a car",
+    askLabel: "Describe your trip", aiHint: "AI turns your sentence into search filters", ask: "from Łódź to techno in Kraków in December, max 50 zł", askShort: ["from Łódź to techno in Kraków in December", "from Łódź to techno in Kraków", "techno in Kraków"], find: "Find a car",
     record: "A spinning vinyl record", gigs: "GIGS LOADED", gigsShort: "GIGS", side: "SIDE A", byMusic: "match by music", signStage: "to the stage", signCity: "KRAKÓW · 270 KM",
     lineup: "Cars leaving for this weekend's line-up", lineupSoon: "Cars leaving for the next shows", together: "together",
     allOnMap: (n: number) => `See all ${n} events on the map`,
@@ -38,7 +39,7 @@ const COPY = {
   pl: {
     nav: ["Wydarzenia", "Przejazdy", "Kierowca"], start: "Start", menu: "Menu", login: "Zaloguj się", langLabel: "Język",
     eyebrow: "Wspólne dojazdy na koncerty i festiwale", title: ["Każda droga kończy się", "pod sceną."],
-    askLabel: "Opisz swoją trasę", ask: "z Łodzi na techno do Krakowa w grudniu, max 50 zł", find: "Znajdź auto",
+    askLabel: "Opisz swoją trasę", aiHint: "AI zamienia twoje zdanie na filtry wyszukiwania", ask: "z Łodzi na techno do Krakowa w grudniu, max 50 zł", askShort: ["z Łodzi na techno do Krakowa w grudniu", "z Łodzi na techno do Krakowa", "z Łodzi na techno"], find: "Znajdź auto",
     record: "Kręcąca się płyta winylowa", gigs: "KONCERTÓW", gigsShort: "KONCERTÓW", side: "STRONA A", byMusic: "dopasowanie po muzyce", signStage: "pod scenę", signCity: "KRAKÓW · 270 KM",
     lineup: "Auta jadą na line-up tego weekendu", lineupSoon: "Auta jadą na najbliższe koncerty", together: "razem",
     allOnMap: (n: number) => `Wszystkie wydarzenia na mapie (${n})`,
@@ -144,7 +145,7 @@ const GROOVES: [number, string][] = Array.from({ length: 41 }, (_, i) => {
   return [Number(r.toFixed(2)), shades[(i * 7 + (i >> 2)) % shades.length]];
 });
 
-const DATE_PILLS = [{ background: "#FF4F8B", color: "#FFFAF2" }, { background: "#1E1B18", color: "#F7EBD8" }, { background: "#D7FF4A" }];
+const DATE_PILLS = [{ background: "#FF4F8B", color: "#1E1B18" }, { background: "#1E1B18", color: "#F7EBD8" }, { background: "#D7FF4A" }];
 const TILES = [
   { background: "#FF4F8B", color: "#FFFAF2", minHeight: 420 },
   { background: "#2D5BFF", color: "#FFFAF2", minHeight: 480 },
@@ -196,7 +197,6 @@ function CarShape({ body, light }: { body: string; light: string }) {
 function Vinyl({ svgRef, className, pathId, label, text }: { svgRef?: Ref<SVGSVGElement>; className?: string; pathId: string; label?: string; text: string }) {
   return (
     <svg ref={svgRef} className={className} viewBox="0 0 200 200" role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
-      <defs><path id={pathId} d="M100,100 m-25,0 a25,25 0 1,1 50,0 a25,25 0 1,1 -50,0" /></defs>
       <circle cx="100" cy="100" r="99" fill="#1E1B18" />
       {/* smooth lead-in at the rim and run-out by the label */}
       <circle cx="100" cy="100" r="96.6" fill="none" stroke="#16130F" strokeWidth="3.2" />
@@ -207,9 +207,13 @@ function Vinyl({ svgRef, className, pathId, label, text }: { svgRef?: Ref<SVGSVG
       {[57.5, 71, 84].map((r) => <circle key={r} cx="100" cy="100" r={r} fill="none" stroke="#141210" strokeWidth="1.5" />)}
       <circle cx="100" cy="100" r="38" fill="#FF4F8B" />
       <circle cx="100" cy="100" r="38" fill="none" stroke="#D7FF4A" strokeWidth="2" strokeDasharray="3 5" />
-      <text fontFamily="DM Mono, monospace" fontSize="6.2" letterSpacing="1.2" fill="#FFFAF2">
-        <textPath href={`#${pathId}`}>{text}</textPath>
-      </text>
+      {/* label ring text, drawn at 2x and scaled down: same look, but a legible font size for audits / zoom */}
+      <g transform="translate(100 100) scale(0.5) translate(-100 -100)">
+        <path id={pathId} d="M100,100 m-50,0 a50,50 0 1,1 100,0 a50,50 0 1,1 -100,0" fill="none" />
+        <text fontFamily="DM Mono, monospace" fontSize="12.4" letterSpacing="2.4" fill="#FFFAF2">
+          <textPath href={`#${pathId}`}>{text}</textPath>
+        </text>
+      </g>
       <text x="100" y="106" textAnchor="middle" fontFamily="Fraunces, serif" fontStyle="italic" fontWeight="700" fontSize="17" fill="#1E1B18">fr</text>
       <circle cx="100" cy="100" r="2.6" fill="#FFFFFF" />
     </svg>
@@ -305,12 +309,14 @@ export default function Landing() {
     return () => { io.disconnect(); clearTimeout(t); };
   }, []);
 
+  // the example sentence gets shorter (whole phrases, not "…") when the field is narrow
+  const [askRef, askPh] = useFittingPlaceholder([c.ask, ...c.askShort]);
   const footTargets: [string, string][] = [["/events", c.nav[0]], ["/search", c.foot[0]], ["/drive/new", c.foot[1]], ["/signup", c.foot[2]]];
   const footLinks = footTargets.map(([to, label]) => <Link key={to} to={to}>{label}</Link>);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    nav(`/search?text=${encodeURIComponent(text.trim() || c.ask)}`);
+    nav(`/search?text=${encodeURIComponent(text.trim() || askPh)}`); // empty: search exactly the example shown in the field
   };
 
   return (
@@ -320,6 +326,11 @@ export default function Landing() {
         <div className="in">
           <nav aria-label="Main" className={[scrolled && "scrolled", menuOpen && "menu-open"].filter(Boolean).join(" ") || undefined}>
             <Link className="logo3" to="/">festride</Link>
+            {/* very narrow phones: language moves into the dropdown, under the section links */}
+            <div className="langpill menu-lang" role="group" aria-label={c.langLabel}>
+              <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
+              <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+            </div>
             <div className="navpill" id="landing-menu">
               <a href="#top" className={navOn === "start" ? "on" : undefined} onClick={(e) => { e.preventDefault(); setNavOn("start"); setMenuOpen(false); scrollTo({ top: 0, behavior: "smooth" }); }}>{c.start}</a>
               <a href="#events" className={navOn === "events" ? "on" : undefined} onClick={() => { setNavOn("events"); setMenuOpen(false); }}>{c.nav[0]}</a>
@@ -344,7 +355,8 @@ export default function Landing() {
             <h1>{c.title[0]}<br />{c.title[1]}</h1>
             <form className="ask3" role="search" onSubmit={submit}>
               <label htmlFor="q3" className="sr-only">{c.askLabel}</label>
-              <input id="q3" value={text} placeholder={c.ask} onChange={(e) => setText(e.target.value)} />
+              <input id="q3" ref={askRef} value={text} placeholder={askPh} onChange={(e) => setText(e.target.value)} />
+              <span className="ask-ai"><AiBadge title={c.aiHint} /></span>
               <button className="btn3" type="submit">{c.find}</button>
             </form>
           </div>
@@ -466,8 +478,8 @@ export default function Landing() {
       <section id="drive" className="drive3">
         <div className="in grid">
           <div className="photos">
-            <div className="ph arch"><img src="/img/festival-crowd.jpg" alt={c.photo1} /></div>
-            <div className="ph round"><img src="/img/festival-field.jpg" alt={c.photo2} /></div>
+            <div className="ph arch"><img src="/img/festival-crowd-800.webp" srcSet="/img/festival-crowd-480.webp 480w, /img/festival-crowd-800.webp 800w" sizes="(max-width: 1100px) 62vw, 400px" width="800" height="1040" loading="lazy" decoding="async" alt={c.photo1} /></div>
+            <div className="ph round"><img src="/img/festival-field-800.webp" srcSet="/img/festival-field-480.webp 480w, /img/festival-field-800.webp 720w" sizes="(max-width: 1100px) 52vw, 340px" width="720" height="720" loading="lazy" decoding="async" alt={c.photo2} /></div>
             <p className="credit">
               {c.photoBy} Krzysztof Popławski (<a href="https://commons.wikimedia.org/wiki/File:30_PolAndRock_Festival,_2024,_du%C5%BCa_scena,_Coma,_widok_od_zaplecza_na_scen%C4%99_i_publiczno%C5%9B%C4%87,_KsP_265.jpg" target="_blank" rel="noreferrer">1</a>, <a href="https://commons.wikimedia.org/wiki/File:30_Pol%27and%27Rock_2024,_widok_ca%C5%82ej_przestrzeni_podczas_koncertu_PFK_Live_0018.jpg" target="_blank" rel="noreferrer">2</a>), <a href={lang === "pl" ? "https://creativecommons.org/licenses/by/4.0/deed.pl" : "https://creativecommons.org/licenses/by/4.0/"} target="_blank" rel="noreferrer">CC BY 4.0</a>, {c.cropped}
             </p>
@@ -490,7 +502,7 @@ export default function Landing() {
         </div>
         <div className="in">
           <h2 aria-label={c.footTitle}><span>{c.footLines[0]}</span> <span className="l2">{c.footLines[1]}</span></h2>
-          <div className="links">{footLinks}<span>hello@festride.example</span></div>
+          <div className="links">{footLinks}</div>
         </div>
       </footer>
     </div>

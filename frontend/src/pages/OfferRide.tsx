@@ -1,19 +1,29 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { api, errorKey, type Event } from "../api";
 import { Page } from "../components/Layout";
 import { EventRow } from "../components/Rows";
-import { Loading } from "../components/ui";
+import { AiBadge, Loading } from "../components/ui";
 import { cityCoords } from "../geo";
 import { useI18n, type Key } from "../i18n";
 
 export default function OfferRide() {
-  const { t, day } = useI18n();
+  const { t, lang } = useI18n();
   const nav = useNavigate();
   const [params] = useSearchParams();
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<Event[] | null>(null);
   const [event, setEvent] = useState<Event | null>(null);
+  const [listOpen, setListOpen] = useState(false);
+  const pickerRef = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!listOpen) return;
+    const away = (e: MouseEvent) => { if (!pickerRef.current?.contains(e.target as Node)) setListOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setListOpen(false); };
+    document.addEventListener("mousedown", away);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+  }, [listOpen]);
   const [origin, setOrigin] = useState("");
   const [departure, setDeparture] = useState("");
   const [seats, setSeats] = useState(3);
@@ -22,6 +32,47 @@ export default function OfferRide() {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
+  // AI: the whole form from one sentence, and a note written for the driver
+  const [sentence, setSentence] = useState("");
+  const [drafting, setDrafting] = useState(false);
+  const [draftInfo, setDraftInfo] = useState<"" | "ai" | "rules" | "none" | "error">("");
+  const [writing, setWriting] = useState(false);
+  const [noteBy, setNoteBy] = useState<"" | "ai" | "template">("");
+
+  const fillFromSentence = async () => {
+    const text = sentence.trim();
+    if (!text) return;
+    setDrafting(true);
+    try {
+      const d = await api.offerDraft(text);
+      if (d.event) pick(d.event);
+      else if (d.event_hint) { setEvent(null); setQuery(d.event_hint); }
+      if (d.origin_city) setOrigin(d.origin_city);
+      if (d.departure) setDeparture(d.departure);
+      if (d.seats) setSeats(d.seats);
+      if (d.price !== null) setPrice(d.price);
+      if (d.smoking_allowed !== null) setSmoking(d.smoking_allowed);
+      if (d.note && !note.trim()) setNote(d.note);
+      setDraftInfo(d.understood ? d.source : "none");
+    } catch {
+      setDraftInfo("error");
+    } finally {
+      setDrafting(false);
+    }
+  };
+
+  const writeNote = async () => {
+    setWriting(true);
+    try {
+      const r = await api.rideNote({ event_id: event?.id ?? null, origin_city: origin.trim() || null, departure: departure || null, smoking_allowed: smoking, hint: note.trim() || null, lang });
+      setNote(r.text);
+      setNoteBy(r.source);
+    } catch {
+      setNoteBy("");
+    } finally {
+      setWriting(false);
+    }
+  };
 
   // Preselected event (?event_id=) from an event page.
   useEffect(() => {
@@ -70,22 +121,39 @@ export default function OfferRide() {
       <form className="form" onSubmit={submit}>
         <h1 className="disp">{t("offer.title")}</h1>
 
+        {/* AI: describe the ride in one sentence and the form fills itself */}
+        <div className="ai-fill">
+          <label htmlFor="of-ai" className="label">{t("offer.aiLabel")} <AiBadge /></label>
+          <div className="ai-row">
+            <input id="of-ai" value={sentence} maxLength={400} placeholder={t("offer.aiPh")} onChange={(e) => setSentence(e.target.value)}
+              onKeyDown={(e) => { if (e.key === "Enter") { e.preventDefault(); fillFromSentence(); } }} />
+            <button className="btn btn-sm" type="button" onClick={fillFromSentence} disabled={drafting || !sentence.trim()}>{drafting ? t("offer.aiBusy") : t("offer.aiFill")}</button>
+          </div>
+          {draftInfo && <p className="note" role="status">{t(`offer.ai.${draftInfo}` as Key)}</p>}
+        </div>
+
         <div className="group">
           <span className="label">{t("offer.event")}</span>
           {event ? (
             <div className="row" style={{ background: "var(--bg)", borderRadius: 32, padding: "6px 10px 6px 6px", flexWrap: "nowrap" }}>
-              <div style={{ minWidth: 0, flex: 1 }}><EventRow ev={event} i={0} asStatic /></div>
+              <div style={{ minWidth: 0, flex: 1 }}><EventRow ev={event} i={0} asStatic posters /></div>
               <button className="btn btn-ghost btn-sm" type="button" onClick={() => { setEvent(null); setQuery(""); }}>{t("offer.change")}</button>
             </div>
           ) : (
             <>
-              <div className="field"><label htmlFor="of-q" className="sr-only">{t("offer.event")}</label>
-                <input id="of-q" type="search" placeholder={t("offer.eventPh")} value={query} onChange={(e) => setQuery(e.target.value)} autoComplete="off" /></div>
-              {results === null && query.trim().length >= 2 && <Loading />}
-              {results && results.map((ev, i) => <EventRow key={ev.id} ev={ev} i={i} onSelect={() => pick(ev)} />)}
+              <div className="ev-picker" ref={pickerRef}>
+                <div className="field"><label htmlFor="of-q" className="sr-only">{t("offer.event")}</label>
+                  <input id="of-q" type="search" placeholder={t("offer.eventPh")} value={query} autoComplete="off" aria-expanded={listOpen && !!results?.length} aria-controls="of-results"
+                    onChange={(e) => { setQuery(e.target.value); setListOpen(true); }} onFocus={() => setListOpen(true)} /></div>
+                {/* results float over the form as a dropdown instead of pushing it down */}
+                {listOpen && query.trim().length >= 2 && (
+                  <div className="ev-pop" id="of-results">
+                    {results === null ? <Loading /> : results.map((ev, i) => <EventRow key={ev.id} ev={ev} i={i} posters onSelect={() => { pick(ev); setListOpen(false); }} />)}
+                  </div>
+                )}
+              </div>
             </>
           )}
-          {event?.event_date && <span className="note">{day(event.event_date)}</span>}
         </div>
 
         <div className="grid2">
@@ -99,8 +167,16 @@ export default function OfferRide() {
             <input id="of-price" type="number" min={0} max={1000} step={1} required value={price} onChange={(e) => setPrice(Number(e.target.value))} /></div>
         </div>
         <label className="switch"><input type="checkbox" checked={smoking} onChange={(e) => setSmoking(e.target.checked)} />{t("offer.smoking")}</label>
-        <div className="field"><label htmlFor="of-note">{t("offer.note")}</label>
-          <textarea id="of-note" maxLength={500} placeholder={t("offer.notePh")} value={note} onChange={(e) => setNote(e.target.value)} /></div>
+        <div className="field">
+          <div className="note-head">
+            <label htmlFor="of-note">{t("offer.note")}</label>
+            <button className="btn btn-ghost btn-sm ai-write" type="button" onClick={writeNote} disabled={writing}>
+              {writing ? t("offer.writing") : <>✶ {t("offer.writeForMe")}</>}
+            </button>
+          </div>
+          <textarea id="of-note" maxLength={500} placeholder={t("offer.notePh")} value={note} onChange={(e) => { setNote(e.target.value); setNoteBy(""); }} />
+          {noteBy && <span className="hint">{noteBy === "ai" ? <><AiBadge /> {t("offer.noteByAi")}</> : t("offer.noteByTemplate")}</span>}
+        </div>
 
         {error && <p className="error" role="alert">{error}</p>}
         <button className="btn btn-pink" type="submit" disabled={busy}>{t("offer.submit")}</button>

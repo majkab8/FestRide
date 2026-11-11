@@ -51,7 +51,7 @@ html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; min-height: 100vh; }
 /* short pages: the content stretches so the footer sits on the bottom edge, no empty band below it */
 #root { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
-#root > main { flex: 1 0 auto; }
+#root > main { flex: 1 0 auto; width: 100%; } /* full width: in a flex column, the pages' auto side margins would otherwise shrink them to their content */
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
 a { color: inherit; }
@@ -192,6 +192,14 @@ main.page { padding-block: 8px 56px; display: flex; flex-direction: column; gap:
 .ev h3, .ev .ev-title { display: block; font-size: 17px; font-weight: 700; line-height: 1.25; }
 .thumb { width: 64px; height: 64px; display: grid; place-items: center; text-align: center; padding: 6px; font-size: 10.5px; line-height: 1.05; overflow: hidden; }
 .thumb.big { width: 84px; height: 84px; font-size: 12px; }
+/* event posters as thumbnails: one shape for all; genre tiles get the same shape when shown alongside */
+.thumb.photo { padding: 0; object-fit: cover; border-radius: 18px; background: var(--sand); }
+.thumb.sh3 { border-radius: 18px; }
+/* "offer a ride" event search: results float over the form */
+.ev-picker { position: relative; }
+.ev-pop { position: absolute; z-index: 30; left: 0; right: 0; top: calc(100% + 8px); max-height: min(380px, 55vh); overflow-y: auto; overscroll-behavior: contain;
+  background: var(--surface); border-radius: 26px; padding: 6px; box-shadow: 0 22px 50px -18px rgba(0, 0, 0, 0.55), inset 0 0 0 1.5px var(--line); }
+.ev-pop .ev { border-radius: 20px; }
 .count { font-family: var(--font-mono); font-size: 13px; white-space: nowrap; }
 .g-electronic { background: var(--pink); color: var(--on-bright); }
 .g-rock { background: var(--fg); color: var(--bg); }
@@ -387,6 +395,17 @@ footer.site p { font-size: 13px; color: #cfc5b6; position: relative; }
   .ask .ic { display: none; }
   .ride-more { padding-left: 0; }
   .form { padding: 20px; border-radius: 28px; gap: 14px; }
+  /* events list: a small map strip, and the month chips as one row you swipe sideways */
+  .split > .map-box { height: 220px; }
+  .chips.months { flex-wrap: nowrap; overflow-x: auto; scrollbar-width: none; margin-inline: -16px; padding-inline: 22px !important; scroll-padding-inline: 22px; }
+  .chips.months::-webkit-scrollbar { display: none; }
+  .chips.months .chip { flex: none; }
+  /* sign-up ride style: compact rows (icon on the left) instead of tall cards */
+  .form .tiles { gap: 8px; }
+  .form .tile { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 1px; align-items: center; padding: 10px 14px; border-radius: 22px; }
+  .form .tile .dot { grid-row: span 2; width: 34px; height: 34px; }
+  .form .tile b { font-size: 19px; line-height: 1.1; }
+  .form .tile span.d { font-size: 12.5px; }
   /* phones: auth forms compact enough that the whole page, footer included, fits one screen */
   .form h1 { font-size: 30px; margin-top: 2px; }
   .form .field { gap: 5px; }
@@ -400,3 +419,17 @@ footer.site p { font-size: 13px; color: #cfc5b6; position: relative; }
   .seat-row { flex-direction: column; }
 }
 @media (prefers-reduced-motion: reduce) { * { transition: none !important; animation: none !important; } }
+
+/* AI: a consistent marker, and the AI parts of the "offer a ride" form */
+.ai-badge { display: inline-flex; align-items: center; gap: 3px; vertical-align: 1px; margin-left: 4px; padding: 2px 8px; border-radius: 999px;
+  font: 600 10.5px var(--font-mono); letter-spacing: 0.06em; white-space: nowrap; background: var(--lime); color: #1e1b18; }
+.ai-fill { display: flex; flex-direction: column; gap: 8px; padding: 14px; border-radius: 26px; background: var(--bg);
+  box-shadow: inset 0 0 0 1.5px color-mix(in srgb, var(--pink) 45%, transparent); }
+.ai-fill .label { display: flex; align-items: center; gap: 4px; flex-wrap: wrap; }
+.ai-fill .ai-row { display: flex; gap: 8px; align-items: center; }
+.ai-fill input { flex: 1; min-width: 0; min-height: 46px; border-radius: 23px; border: 0; box-shadow: inset 0 0 0 1.5px var(--line); background: var(--surface); color: var(--fg); font: inherit; font-size: 15px; padding: 0 16px; }
+.ai-fill input:focus { box-shadow: inset 0 0 0 2px var(--fg); outline: none; }
+.ai-fill .note { margin: 0; }
+.note-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
+.ai-write { min-height: 36px; padding: 0 14px; font-size: 14px; }
+@media (max-width: 600px) { .ai-fill .ai-row { flex-direction: column; align-items: stretch; } }

@@ -97,7 +97,7 @@ export default function Home() {
               <div className="wait" key={ev.id}>
                 <div className="whead">
                   <h2>{t("home.waiting", { event: [ev.name, ev.city].join(", ") })}</h2>
-                  <span className="mono" style={{ fontSize: 13, color: "var(--muted)" }}>{ev.event_date ? day(ev.event_date) : ""} · {t("home.askedN", { n: group.length })}</span>
+                  <span className="mono meta" style={{ fontSize: 13, color: "var(--muted)" }}>{ev.event_date && <><span>{day(ev.event_date)}</span> · </>}<span>{t("home.askedN", { n: group.length })}</span></span>
                 </div>
                 <div className="cars">
                   {group.map((q) => {
@@ -133,7 +133,7 @@ export default function Home() {
               <div className="tier poster t1" style={{ marginTop: 20, fontSize: "clamp(44px, 5.3vw, 76px)" }}>
                 <Link to={`/search?event_id=${sound.data[0].id}`} title={sound.data[0].name}>{billName(sound.data[0].name)}</Link>
               </div>
-              <div className="sub">{sound.data[0].city.toLowerCase()} · {sound.data[0].event_date ? day(sound.data[0].event_date) : ""} · {plural(carsTo(sound.data[0].id), "car")}</div>
+              <div className="sub meta"><span>{sound.data[0].city.toLowerCase()}</span>{sound.data[0].event_date && <> · <span>{day(sound.data[0].event_date)}</span></>} · <span>{plural(carsTo(sound.data[0].id), "car")}</span></div>
             </>}
             {sound.data && sound.data.length > 1 && (
               <div className="tier poster t2" style={{ marginTop: 22, fontSize: 42, color: "var(--pink-2)" }}>

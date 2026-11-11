@@ -32,6 +32,12 @@ export interface SearchFilters {
 export interface SearchResult { filters: SearchFilters; chips: string[]; source: "ai" | "rules"; understood: boolean; }
 export interface Explanations { rides: Record<string, string>; requests: Record<string, string>; ai_available: boolean; }
 export interface CityCount { city: string; events: number; }
+/** "offer a ride" form values read from one sentence (every field optional) */
+export interface OfferDraft {
+  event: Event | null; event_hint: string | null; origin_city: string | null; departure: string | null;
+  seats: number | null; price: number | null; smoking_allowed: boolean | null; note: string | null;
+  source: "ai" | "rules"; understood: boolean;
+}
 
 export class ApiError extends Error {
   status: number;
@@ -134,4 +140,7 @@ export const api = {
   search: (text: string) => request<SearchResult>("POST", "/ai/search", { body: { text }, auth: "none" }),
   explain: (data: { ride_ids?: number[]; request_ids?: number[]; lang: "pl" | "en" }) =>
     request<Explanations>("POST", "/ai/explain", { body: data, auth: "required" }),
+  offerDraft: (text: string) => request<OfferDraft>("POST", "/ai/offer", { body: { text }, auth: "required" }),
+  rideNote: (data: { event_id?: number | null; origin_city?: string | null; departure?: string | null; smoking_allowed: boolean; hint?: string | null; lang: "pl" | "en" }) =>
+    request<{ text: string; source: "ai" | "template" }>("POST", "/ai/ride-note", { body: data, auth: "required" }),
 };
