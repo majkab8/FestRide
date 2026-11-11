@@ -12,7 +12,7 @@ const SHOW_RECORD_CAR = true; // EXPERIMENT: set to false (or delete RecordCar) 
 /* Copy of the v3 Landing board, in both languages. */
 const COPY = {
   en: {
-    nav: ["Events", "Rides", "Drive"], start: "Home", login: "Log in", langLabel: "Language",
+    nav: ["Events", "Rides", "Drive"], start: "Home", menu: "Menu", login: "Log in", langLabel: "Language",
     eyebrow: "Carpools to Polish gigs & festivals", title: ["Every road ends", "at a stage."],
     askLabel: "Describe your trip", ask: "from Łódź to techno in Kraków in December, max 50 zł", find: "Find a car",
     record: "A spinning vinyl record", gigs: "GIGS LOADED", gigsShort: "GIGS", side: "SIDE A", byMusic: "match by music", signStage: "to the stage", signCity: "KRAKÓW · 270 KM",
@@ -26,18 +26,18 @@ const COPY = {
     ],
     matchTitle: "Four hours is long with the wrong DJ.",
     matchText: "Kasia drives Łódź to Kraków and plays techno and house. You share the house, neither of you smokes, she just likes a quiet ride. That's a 67.",
-    bars: ["music", "ride style", "smoking"], great: "GOOD MATCH", bothNoSmoke: "neither of you smokes", bandDay: "SAT 12.12",
+    bars: ["music", "ride style", "smoking"], great: "GOOD MATCH", bothNoSmoke: "neither of you smokes", bandDay: "SAT 12.12", bandBack: "Both into house ✶ Smoke-free",
     filterNote: ["same vibe,", "same", "route"],
     photo1: "Crowd with flags in front of the main stage at Pol'and'Rock 2024", photo2: "Festival field with the main stage and a Ferris wheel at Pol'and'Rock 2024",
     photoBy: "Photos:", cropped: "cropped",
     driveTitle: "Three empty seats? That's 135 zł of fuel.",
     driveText: "Post your route and time. People who like your music ask for a seat, you pick who comes.",
     offer: "Offer a ride", perSeat: "45 zł / seat",
-    footTitle: "See you at the gate.", foot: ["Find a ride", "Offer a ride", "Sign up"],
+    footTitle: "See you at the gate.", footLines: ["See you", "at the gate."], foot: ["Find a ride", "Offer a ride", "Sign up"],
     credit: "Photos: Thesupermat (CC BY-SA 3.0), Nathan (CC BY-SA 2.0), via Wikimedia Commons.",
   },
   pl: {
-    nav: ["Wydarzenia", "Przejazdy", "Kierowca"], start: "Start", login: "Zaloguj się", langLabel: "Język",
+    nav: ["Wydarzenia", "Przejazdy", "Kierowca"], start: "Start", menu: "Menu", login: "Zaloguj się", langLabel: "Język",
     eyebrow: "Wspólne dojazdy na koncerty i festiwale", title: ["Każda droga kończy się", "pod sceną."],
     askLabel: "Opisz swoją trasę", ask: "z Łodzi na techno do Krakowa w grudniu, max 50 zł", find: "Znajdź auto",
     record: "Kręcąca się płyta winylowa", gigs: "KONCERTÓW", gigsShort: "KONCERTÓW", side: "STRONA A", byMusic: "dopasowanie po muzyce", signStage: "pod scenę", signCity: "KRAKÓW · 270 KM",
@@ -51,14 +51,14 @@ const COPY = {
     ],
     matchTitle: "Cztery godziny to długo ze złym DJ-em.",
     matchText: "Kasia jedzie z Łodzi do Krakowa i puszcza techno i house. Wspólny macie house, oboje nie palicie, tylko ona woli ciszę w trasie. Razem 67.",
-    bars: ["muzyka", "styl jazdy", "palenie"], great: "DOBRE DOPASOWANIE", bothNoSmoke: "oboje nie palicie", bandDay: "SOB 12.12",
+    bars: ["muzyka", "styl jazdy", "palenie"], great: "DOBRE DOPASOWANIE", bothNoSmoke: "oboje nie palicie", bandDay: "SOB 12.12", bandBack: "Wspólny house ✶ Bez palenia",
     filterNote: ["ten sam vibe,", "ta sama", "trasa"],
     photo1: "Tłum z flagami pod dużą sceną na Pol'and'Rock 2024", photo2: "Pole festiwalowe z dużą sceną i diabelskim młynem na Pol'and'Rock 2024",
     photoBy: "fot.", cropped: "kadr",
     driveTitle: "Trzy wolne miejsca? To 135 zł na paliwo.",
     driveText: "Dodaj trasę i godzinę. Osoby, które lubią twoją muzykę, poproszą o miejsce, a ty wybierasz, kto jedzie.",
     offer: "Zaproponuj przejazd", perSeat: "45 zł / miejsce",
-    footTitle: "Do zobaczenia pod bramą.", foot: ["Znajdź przejazd", "Zaproponuj przejazd", "Załóż konto"],
+    footTitle: "Do zobaczenia pod bramą.", footLines: ["Do zobaczenia", "pod bramą."], foot: ["Znajdź przejazd", "Zaproponuj przejazd", "Załóż konto"],
     credit: "Zdjęcia: Thesupermat (CC BY-SA 3.0), Nathan (CC BY-SA 2.0), Wikimedia Commons.",
   },
 };
@@ -183,6 +183,17 @@ function useScrollReveal() {
   return root;
 }
 
+/** Small side-on car silhouette (same shape as the record car), drawn in a viewBox of "-17 -18 31 19". */
+function CarShape({ body, light }: { body: string; light: string }) {
+  return <>
+    <path d="M-7.6 -6.4 L-5.2 -11.2 Q-4.6 -12.2 -3.4 -12.2 L3.6 -12.2 Q4.8 -12.2 5.4 -11.2 L8.2 -6.4 Z" fill={body} />
+    <path d="M-12 -6.4 Q-12 -8.6 -9.8 -8.6 L10.2 -8.6 Q12.6 -8.6 12.6 -6.2 L12.6 -2.6 Q12.6 -1.4 11.4 -1.4 L-10.8 -1.4 Q-12 -1.4 -12 -2.6 Z" fill={body} />
+    <circle cx="-6.4" cy="-1.2" r="2.5" fill={body} />
+    <circle cx="6.8" cy="-1.2" r="2.5" fill={body} />
+    <rect x="10.4" y="-6.6" width="2.2" height="1.6" rx=".6" fill={light} />
+  </>;
+}
+
 /** The vinyl record in the hero. */
 function Vinyl({ svgRef, className, pathId, label, text }: { svgRef?: Ref<SVGSVGElement>; className?: string; pathId: string; label?: string; text: string }) {
   return (
@@ -273,6 +284,32 @@ export default function Landing() {
   const upcomingDays = [...new Set(lineup.items.map((a) => a.date).filter(Boolean) as string[])].sort().slice(0, 3).map(parseLocal);
   const dateRow = lineup.weekend || upcomingDays.length < 3 ? [fri, sat, sun] : upcomingDays;
 
+  const [menuOpen, setMenuOpen] = useState(false);
+  useEffect(() => {
+    if (!menuOpen) return;
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setMenuOpen(false); };
+    addEventListener("keydown", esc);
+    return () => removeEventListener("keydown", esc);
+  }, [menuOpen]);
+
+  const bandRef = useRef<HTMLDivElement>(null);
+  const [bandOpen, setBandOpen] = useState(false);
+  useEffect(() => {
+    const el = bandRef.current;
+    if (!el || !matchMedia("(hover: none)").matches || matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    let t = 0;
+    const io = new IntersectionObserver(([e]) => {
+      if (!e.isIntersecting) return;
+      io.disconnect();
+      t = window.setTimeout(() => { setBandOpen(true); t = window.setTimeout(() => setBandOpen(false), 2200); }, 400);
+    }, { threshold: 0.7 });
+    io.observe(el);
+    return () => { io.disconnect(); clearTimeout(t); };
+  }, []);
+
+  const footTargets: [string, string][] = [["/events", c.nav[0]], ["/search", c.foot[0]], ["/drive/new", c.foot[1]], ["/signup", c.foot[2]]];
+  const footLinks = footTargets.map(([to, label]) => <Link key={to} to={to}>{label}</Link>);
+
   const submit = (e: FormEvent) => {
     e.preventDefault();
     nav(`/search?text=${encodeURIComponent(text.trim() || c.ask)}`);
@@ -283,13 +320,13 @@ export default function Landing() {
       {/* HERO: sunset sky, striped sun with the crowd inside */}
       <section className="hero">
         <div className="in">
-          <nav aria-label="Main" className={scrolled ? "scrolled" : undefined}>
+          <nav aria-label="Main" className={[scrolled && "scrolled", menuOpen && "menu-open"].filter(Boolean).join(" ") || undefined}>
             <Link className="logo3" to="/">festride</Link>
-            <div className="navpill">
-              <a href="#top" className={navOn === "start" ? "on" : undefined} onClick={(e) => { e.preventDefault(); setNavOn("start"); scrollTo({ top: 0, behavior: "smooth" }); }}>{c.start}</a>
-              <a href="#events" className={navOn === "events" ? "on" : undefined} onClick={() => setNavOn("events")}>{c.nav[0]}</a>
-              <a href="#rides" className={navOn === "rides" ? "on" : undefined} onClick={() => setNavOn("rides")}>{c.nav[1]}</a>
-              <a href="#drive" className={navOn === "drive" ? "on" : undefined} onClick={() => setNavOn("drive")}>{c.nav[2]}</a>
+            <div className="navpill" id="landing-menu">
+              <a href="#top" className={navOn === "start" ? "on" : undefined} onClick={(e) => { e.preventDefault(); setNavOn("start"); setMenuOpen(false); scrollTo({ top: 0, behavior: "smooth" }); }}>{c.start}</a>
+              <a href="#events" className={navOn === "events" ? "on" : undefined} onClick={() => { setNavOn("events"); setMenuOpen(false); }}>{c.nav[0]}</a>
+              <a href="#rides" className={navOn === "rides" ? "on" : undefined} onClick={() => { setNavOn("rides"); setMenuOpen(false); }}>{c.nav[1]}</a>
+              <a href="#drive" className={navOn === "drive" ? "on" : undefined} onClick={() => { setNavOn("drive"); setMenuOpen(false); }}>{c.nav[2]}</a>
             </div>
             <div className="navright">
               <div className="langpill" role="group" aria-label={c.langLabel}>
@@ -297,6 +334,10 @@ export default function Landing() {
                 <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
               </div>
               <Link to="/login" className="btn3 login3">{c.login}</Link>
+              {/* phones: the section links fold into this menu */}
+              <button type="button" className="burger" aria-expanded={menuOpen} aria-controls="landing-menu" aria-label={c.menu} onClick={() => setMenuOpen((o) => !o)}>
+                <span /><span /><span />
+              </button>
             </div>
           </nav>
 
@@ -407,14 +448,15 @@ export default function Landing() {
             </div>
           </div>
           <div className="bandwrap">
-            <div className="band3">
+            {/* touch screens have no hover: the band unrolls by itself once it comes into view, and a tap unrolls / rolls it up */}
+            <div className={`band3${bandOpen ? " open" : ""}`} ref={bandRef} onClick={() => { if (matchMedia("(hover: none)").matches) setBandOpen((o) => !o); }}>
               <div className="stub3">
                 <b>67%</b>
                 <span>{c.great}<br />KASIA W. · {c.bandDay}<br />ŁÓDŹ → KRAKÓW</span>
               </div>
-              <span className="poster">Nocny Rejs</span>
-              {/* the other side of the band, revealed on hover as if it were unrolled */}
-              <span className="back poster" aria-hidden="true">Nocny Rejs ✶ Nocny Rejs</span>
+              <span className="poster">Łódź ✶ Kraków</span>
+              {/* the other side of the band, revealed when it unrolls: what the two of you share (why it is a 67) */}
+              <span className="back poster" aria-hidden="true">{c.bandBack}</span>
               <span className="curl" aria-hidden="true" />
             </div>
             <div className="note-lime">{c.filterNote[0]}<br />{c.filterNote[1]}<br />{c.filterNote[2]}</div>
@@ -441,24 +483,16 @@ export default function Landing() {
       </section>
 
       {/* FOOTER: a car driving into the striped sun */}
+      {/* FOOTER: the striped sun with the car; on phones a small corner sun */}
       <footer>
         {/* the striped sun, with a car silhouette driving across it into the sunset */}
         <div className="sun3" aria-hidden="true" />
         <div className="sunroad" aria-hidden="true">
-          <svg className="sundrive" viewBox="-17 -18 31 19">
-            <path d="M-7.6 -6.4 L-5.2 -11.2 Q-4.6 -12.2 -3.4 -12.2 L3.6 -12.2 Q4.8 -12.2 5.4 -11.2 L8.2 -6.4 Z" fill="#1E1B18" />
-            <path d="M-12 -6.4 Q-12 -8.6 -9.8 -8.6 L10.2 -8.6 Q12.6 -8.6 12.6 -6.2 L12.6 -2.6 Q12.6 -1.4 11.4 -1.4 L-10.8 -1.4 Q-12 -1.4 -12 -2.6 Z" fill="#1E1B18" />
-            <circle cx="-6.4" cy="-1.2" r="2.5" fill="#1E1B18" />
-            <circle cx="6.8" cy="-1.2" r="2.5" fill="#1E1B18" />
-            <rect x="10.4" y="-6.6" width="2.2" height="1.6" rx=".6" fill="#D7FF4A" />
-          </svg>
+          <svg className="sundrive" viewBox="-17 -18 31 19"><CarShape body="#1E1B18" light="#D7FF4A" /></svg>
         </div>
         <div className="in">
-          <h2>{c.footTitle}</h2>
-          <div className="links">
-            <Link to="/events">{c.nav[0]}</Link><Link to="/search">{c.foot[0]}</Link><Link to="/drive/new">{c.foot[1]}</Link><Link to="/signup">{c.foot[2]}</Link>
-            <span>hello@festride.example</span>
-          </div>
+          <h2 aria-label={c.footTitle}><span>{c.footLines[0]}</span> <span className="l2">{c.footLines[1]}</span></h2>
+          <div className="links">{footLinks}<span>hello@festride.example</span></div>
           <p className="credit">{c.credit}</p>
         </div>
       </footer>

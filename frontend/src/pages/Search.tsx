@@ -78,6 +78,8 @@ export default function Search() {
   const [formOpen, setFormOpen] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const rowsRef = useRef<HTMLDivElement>(null);
+  const mapRef = useRef<HTMLDivElement>(null);
 
   const filters = useMemo(() => Object.fromEntries(FILTER_KEYS.filter((k) => params.get(k)).map((k) => [k, params.get(k)!])) as Filters, [params]);
   const hasFilters = Object.keys(filters).length > 0;
@@ -123,6 +125,71 @@ export default function Search() {
   const list: Ride[] = rides.data ?? [];
   const sel = list.find((r) => r.id === selected) ?? list[0];
 
+  const [narrow, setNarrow] = useState(() => matchMedia("(max-width: 1100px)").matches);
+  useEffect(() => {
+    const mq = matchMedia("(max-width: 1100px)");
+    const on = () => setNarrow(mq.matches);
+    mq.addEventListener("change", on);
+    return () => mq.removeEventListener("change", on);
+  }, []);
+
+  // One column (phones, tablets): there's no hover, so the map stays pinned at the top and the ride
+  // in the middle of the visible list is the focused one: its route shows on the map as you scroll.
+  useEffect(() => {
+    const mq = matchMedia("(max-width: 1100px)");
+    let raf = 0;
+    const pick = () => {
+      raf = 0;
+      if (!mq.matches || !rowsRef.current) return;
+      const head = document.querySelector<HTMLElement>(".app-head");
+      document.documentElement.style.setProperty("--head-h", `${head?.offsetHeight ?? 0}px`);
+      // where the map's bottom edge sits once pinned (same line the CSS scroll snap uses), even before it has stuck
+      const top = (head?.offsetHeight ?? 0) + 8 + (mapRef.current?.offsetHeight ?? 0);
+      const mid = top + (innerHeight - top) / 2;
+      const rows = [...rowsRef.current.querySelectorAll<HTMLElement>(".row3[data-id]")];
+      // at the top of the page (first ride still at or below the focus spot), the first ride is the focused one
+      const firstR = rows[0]?.getBoundingClientRect();
+      if (firstR && (firstR.top + firstR.bottom) / 2 >= mid) { setSelected(Number(rows[0].dataset.id)); return; }
+      let best: HTMLElement | null = null, dist = Infinity;
+      for (const el of rows) {
+        const r = el.getBoundingClientRect();
+        const d = Math.abs((r.top + r.bottom) / 2 - mid);
+        if (d < dist) { dist = d; best = el; }
+      }
+      if (best) setSelected(Number(best.dataset.id));
+    };
+    const onScroll = () => { if (!raf) raf = requestAnimationFrame(pick); };
+
+    // Mouse wheel / touchpad: browsers' snapping is inconsistent with big wheel deltas, so one wheel
+    // gesture moves exactly one stop (page top, then each ride in the focus spot). Touch keeps native snap.
+    let lockUntil = 0, lastWheel = 0;
+    const onWheel = (e: WheelEvent) => {
+      const now = performance.now(), fresh = now - lastWheel > 220; // a new gesture after a short pause
+      lastWheel = now;
+      if (!mq.matches || !rowsRef.current || e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      const head = document.querySelector<HTMLElement>(".app-head");
+      const line = (head?.offsetHeight ?? 0) + 8 + (mapRef.current?.offsetHeight ?? 0);
+      const mid = line + (innerHeight - line) / 2;
+      const stops = [0, ...[...rowsRef.current.querySelectorAll<HTMLElement>(".row3[data-id]")].map((el) => {
+        const r = el.getBoundingClientRect();
+        return Math.round(scrollY + (r.top + r.bottom) / 2 - mid);
+      })].filter((y) => y >= 0);
+      const y = scrollY;
+      const next = e.deltaY > 0 ? stops.find((s) => s > y + 4) : [...stops].reverse().find((s) => s < y - 4);
+      if (next === undefined) return; // past the last ride / above the top: let the page scroll normally
+      e.preventDefault();
+      if (!fresh || now < lockUntil) return; // one stop per gesture (touchpads and free-spinning wheels fire many events)
+      lockUntil = now + 380;
+      scrollTo({ top: next, behavior: "smooth" });
+    };
+
+    pick();
+    addEventListener("scroll", onScroll, { passive: true });
+    addEventListener("resize", onScroll);
+    addEventListener("wheel", onWheel, { passive: false });
+    return () => { removeEventListener("scroll", onScroll); removeEventListener("resize", onScroll); removeEventListener("wheel", onWheel); cancelAnimationFrame(raf); };
+  }, [list.length]);
+
   const chipText = (k: FilterKey, v: string): string => {
     switch (k) {
       case "origin_city": return `${t("f.from")} ${v}`;
@@ -148,6 +215,7 @@ export default function Search() {
     if (from && !seenOr.has(r.origin_city)) { seenOr.add(r.origin_city); origins.push({ id: r.origin_city, pos: from, title: r.origin_city, on: r.origin_city === sel?.origin_city }); }
     if (from && to) routes.push({ id: r.id, from, to, on });
   }
+  const focusRoute = routes.find((r) => r.on);
 
   return (
     <Screen className="search3">
@@ -190,7 +258,7 @@ export default function Search() {
 
       <div className="grid">
         {/* list */}
-        <div className="rows">
+        <div className="rows" ref={rowsRef}>
           {!user && <p className="note" style={{ padding: "0 8px 8px" }}>{t("search.loginForMatch")}</p>}
           {(rides.loading || awaitingParse) && <Loading />}
           {rides.error != null && <ErrorBox error={rides.error} onRetry={rides.reload} />}
@@ -198,7 +266,7 @@ export default function Search() {
           {list.map((r) => {
             const k = r.match ? matchKey(r.match) : "diff";
             return (
-              <Link key={r.id} to={`/rides/${r.id}`} className={`row3${r.id === sel?.id ? " on" : ""}`} onMouseEnter={() => setSelected(r.id)} onFocus={() => setSelected(r.id)}>
+              <Link key={r.id} data-id={r.id} to={`/rides/${r.id}`} className={`row3${r.id === sel?.id ? " on" : ""}`} onMouseEnter={() => setSelected(r.id)} onFocus={() => setSelected(r.id)}>
                 <span className={`sc ${shapeFor(k)} ${r.match ? `s-${k}` : "s-none"}${r.match?.percent === 100 ? " n3" : ""}`}>{r.match?.percent ?? "·"}</span>
                 <span className="who"><b>{r.driver.display_name}</b>
                   <span>{[!filters.event_id && billName(r.event.name), `${r.origin_city.toLowerCase()} → ${r.event.city.toLowerCase()}`, time(r.departure_time), r.match && t(`match.${k}`), t(`style.${r.driver.driving_style}`)].filter(Boolean).join(" · ")}</span></span>
@@ -209,8 +277,8 @@ export default function Search() {
         </div>
 
         {/* map */}
-        <div className="mapwrap">
-          <MapView label={t("nav.find")} pins={pins} origins={origins} routes={routes} />
+        <div className="mapwrap" ref={mapRef}>
+          <MapView label={t("nav.find")} pins={pins} origins={origins} routes={routes} focus={narrow && focusRoute ? [focusRoute.from, focusRoute.to] : undefined} />
           {sel && (
             <Link className="float" to={`/rides/${sel.id}`}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>

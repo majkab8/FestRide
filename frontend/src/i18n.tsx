@@ -13,9 +13,9 @@ const pl = {
   "ride.lineFor": "Kilka słów dla: {name}", "ride.askName": "Poproś o miejsce: {name}",
   "ride.askedOthers": "Na to wydarzenie prosisz też inne auta ({n}). Pierwsze „tak” wygrywa, a reszta próśb zamknie się sama.",
   "drive.seatsTaken": "{taken}/{total} miejsc", "drive.fresh": "nowe: {n}", "drive.perSeat": "{n} zł za miejsce", "drive.title": "{from} → {event}",
-  "nav.home": "Start", "nav.find": "Znajdź przejazd", "nav.events": "Wydarzenia", "nav.drive": "Kierowca",
+  "nav.menu": "Menu", "nav.home": "Start", "nav.find": "Znajdź przejazd", "nav.findShort": "Szukaj", "nav.myRidesShort": "Moje", "nav.events": "Wydarzenia", "nav.drive": "Kierowca",
   "nav.login": "Zaloguj się", "nav.signup": "Załóż konto", "nav.logout": "Wyloguj się", "nav.signedIn": "Zalogowano jako",
-  "lang.label": "Język", "theme.toLight": "Włącz jasny motyw", "theme.toDark": "Włącz ciemny motyw", "menu.open": "Menu konta",
+  "lang.label": "Język", "theme.label": "Motyw", "theme.light": "Jasny motyw", "theme.dark": "Ciemny motyw", "theme.toLight": "Włącz jasny motyw", "theme.toDark": "Włącz ciemny motyw", "menu.open": "Menu konta",
 
   "landing.eyebrow": "Wspólne dojazdy na koncerty i festiwale w Polsce",
   "landing.title": "Każda droga kończy się pod sceną.",
@@ -120,9 +120,9 @@ const en: Dict = {
   "ride.lineFor": "A line for {name}", "ride.askName": "Ask {name} for a seat",
   "ride.askedOthers": "You've asked {n} other cars for this event. The first yes wins and the others close on their own.",
   "drive.seatsTaken": "{taken}/{total} seats", "drive.fresh": "{n} new", "drive.perSeat": "{n} zł a seat", "drive.title": "{from} to {event}",
-  "nav.home": "Home", "nav.find": "Find a ride", "nav.events": "Events", "nav.drive": "Drive",
+  "nav.menu": "Menu", "nav.home": "Home", "nav.find": "Find a ride", "nav.findShort": "Find", "nav.myRidesShort": "My rides", "nav.events": "Events", "nav.drive": "Drive",
   "nav.login": "Log in", "nav.signup": "Sign up", "nav.logout": "Log out", "nav.signedIn": "Signed in as",
-  "lang.label": "Language", "theme.toLight": "Switch to light theme", "theme.toDark": "Switch to dark theme", "menu.open": "Account menu",
+  "lang.label": "Language", "theme.label": "Theme", "theme.light": "Light theme", "theme.dark": "Dark theme", "theme.toLight": "Switch to light theme", "theme.toDark": "Switch to dark theme", "menu.open": "Account menu",
 
   "landing.eyebrow": "Carpools to Polish gigs & festivals",
   "landing.title": "Every road ends at a stage.",

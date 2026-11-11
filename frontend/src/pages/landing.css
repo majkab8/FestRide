@@ -42,6 +42,7 @@
 .v3 .langpill button { border: 0; background: none; border-radius: 999px; padding: 9px 12px; font: 500 13px "DM Mono", monospace; letter-spacing: 0.06em; color: var(--ink); cursor: pointer; }
 .v3 .langpill button[aria-pressed="true"] { background: var(--ink); color: var(--apricot); }
 .v3 .login3 { font-weight: 600; font-size: 16px; padding: 14px 24px; box-shadow: inset 0 0 0 2px var(--ink); color: var(--ink); background: transparent; }
+.v3 .burger { display: none; }
 .v3 .hero-copy { position: relative; z-index: 3; text-align: center; margin-top: 18px; }
 .v3 .hero-eyebrow { font-family: "DM Mono", monospace; font-size: 14px; letter-spacing: 0.12em; text-transform: uppercase; }
 .v3 .hero h1 { margin: 18px auto 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(46px, 7.22vw, 104px); line-height: 0.9; letter-spacing: -0.045em; max-width: 1100px; }
@@ -113,20 +114,26 @@
 .v3 .bandwrap { position: relative; height: 520px; }
 .v3 .band3 { position: absolute; left: 40px; right: -120px; top: 190px; height: 140px; transform: rotate(-7deg); border-radius: 22px; overflow: hidden; cursor: pointer;
   background: repeating-linear-gradient(0deg, #ff4f8b 0 10px, #ff6fa0 10px 14px), #ff4f8b; box-shadow: 0 30px 50px -20px rgba(0, 0, 40, 0.55); display: flex; align-items: center; transition: transform 0.4s ease; }
-.v3 .band3:hover { transform: rotate(-3deg) translateY(-4px); }
+.v3 .band3.open { transform: rotate(-3deg) translateY(-4px); }
 .v3 .band3::before { content: ""; position: absolute; inset: 0; border-radius: 22px; background: repeating-linear-gradient(90deg, transparent 0 60px, rgba(255, 255, 255, 0.14) 60px 62px); }
 .v3 .stub3 { position: relative; margin-left: 40px; background: var(--cream); color: var(--ink); border-radius: 16px; padding: 14px 24px; display: flex; align-items: center; gap: 18px; flex: none; }
 .v3 .stub3 b { font-family: "Fraunces", serif; font-style: italic; font-weight: 700; font-size: 64px; line-height: 1; }
 .v3 .stub3 span { font-family: "DM Mono", monospace; font-size: 13px; line-height: 1.5; }
-.v3 .band3 .poster { position: relative; flex: 1; min-width: 0; margin: 0 50px 0 30px; text-align: center; overflow: hidden; font-size: 46px; color: var(--cream); white-space: nowrap; }
+.v3 .band3 .poster { position: relative; flex: 1; min-width: 0; margin: 0 50px 0 30px; text-align: center; overflow: hidden; font-size: 40px; color: var(--cream); white-space: nowrap; }
 /* hover: the band unrolls left to right and shows its other side, the print only */
-.v3 .band3 .back { position: absolute; inset: 0; margin: 0; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 64px; color: var(--lime);
+.v3 .band3 .back { position: absolute; inset: 0; margin: 0; z-index: 2; display: flex; align-items: center; justify-content: center; font-size: 52px; color: var(--lime); white-space: nowrap;
   background: repeating-linear-gradient(90deg, transparent 0 60px, rgba(255, 255, 255, 0.07) 60px 62px), var(--ink);
   clip-path: inset(0 100% 0 0); transition: clip-path 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
-.v3 .band3:hover .back { clip-path: inset(0 0 0 0); }
+.v3 .band3.open .back { clip-path: inset(0 0 0 0); }
 .v3 .band3 .curl { position: absolute; z-index: 3; top: 0; bottom: 0; left: -46px; width: 46px; pointer-events: none; opacity: 0;
   background: linear-gradient(90deg, rgba(0, 0, 0, 0.25), #ff86b0 45%, #ff4f8b 70%, rgba(0, 0, 0, 0.18)); box-shadow: 8px 0 14px rgba(0, 0, 0, 0.25); }
-.v3 .band3:hover .curl { animation: curl 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+.v3 .band3.open .curl { animation: curl 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+/* real hover only where there is a mouse: on touch screens a tap leaves a "sticky" hover that would keep the band open */
+@media (hover: hover) {
+  .v3 .band3:hover { transform: rotate(-3deg) translateY(-4px); }
+  .v3 .band3:hover .back { clip-path: inset(0 0 0 0); }
+  .v3 .band3:hover .curl { animation: curl 0.7s cubic-bezier(0.65, 0, 0.35, 1); }
+}
 @keyframes curl { 0% { left: -46px; opacity: 1; } 92% { opacity: 1; } 100% { left: 100%; opacity: 0; } }
 .v3 .note-lime { position: absolute; right: 30px; top: 30px; width: 150px; height: 150px; border-radius: 50%; background: var(--lime); color: var(--ink);
   display: flex; align-items: center; justify-content: center; text-align: center; transform: rotate(10deg); font-weight: 700; font-size: 19px; line-height: 1.15; padding-top: 22px; box-sizing: border-box; }
@@ -157,9 +164,11 @@
 /* car silhouette driving across the sun: same box as the sun, clipped to its circle, so the car only shows against it */
 .v3 footer .sunroad { position: absolute; right: -60px; top: -260px; width: 560px; height: 560px; border-radius: 50%; overflow: hidden; pointer-events: none; }
 .v3 footer .sunroad::before { content: ""; position: absolute; left: 0; right: 0; top: 87.5%; height: 3px; background: var(--ink); }
-.v3 footer .sundrive { position: absolute; left: 0; top: calc(87.5% - 58px); width: 96px; height: 59px; animation: sundrive 8s linear infinite; }
-@keyframes sundrive { from { translate: -120px 0; } to { translate: 600px 0; } }
-@media (max-width: 860px) { .v3 footer .sun3, .v3 footer .sunroad { width: 360px; height: 360px; right: -120px; top: -170px; } .v3 footer .sundrive { width: 64px; height: 39px; top: calc(87.5% - 36px); } }
+.v3 footer .sundrive { --carw: 96px; position: absolute; left: 18%; top: calc(87.5% - 58px); width: var(--carw); height: 59px; animation: sundrive 7s linear infinite; }
+/* the car drives across the visible stretch of road inside the sun (about 18%–82% of its width at any size):
+   it slips out at the right edge and straight back in at the left, so it's never gone for long */
+@keyframes sundrive { from { left: calc(18% - var(--carw)); } to { left: 82%; } }
+@media (max-width: 860px) { .v3 footer .sun3, .v3 footer .sunroad { width: 360px; height: 360px; right: -120px; top: -170px; } .v3 footer .sundrive { --carw: 64px; height: 39px; top: calc(87.5% - 36px); } }
 /* footer copy sits a bit further left than the page column, when there is room for it */
 .v3 footer .in { margin-left: max(0px, calc((100% - 1440px) / 2 - 80px)); }
 .v3 footer h2 { position: relative; margin: 0; font-family: "Fraunces", serif; font-style: italic; font-weight: 600; font-size: clamp(52px, 7.64vw, 110px); letter-spacing: -0.045em; line-height: 0.9; }
@@ -183,18 +192,54 @@
   .v3 .bandwrap { height: 300px; }
   .v3 .band3 { top: 90px; left: -16px; right: -16px; }
   .v3 .note-lime { top: 0; right: 10px; width: 120px; height: 120px; font-size: 15px; }
-  .v3 .photos { height: 400px; }
+  .v3 .photos { height: 428px; }
+  /* "Offer a ride" + price pill: one tidy full-width row instead of two wrapped blobs */
+  .v3 .cta-offer { display: flex; width: 100%; justify-content: space-between; align-items: center; gap: 10px; white-space: nowrap; font-size: 16px; padding: 8px 8px 8px 22px; }
+  .v3 .cta-offer span { font-size: 12.5px; padding: 11px 14px; }
   .v3 .ph.arch { height: 380px; }
-  .v3 .photos .credit { top: 390px; white-space: normal; }
+  .v3 .photos .credit { top: 404px; white-space: normal; } /* below the circle's ring, not under it */
   .v3 .ph.round { top: 180px; }
 }
 @media (max-width: 600px) {
-  .v3 .hero nav { display: flex; flex-wrap: wrap; justify-content: center; border-radius: 28px; padding: 10px 12px; top: 8px; }
-  .v3 .hero > .in { padding-top: 150px; }
+  /* phones: one row (logo | language, log in, menu button); the section links open as a dropdown from the menu button */
+  .v3 .hero nav { display: grid; grid-template-columns: auto 1fr; grid-template-areas: "logo right" "pill pill"; row-gap: 0; column-gap: 8px;
+    border-radius: 26px; padding: 8px 8px 8px 16px; top: 8px; width: calc(100% - 16px); }
+  .v3 .hero nav .logo3 { grid-area: logo; font-size: 28px; }
+  .v3 .hero nav .navright { grid-area: right; justify-self: end; gap: 6px; }
+  .v3 .langpill button { padding: 7px 9px; font-size: 12px; }
+  .v3 .login3 { font-size: 14px; padding: 9px 14px; }
+  .v3 .burger { display: grid; place-content: center; gap: 4px; width: 40px; height: 40px; border: 0; border-radius: 50%; background: var(--ink); cursor: pointer; }
+  .v3 .burger span { display: block; width: 16px; height: 2px; border-radius: 2px; background: var(--apricot); transition: translate 0.25s ease, rotate 0.25s ease, opacity 0.2s ease; }
+  .v3 nav.menu-open .burger span:nth-child(1) { translate: 0 6px; rotate: 45deg; }
+  .v3 nav.menu-open .burger span:nth-child(2) { opacity: 0; }
+  .v3 nav.menu-open .burger span:nth-child(3) { translate: 0 -6px; rotate: -45deg; }
+  .v3 .hero nav .navpill { grid-area: pill; display: none; flex-direction: column; gap: 2px; padding: 8px 0 2px; margin-top: 8px; background: transparent !important; border-radius: 0; border-top: 1px solid rgba(30, 27, 24, 0.14); font-size: 17px; }
+  .v3 .hero nav.menu-open .navpill { display: flex; }
+  .v3 .hero nav .navpill a { padding: 12px 14px; border-radius: 16px; }
+  .v3 .hero nav.menu-open { background: rgba(255, 250, 242, 0.92); -webkit-backdrop-filter: blur(16px); backdrop-filter: blur(16px); box-shadow: 0 14px 30px -18px rgba(30, 27, 24, 0.5); }
+  .v3 .hero > .in { padding-top: 84px; }
+  .v3 .lineup3 { padding-block: 56px 72px; }
+  /* footer: compact; the headline may run across the sun, links as a tidy two-column list */
+  .v3 footer { padding-block: 40px 28px; }
+  /* phones: the sun stays a desktop thing; the footer is just the headline and links */
+  .v3 footer .sun3, .v3 footer .sunroad { display: none; }
+  /* phones: a small version of the desktop sun in the top-right corner, the car driving to and fro across it */
+  .v3 footer:not([class]) { padding-top: 26px; } /* headline sits beside the sun */
+  .v3 footer:not([class]) :is(.sun3, .sunroad) { display: block; width: 200px; height: 200px; right: -40px; top: -118px; } /* top stripe tucked above the edge: two bands show */
+  .v3 footer:not([class]) .sundrive { --carw: 38px; height: 23px; top: calc(87.5% - 21px); }
+  .v3 footer h2 { font-size: 38px; }
+  /* staggered, poster-style: first line, then the second pushed to the right, clear of the corner sun */
+  .v3 footer h2 span { display: block; }
+  .v3 footer h2 .l2 { padding-left: 1.6em; }
+  .v3 footer .links { display: grid; grid-template-columns: auto auto; justify-content: start; gap: 9px 26px; margin-top: 22px; font-size: 15px; }
+  .v3 footer .links span { grid-column: 1 / -1; margin-top: 6px; color: #cfc5b6; }
+  .v3 footer .credit { margin-top: 28px; }
   .v3 .ask3 { flex-direction: column; align-items: stretch; border-radius: 28px; padding: 12px; gap: 8px; }
   .v3 .ask3 input { padding: 10px 12px; font-size: 17px; }
   .v3 .stub3 b { font-size: 40px; }
   .v3 .band3 .poster { font-size: 34px; margin-right: 20px; }
+  .v3 .band3 > .poster:not(.back) { display: none; }
+  .v3 .band3 .back { font-size: 28px; } /* no room for "Nocny Rejs" next to the stub on phones */
   .v3 .match3, .v3 .drive3 { padding-block: 72px; }
   .v3 .match3 { border-radius: 36px 36px 0 0; }
   .v3 .tile .n { font-size: 110px; }
