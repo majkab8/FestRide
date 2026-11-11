@@ -3,7 +3,11 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState, t
 export type Lang = "pl" | "en";
 
 const pl = {
-  "nav.myRides": "Moje przejazdy", "nav.newRequests": "Nowe prośby: {n}", "nav.noRequests": "Brak nowych próśb",
+  "nav.myRides": "Moje przejazdy", "bell.label": "Powiadomienia", "bell.unread": "Powiadomienia, nowe: {n}", "bell.empty": "Na razie nic się nie wydarzyło.",
+  "bell.request": "{name} prosi o miejsce: {event}", "bell.withdrew": "{name} rezygnuje z przejazdu: {event}",
+  "bell.accepted": "{name} bierze cię do auta: {event}", "bell.declined": "{name} nie ma dla ciebie miejsca: {event}",
+  "bell.removed": "{name} usuwa cię z przejazdu: {event}", "bell.called_off": "{name} odwołuje przejazd: {event}",
+  "bell.now": "przed chwilą", "bell.min": "{n} min temu", "bell.h": "{n} godz. temu", "bell.d": "{n} dni temu",
   "home.nextLine": "{event} {when}. {driver} rusza z: {from} o {time}.", "home.trySentence": "Spróbuj napisać tak",
   "mine.title": "Moje przejazdy", "mine.going": "Jedziesz", "mine.waiting": "Czekasz na odpowiedź", "mine.past": "Minione i odrzucone",
   "mine.none": "Nie prosiłeś jeszcze o miejsce w żadnym aucie.",
@@ -63,7 +67,13 @@ const pl = {
   "ride.message": "Wiadomość dla kierowcy", "ride.messagePh": "Np. mam mały plecak, chętnie podzielę się playlistą.",
   "ride.ask": "Poproś o miejsce", "ride.loginToAsk": "Zaloguj się, żeby poprosić o miejsce", "ride.own": "To twój przejazd",
   "ride.manage": "Zarządzaj przejazdem", "ride.status.pending": "prośba wysłana", "ride.status.accepted": "jedziesz!",
-  "ride.status.declined": "odrzucono", "ride.multi": "Możesz poprosić kilka aut na ten sam event. Pierwsze „tak” wygrywa, reszta próśb zamknie się sama.",
+  "ride.status.declined": "odrzucono", "ride.status.cancelled": "wycofane", "ride.status.removed": "usunięto cię z auta", "ride.status.called_off": "przejazd odwołany",
+  "ride.calledOffNote": "Kierowca odwołał ten przejazd. Poszukaj innego auta na ten koncert.", "err.calledOff": "Kierowca odwołał ten przejazd.",
+  "drive.callOff": "Odwołaj przejazd", "drive.callOffSure": "Odwołać ten przejazd?", "drive.callOffSureWith": "Odwołać? Osoby, które prosiły o miejsce, zobaczą, że przejazd jest odwołany.",
+  "drive.callOffYes": "Tak, odwołaj", "drive.callOffNo": "Nie",
+  "ride.withdraw": "Wycofaj prośbę", "ride.giveUp": "Rezygnuję z miejsca", "ride.withdrawSure": "Wycofać prośbę?", "ride.giveUpSure": "Na pewno zwolnić miejsce?",
+  "ride.sureYes": "Tak", "ride.sureNo": "Nie", "ride.removedNote": "Kierowca usunął cię z tego przejazdu. Poszukaj innego auta na ten koncert.",
+  "ride.multi": "Możesz poprosić kilka aut na ten sam event. Pierwsze „tak” wygrywa, reszta próśb zamknie się sama.",
   "ride.full": "Brak wolnych miejsc", "ride.left": "Ten przejazd już wyjechał", "ride.back": "Wróć do wyników", "ride.note": "Od kierowcy",
   "ride.notFound": "Nie ma takiego przejazdu.", "ride.sent": "Prośba wysłana. Damy znać, gdy kierowca odpowie.",
 
@@ -78,7 +88,8 @@ const pl = {
   "drive.fill": "pełne auto: {n} zł na paliwo", "drive.seatN": "miejsce {n}", "drive.seatFree": "miejsce {n} wolne",
   "drive.want": "{n} {verb} jechać", "drive.wantOne": "chce", "drive.wantFew": "chcą", "drive.noRequests": "Na razie nikt nie poprosił o miejsce.", "drive.take": "Zabierz: {name}",
   "drive.notNow": "Nie tym razem", "drive.done": "zakończony", "drive.full": "Auto jest pełne",
-  "drive.decided": "Podjęte decyzje",
+  "drive.decided": "Podjęte decyzje", "drive.withdrew": "Zrezygnowali", "drive.removed": "Usunięci z auta",
+  "drive.remove": "Usuń z przejazdu: {name}", "drive.removeSure": "usunąć: {name}?", "drive.yes": "tak", "drive.no": "nie",
 
   "offer.title": "Zaproponuj przejazd", "offer.event": "Na jakie wydarzenie?", "offer.eventPh": "Wpisz nazwę, miasto albo miejsce",
   "offer.change": "Zmień", "offer.origin": "Skąd wyjeżdżasz?", "offer.originPh": "np. Łódź",
@@ -102,7 +113,9 @@ const pl = {
   "common.retry": "Spróbuj ponownie",
   "err.full": "W tym aucie nie ma już wolnych miejsc.", "err.duplicate": "Już poprosiłeś o miejsce w tym aucie.",
   "err.alreadyGoing": "Masz już potwierdzony przejazd na to wydarzenie.", "err.time": "Sprawdź datę i godzinę wyjazdu.",
-  "err.own": "To twój własny przejazd.", "err.decided": "Ta prośba ma już odpowiedź.",
+  "err.own": "To twój własny przejazd.", "err.twoRides": "Masz już przejazd na to wydarzenie.",
+  "offer.haveOne": "Masz już przejazd na to wydarzenie. Jedno auto na wydarzenie wystarczy.", "offer.manageIt": "Zobacz swój przejazd",
+  "err.decided": "Ta prośba ma już odpowiedź.",
   "nav.main": "Główna nawigacja", "nav.footer": "Stopka", "home.offers": "Twoje przejazdy jako kierowca",
   "drive.seats": "Miejsca w aucie", "su.stepsAria": "Postęp rejestracji",
 };
@@ -111,7 +124,11 @@ type Dict = typeof pl;
 export type Key = keyof Dict;
 
 const en: Dict = {
-  "nav.myRides": "My rides", "nav.newRequests": "{n} new requests", "nav.noRequests": "No new requests",
+  "nav.myRides": "My rides", "bell.label": "Notifications", "bell.unread": "Notifications, {n} new", "bell.empty": "Nothing has happened yet.",
+  "bell.request": "{name} asks for a seat: {event}", "bell.withdrew": "{name} withdrew from your ride: {event}",
+  "bell.accepted": "{name} has a seat for you: {event}", "bell.declined": "{name} has no seat for you: {event}",
+  "bell.removed": "{name} took you off the ride: {event}", "bell.called_off": "{name} called off the ride: {event}",
+  "bell.now": "just now", "bell.min": "{n} min ago", "bell.h": "{n} h ago", "bell.d": "{n} d ago",
   "home.nextLine": "{event} is {when}. {driver} leaves {from} at {time}.", "home.trySentence": "Try typing this",
   "mine.title": "My rides", "mine.going": "You're going", "mine.waiting": "Waiting for a yes", "mine.past": "Past and declined",
   "mine.none": "You haven't asked any car for a seat yet.",
@@ -171,7 +188,13 @@ const en: Dict = {
   "ride.message": "A line for the driver", "ride.messagePh": "E.g. one small backpack, happy to share the playlist.",
   "ride.ask": "Ask for a seat", "ride.loginToAsk": "Log in to ask for a seat", "ride.own": "This is your ride",
   "ride.manage": "Manage this ride", "ride.status.pending": "request sent", "ride.status.accepted": "you're in!",
-  "ride.status.declined": "declined", "ride.multi": "You can ask a few cars for the same event. The first yes wins and the others close on their own.",
+  "ride.status.declined": "declined", "ride.status.cancelled": "withdrawn", "ride.status.removed": "removed by the driver", "ride.status.called_off": "ride called off",
+  "ride.calledOffNote": "The driver called off this ride. Look for another car to this show.", "err.calledOff": "The driver called off this ride.",
+  "drive.callOff": "Call off this ride", "drive.callOffSure": "Call off this ride?", "drive.callOffSureWith": "Call it off? Everyone who asked for a seat will see it's off.",
+  "drive.callOffYes": "Yes, call it off", "drive.callOffNo": "No",
+  "ride.withdraw": "Withdraw request", "ride.giveUp": "Give up my seat", "ride.withdrawSure": "Withdraw the request?", "ride.giveUpSure": "Free up your seat?",
+  "ride.sureYes": "Yes", "ride.sureNo": "No", "ride.removedNote": "The driver took you off this ride. Look for another car to this show.",
+  "ride.multi": "You can ask a few cars for the same event. The first yes wins and the others close on their own.",
   "ride.full": "No seats left", "ride.left": "This ride has already left", "ride.back": "Back to results", "ride.note": "From the driver",
   "ride.notFound": "This ride doesn't exist.", "ride.sent": "Request sent. We'll let you know when the driver answers.",
 
@@ -186,7 +209,8 @@ const en: Dict = {
   "drive.fill": "fill it: {n} zł for fuel", "drive.seatN": "seat {n}", "drive.seatFree": "seat {n} free",
   "drive.want": "{n} {verb} in", "drive.wantOne": "wants", "drive.wantFew": "want", "drive.noRequests": "Nobody has asked for a seat yet.", "drive.take": "Take {name}",
   "drive.notNow": "Not this time", "drive.done": "done", "drive.full": "Your car is full",
-  "drive.decided": "Decided",
+  "drive.decided": "Decided", "drive.withdrew": "Withdrew", "drive.removed": "Removed",
+  "drive.remove": "Remove {name} from the ride", "drive.removeSure": "remove {name}?", "drive.yes": "yes", "drive.no": "no",
 
   "offer.title": "Offer a ride", "offer.event": "Which event?", "offer.eventPh": "Type a name, city or venue",
   "offer.change": "Change", "offer.origin": "Leaving from", "offer.originPh": "e.g. Łódź",
@@ -210,7 +234,9 @@ const en: Dict = {
   "common.retry": "Try again",
   "err.full": "This car has no free seats left.", "err.duplicate": "You already asked this car for a seat.",
   "err.alreadyGoing": "You already have a confirmed ride to this event.", "err.time": "Check the departure date and time.",
-  "err.own": "This is your own ride.", "err.decided": "This request has already been answered.",
+  "err.own": "This is your own ride.", "err.twoRides": "You already offer a ride to this event.",
+  "offer.haveOne": "You already offer a ride to this event. One car per event is enough.", "offer.manageIt": "See your ride",
+  "err.decided": "This request has already been answered.",
   "nav.main": "Main navigation", "nav.footer": "Footer", "home.offers": "Your rides as a driver",
   "drive.seats": "Seats in the car", "su.stepsAria": "Sign-up progress",
 };

@@ -77,6 +77,48 @@ def test_accept_declines_other_requests_to_same_event(client, register, make_rid
     assert client.post(f"/rides/{ride_b}/requests", headers=passenger).status_code == 409
 
 
+def test_passenger_can_withdraw_and_ask_again(client, register, make_ride):
+    driver = register()
+    ride = make_ride(driver, seats=1)
+    passenger, stranger = register(), register()
+    req = client.post(f"/rides/{ride}/requests", json={"message": "hej"}, headers=passenger).json()
+    assert client.post(f"/requests/{req['id']}/cancel", headers=stranger).status_code == 403
+
+    # withdraw while pending, then ask again: the same request reopens
+    assert client.post(f"/requests/{req['id']}/cancel", headers=passenger).json()["status"] == "cancelled"
+    assert client.post(f"/requests/{req['id']}/cancel", headers=passenger).status_code == 409
+    again = client.post(f"/rides/{ride}/requests", json={"message": "jednak tak"}, headers=passenger).json()
+    assert (again["id"], again["status"], again["message"]) == (req["id"], "pending", "jednak tak")
+
+    # give up an accepted seat: the seat frees up
+    client.patch(f"/requests/{req['id']}", json={"status": "accepted"}, headers=driver)
+    assert client.get(f"/rides/{ride}").json()["seats_left"] == 0
+    client.post(f"/requests/{req['id']}/cancel", headers=passenger)
+    assert client.get(f"/rides/{ride}").json()["seats_left"] == 1
+    statuses = {q["id"]: q["status"] for q in client.get(f"/rides/{ride}/requests", headers=driver).json()}
+    assert statuses == {req["id"]: "cancelled"}
+    # a cancelled request can't be accepted
+    assert client.patch(f"/requests/{req['id']}", json={"status": "accepted"}, headers=driver).status_code == 409
+
+
+def test_driver_can_remove_an_accepted_passenger(client, register, make_ride):
+    driver = register()
+    ride = make_ride(driver, seats=1)
+    passenger, waiting = register(), register()
+    req = client.post(f"/rides/{ride}/requests", headers=passenger).json()
+    other = client.post(f"/rides/{ride}/requests", headers=waiting).json()
+    assert client.post(f"/requests/{req['id']}/remove", headers=driver).status_code == 409  # not accepted yet
+    client.patch(f"/requests/{req['id']}", json={"status": "accepted"}, headers=driver)
+
+    assert client.post(f"/requests/{req['id']}/remove", headers=passenger).status_code == 403
+    assert client.post(f"/requests/{req['id']}/remove", headers=driver).json()["status"] == "removed"
+    assert client.get(f"/rides/{ride}").json()["seats_left"] == 1
+    # the freed seat can go to someone else; the removed passenger can't ask this ride again
+    assert client.patch(f"/requests/{other['id']}", json={"status": "accepted"}, headers=driver).status_code == 200
+    assert client.post(f"/rides/{ride}/requests", headers=passenger).status_code == 409
+    assert [q["status"] for q in client.get("/requests/mine", headers=passenger).json()] == ["removed"]
+
+
 # --- match ranking ------------------------------------------------------------
 
 
@@ -149,3 +191,73 @@ def test_request_message_reaches_driver(client, register, make_ride):
     [req] = client.get(f"/rides/{ride}/requests", headers=driver).json()
     assert req["message"] == "One small backpack"
     assert client.post(f"/rides/{ride}/requests", json={"message": "x" * 301}, headers=register()).status_code == 422
+
+
+
+def test_one_ride_per_driver_per_event(client, register, make_ride, event_id):
+    driver = register()
+    first = make_ride(driver, hours_before=2)
+    departure = client.get(f"/rides/{first}").json()["departure_time"][:10] + "T12:00"
+    r = client.post("/rides", json={"event_id": event_id, "origin_city": "Łódź", "departure_time": departure,
+                                    "seats_total": 3, "price": 0}, headers=driver)
+    assert r.status_code == 409 and "already offer" in r.json()["detail"]  # same event, two hours later
+    make_ride(register())  # another driver to the same event is fine
+
+
+def test_driver_can_call_off_a_ride(client, register, make_ride, event_id):
+    driver, other = register(), register()
+    # nobody asked: the ride is simply gone
+    empty = make_ride(driver)
+    assert client.delete(f"/rides/{empty}", headers=other).status_code == 403
+    assert client.delete(f"/rides/{empty}", headers=driver).status_code == 204
+    assert client.get(f"/rides/{empty}").status_code == 404
+
+    # with passengers: kept as called off, hidden, requests closed
+    ride = make_ride(driver)
+    going, waiting = register(), register()
+    req = client.post(f"/rides/{ride}/requests", headers=going).json()
+    client.post(f"/rides/{ride}/requests", headers=waiting)
+    client.patch(f"/requests/{req['id']}", json={"status": "accepted"}, headers=driver)
+    assert client.delete(f"/rides/{ride}", headers=driver).status_code == 204
+    assert client.delete(f"/rides/{ride}", headers=driver).status_code == 409
+
+    assert client.get(f"/rides/{ride}").json()["cancelled"] is True
+    assert ride not in [r["id"] for r in client.get("/rides").json()]
+    assert ride not in [r["id"] for r in client.get("/rides/mine", headers=driver).json()]
+    for passenger in (going, waiting):
+        assert [q["status"] for q in client.get("/requests/mine", headers=passenger).json()] == ["called_off"]
+    assert client.post(f"/rides/{ride}/requests", headers=register()).status_code == 400
+    # the passenger is free to take another car, and the driver to offer a new ride
+    assert client.post(f"/rides/{make_ride(register())}/requests", headers=going).status_code == 201
+    make_ride(driver)
+
+
+def test_notifications_follow_the_ride(client, register, make_ride):
+    driver = register(name="Kuba")
+    passenger = register(name="Ola")
+    ride = make_ride(driver)
+    bell = lambda who: client.get("/notifications", headers=who).json()
+    kinds = lambda who: [n["kind"] for n in bell(who)["items"]]
+
+    req = client.post(f"/rides/{ride}/requests", headers=passenger).json()
+    first = bell(driver)
+    assert first["unread"] == 1 and first["items"][0]["actor_name"] == "Ola" and first["items"][0]["event_name"] == "Test Fest"
+
+    client.patch(f"/requests/{req['id']}", json={"status": "accepted"}, headers=driver)
+    client.post(f"/requests/{req['id']}/cancel", headers=passenger)
+    assert kinds(passenger) == ["accepted"] and kinds(driver) == ["withdrew", "request"]
+
+    assert client.post("/notifications/read", headers=driver).status_code == 204
+    assert bell(driver)["unread"] == 0 and bell(passenger)["unread"] == 1
+
+    client.post(f"/rides/{ride}/requests", headers=passenger)  # asks again
+    client.patch(f"/requests/{req['id']}", json={"status": "accepted"}, headers=driver)
+    client.post(f"/requests/{req['id']}/remove", headers=driver)
+    assert kinds(passenger)[:2] == ["removed", "accepted"]
+
+    other = register()
+    req2 = client.post(f"/rides/{ride}/requests", headers=other).json()
+    client.delete(f"/rides/{ride}", headers=driver)
+    assert kinds(other) == ["called_off"]
+    assert client.get("/notifications").status_code == 401
+    assert req2["status"] == "pending"

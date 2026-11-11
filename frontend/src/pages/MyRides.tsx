@@ -16,7 +16,7 @@ export default function MyRides() {
   const groups: [string, MyRequest[]][] = [
     [t("mine.going"), upcoming.filter((q) => q.status === "accepted")],
     [t("mine.waiting"), upcoming.filter((q) => q.status === "pending")],
-    [t("mine.past"), [...all.filter((q) => !upcoming.includes(q)), ...upcoming.filter((q) => q.status === "declined")].reverse()],
+    [t("mine.past"), [...all.filter((q) => !upcoming.includes(q)), ...upcoming.filter((q) => q.status !== "accepted" && q.status !== "pending")].reverse()],
   ];
 
   return (
@@ -36,7 +36,7 @@ export default function MyRides() {
           <div className="rows" style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 760 }}>
             {list.map((q) => {
               const k = q.ride.match ? matchKey(q.ride.match) : "diff";
-              const dim = q.status === "declined" || parseLocal(q.ride.departure_time) <= now;
+              const dim = (q.status !== "accepted" && q.status !== "pending") || parseLocal(q.ride.departure_time) <= now;
               return (
                 <Link key={q.id} to={`/rides/${q.ride.id}`} className={`row3${dim ? " dim" : ""}`}>
                   <span className={`sc ${shapeFor(k)} ${dim ? "s-none" : `s-${k}`}${q.ride.match?.percent === 100 ? " n3" : ""}`}>{q.ride.match?.percent ?? "·"}</span>

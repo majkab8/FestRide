@@ -28,6 +28,19 @@ def init_db() -> None:
     from . import models  # noqa: F401
 
     SQLModel.metadata.create_all(engine)
+    _add_missing_columns()
+
+
+def _add_missing_columns() -> None:
+    """create_all doesn't alter existing tables: add columns introduced later,
+    so an existing local database keeps working (no migration tool in the MVP)."""
+    added = {"ride": {"cancelled": "BOOLEAN NOT NULL DEFAULT 0"}}
+    with engine.begin() as conn:
+        for table, columns in added.items():
+            have = {row[1] for row in conn.exec_driver_sql(f"PRAGMA table_info({table})")}
+            for name, ddl in columns.items():
+                if have and name not in have:
+                    conn.exec_driver_sql(f"ALTER TABLE {table} ADD COLUMN {name} {ddl}")
 
 
 def get_session() -> Iterator[Session]:

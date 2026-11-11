@@ -1,8 +1,8 @@
 """One-off import of Polish music events into the local SQLite database.
 
 Usage (from the backend/ directory):
-    python import_events.py          # Ticketmaster if TICKETMASTER_API_KEY is set, else seed
-    python import_events.py --seed   # always load the small built-in seed
+    python import_events.py          # Ticketmaster + big festivals if TICKETMASTER_API_KEY is set, else festivals only
+    python import_events.py --seed   # only the built-in festival list
 
 The import is idempotent: events are upserted by `external_id`, so re-running
 refreshes existing rows instead of creating duplicates. The app itself only
@@ -111,17 +111,16 @@ def fetch_ticketmaster(api_key: str) -> list[dict]:
     return list(events.values())
 
 
-# Fallback sample data for running without a Ticketmaster key. Festival names
-# are real, but dates are illustrative and venues/coordinates approximate.
-SEED_EVENTS = [
-    ("seed:opener-2027", "Open'er Festival 2027", "Gdynia", "Lotnisko Gdynia-Kosakowo", "Alternative", "2027-07-01", 54.5302, 18.4952),
-    ("seed:off-2027", "OFF Festival 2027", "Katowice", "Dolina Trzech Stawów", "Alternative", "2027-08-06", 50.2485, 19.0370),
-    ("seed:audioriver-2027", "Audioriver 2027", "Płock", "Plaża nad Wisłą", "Dance/Electronic", "2027-07-23", 52.5410, 19.6900),
-    ("seed:nowa-muzyka-2027", "Tauron Nowa Muzyka 2027", "Katowice", "Strefa Kultury", "Dance/Electronic", "2027-08-20", 50.2650, 19.0350),
-    ("seed:orange-warsaw-2027", "Orange Warsaw Festival 2027", "Warszawa", "Tor Wyścigów Konnych Służewiec", "Pop", "2027-06-04", 52.1700, 21.0120),
-    ("seed:polandrock-2027", "Pol'and'Rock Festival 2027", "Czaplinek", "Lotnisko Broczyno", "Rock", "2027-07-29", 53.5600, 16.2400),
-    ("seed:mystic-2027", "Mystic Festival 2027", "Gdańsk", "Stocznia Gdańska", "Metal", "2027-06-02", 54.3620, 18.6420),
-    ("seed:unsound-2027", "Unsound Kraków 2027", "Kraków", "Kraków (various venues)", "Dance/Electronic", "2027-10-10", 50.0614, 19.9366),
+# Big festivals Ticketmaster doesn't sell (their tickets go through other
+# shops), added on every import. Dates are the first festival day, checked
+# against the organisers' announcements in Nov 2026; venues/coordinates are
+# approximate. Only editions with confirmed dates belong here. Also the
+# fallback data when there is no Ticketmaster key.
+FESTIVALS = [
+    ("fest:mystic-2027", "Mystic Festival 2027", "Gdańsk", "Polsat Plus Arena Gdańsk (Letnica)", "Metal", "2027-06-10", 54.3897, 18.6401, "https://www.mysticfestival.pl"),
+    ("fest:opener-2027", "Open'er Festival 2027", "Gdynia", "Lotnisko Gdynia-Kosakowo", "Alternative", "2027-06-30", 54.5302, 18.4952, "https://opener.pl"),
+    ("fest:polandrock-2027", "Pol'and'Rock Festival 2027", "Czaplinek", "Lotnisko Broczyno", "Rock", "2027-07-29", 53.5600, 16.2400, "https://polandrockfestival.pl"),
+    ("fest:orange-warsaw-2027", "Orange Warsaw Festival 2027", "Warszawa", "Tor Wyścigów Konnych Służewiec", "Pop", "2027-08-13", 52.1700, 21.0120, "https://orangewarsawfestival.pl"),
 ]
 
 
@@ -136,10 +135,10 @@ def seed_events() -> list[dict]:
             "event_date": date.fromisoformat(day),
             "latitude": lat,
             "longitude": lng,
-            "url": None,
+            "url": url,
             "image_url": None,
         }
-        for ext_id, name, city, venue, genre, day, lat, lng in SEED_EVENTS
+        for ext_id, name, city, venue, genre, day, lat, lng, url in FESTIVALS
     ]
 
 
@@ -182,6 +181,8 @@ def main() -> int:
         except ValueError:
             print("Ticketmaster returned a non-JSON response. Re-run with --seed to use sample data.")
             return 1
+
+        events += seed_events()
 
     created, updated = upsert(events)
     print(f"Done: {created} created, {updated} updated.")

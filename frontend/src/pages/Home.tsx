@@ -41,7 +41,7 @@ export default function Home() {
   const waiting = [...waitingBy.values()].filter((g) => g.some((q) => q.status === "pending"));
 
   // feed: the best-matching cars still leaving with a free seat, to events you don't already have a ride or open requests for
-  const covered = new Set(upcoming.filter((q) => q.status !== "declined").map((q) => q.ride.event.id));
+  const covered = new Set(upcoming.filter((q) => q.status === "pending" || q.status === "accepted").map((q) => q.ride.event.id));
   const picks = (rides.data ?? [])
     .filter((r) => r.match && r.driver.id !== user?.id && !covered.has(r.event.id) && r.seats_left > 0 && parseLocal(r.departure_time) > now)
     .sort((a, b) => (b.match?.percent ?? 0) - (a.match?.percent ?? 0))
@@ -101,13 +101,13 @@ export default function Home() {
                 </div>
                 <div className="cars">
                   {group.map((q) => {
-                    const off = q.status === "declined" || q.ride.seats_left <= 0;
+                    const off = q.status !== "pending" || q.ride.seats_left <= 0;
                     const k = q.ride.match ? matchKey(q.ride.match) : "diff";
                     return (
                       <Link key={q.id} to={`/rides/${q.ride.id}`} className={`car${off ? " off" : ""}`}>
                         <span className={`sc ${shapeFor(k)} ${off ? "s-none" : `s-${k}`}${q.ride.match?.percent === 100 ? " n3" : ""}`}>{q.ride.match?.percent ?? "·"}</span>
                         <span style={{ flex: 1, minWidth: 0 }}><b>{q.ride.driver.display_name}</b><br />
-                          <small>{off ? (q.status === "declined" ? t("ride.status.declined") : t("ride.full")) : `${q.ride.origin_city.toLowerCase()} ${time(q.ride.departure_time)}`}</small></span>
+                          <small>{off ? (q.status !== "pending" ? t(`ride.status.${q.status}`) : t("ride.full")) : `${q.ride.origin_city.toLowerCase()} ${time(q.ride.departure_time)}`}</small></span>
                       </Link>
                     );
                   })}

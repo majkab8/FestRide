@@ -25,10 +25,12 @@ _ALIASES = {
 }
 
 def fold(text: str) -> str:
-    """Lowercase and strip diacritics ("Łódź" -> "lodz", "Café" -> "cafe"),
-    for case/diacritic-insensitive lookups and comparisons."""
+    """Lowercase and strip diacritics and apostrophes ("Łódź" -> "lodz",
+    "Open'er" -> "opener"), for case/diacritic-insensitive lookups and comparisons."""
     # ł/Ł have no Unicode decomposition, so NFKD alone would keep them.
     text = text.strip().replace("ł", "l").replace("Ł", "L")
+    for apostrophe in "'’`":
+        text = text.replace(apostrophe, "")
     decomposed = unicodedata.normalize("NFKD", text)
     return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
 

@@ -22,7 +22,7 @@ from sqlmodel import Session, col, select
 
 from app.clock import today_pl
 from app.database import engine, init_db
-from app.models import DrivingStyle, Event, RequestStatus, Ride, RideRequest, User
+from app.models import DrivingStyle, Event, Notification, NotificationKind, RequestStatus, Ride, RideRequest, User
 from app.security import hash_password
 
 PASSWORD = "festride-demo"
@@ -59,6 +59,12 @@ def _reset(session: Session) -> int:
         select(RideRequest).where(col(RideRequest.passenger_id).in_(ids) | col(RideRequest.ride_id).in_(ride_ids))
     ):
         session.delete(req)
+    for note in session.exec(
+        select(Notification).where(
+            col(Notification.user_id).in_(ids) | col(Notification.actor_id).in_(ids) | col(Notification.ride_id).in_(ride_ids)
+        )
+    ):
+        session.delete(note)
     for ride in rides:
         session.delete(ride)
     for user in users:
@@ -148,6 +154,7 @@ def main() -> int:
         for name, genres, style, smoker, message in PASSENGERS:
             passenger = _user(session, name, genres, style, smoker)
             session.add(RideRequest(ride_id=own.id, passenger_id=passenger.id, message=message))
+            session.add(Notification(user_id=demo.id, actor_id=passenger.id, ride_id=own.id, kind=NotificationKind.request))
 
         # Ania as a passenger on two other events: one confirmed ride (Home's
         # wristband card) and two requests still waiting for a yes.
@@ -157,6 +164,7 @@ def main() -> int:
             used.append(going.id)
             ride = _ride(session, drivers["Kuba"], going, "Łódź", 35, False, "Techno przez całą drogę, weźcie przekąski!")
             session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, status=RequestStatus.accepted, message="Cześć! Mam tylko mały plecak."))
+            session.add(Notification(user_id=demo.id, actor_id=drivers["Kuba"].id, ride_id=ride.id, kind=NotificationKind.accepted))
         waiting = _upcoming(session, lead + 6, exclude=used)
         if waiting:
             for name, origin, price in (("Ola", "Łódź", 30), ("Piotr", "Łódź", 40)):
