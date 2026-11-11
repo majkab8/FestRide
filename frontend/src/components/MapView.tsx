@@ -1,13 +1,19 @@
 import L from "leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect, useMemo } from "react";
-import { MapContainer, Marker, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { MapContainer, Marker, Polygon, Polyline, TileLayer, Tooltip, useMap } from "react-leaflet";
+import { POLAND_BORDER } from "../poland";
 
 export interface MapPin { id: string | number; pos: [number, number]; label: string; title: string; on?: boolean; }
 export interface MapOrigin { id: string | number; pos: [number, number]; title: string; on?: boolean; }
 export interface MapRoute { id: string | number; from: [number, number]; to: [number, number]; on?: boolean; }
 
 const POLAND_CENTER: [number, number] = [52.0, 19.2];
+
+/* FestRide only covers Poland for now: the map can't pan away from it, and everything outside the
+   border is covered with the page colour, so only Poland shows. */
+const POLAND_BOUNDS = L.latLngBounds([48.7, 13.9], [55.1, 24.4]);
+const WORLD: [number, number][] = [[-89, -179], [-89, 179], [89, 179], [89, -179]];
 
 const escapeHtml = (s: string) => s.replace(/[&<>"']/g, (c) => `&#${c.charCodeAt(0)};`);
 
@@ -53,21 +59,23 @@ export function MapView({ pins = [], origins = [], routes = [], onPin, label }: 
   const points = useMemo(() => [...pins.map((p) => p.pos), ...origins.map((o) => o.pos)], [pins, origins]);
   return (
     <div className="map-box" role="region" aria-label={label}>
-      <MapContainer center={POLAND_CENTER} zoom={6} scrollWheelZoom={false} style={{ width: "100%", height: "100%" }}>
+      <MapContainer center={POLAND_CENTER} zoom={6} minZoom={6} maxBounds={POLAND_BOUNDS} maxBoundsViscosity={1} scrollWheelZoom={false} style={{ width: "100%", height: "100%" }}>
         <TileLayer
           attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
           url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
         />
+        <Polygon positions={[WORLD, POLAND_BORDER]} interactive={false} pathOptions={{ className: "outside-pl", weight: 1.5 }} />
         {[...routes].sort((a, b) => Number(!!a.on) - Number(!!b.on)).map((r) => (
           <Polyline key={`${r.id}-${!!r.on}`} positions={arc(r.from, r.to)} pathOptions={{ className: r.on ? "route on" : "route", weight: r.on ? 6 : 3, dashArray: r.on ? undefined : "2 10", lineCap: "round" }} />
         ))}
+        {/* keyed by `on` as well: Leaflet ignores later changes to a tooltip's `permanent`, so the label would stick to the first selection */}
         {origins.map((o) => (
-          <Marker key={`o${o.id}`} position={o.pos} icon={originIcon(!!o.on)} keyboard={false}>
+          <Marker key={`o${o.id}-${!!o.on}`} position={o.pos} icon={originIcon(!!o.on)} keyboard={false}>
             <Tooltip direction="right" offset={[10, 0]} permanent={!!o.on} className="map-tip">{o.title}</Tooltip>
           </Marker>
         ))}
         {pins.map((p) => (
-          <Marker key={`p${p.id}`} position={p.pos} icon={pinIcon(p.label, !!p.on)} title={p.title}
+          <Marker key={`p${p.id}-${!!p.on}`} position={p.pos} icon={pinIcon(p.label, !!p.on)} title={p.title}
             eventHandlers={onPin ? { click: () => onPin(p.id) } : undefined} zIndexOffset={p.on ? 1000 : 0}>
             <Tooltip direction="top" offset={[0, -40]} permanent={!!p.on}>{p.title}</Tooltip>
           </Marker>

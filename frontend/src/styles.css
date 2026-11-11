@@ -6,6 +6,11 @@
   --bg: #f7ebd8; --surface: #fffaf2; --sand: #efe0c9; --line: #e2d2ba; --fg: #1e1b18; --muted: #6e655a; --faint: #8a8073;
   --pink: #ff4f8b; --pink-2: #ff6fa0; --blue: #2d5bff; --lime: #d7ff4a; --peach: #ffc48e; --blush: #f3d3be;
   --on-bright: #1e1b18; --on-blue: #fffaf2;
+  /* frosted ride card on the map: cream glass on both themes, dark text, pink score */
+  --float-bg: rgba(255, 250, 242, 0.9); --float-fg: #1e1b18; --float-muted: #6e655a; --float-num: #ff4f8b;
+  /* match tiers, pastel traffic light: mint = great, pistachio = good, tangerine = something in common, light red = different vibes
+     (the *-ink versions are deeper, for numbers shown as text) */
+  --m-best: #8edba9; --m-good: #c8e66b; --m-mid: #f7ae7c; --m-low: #ec9f9b; --m-best-ink: #1f9d5a; --m-good-ink: #6f8f12; --m-mid-ink: #e07b12; --m-low-ink: #e04848;
   --inv-bg: #1e1b18; --inv-fg: #f7ebd8; --inv-muted: #cfc5b6; --inv-soft: #2c2824; --inv-line: #5d564c;
   --sky: linear-gradient(180deg, #ffe7c2 0%, #ffc48e 38%, #ff8f7a 70%, #ff5c8e 100%);
   --sky-fg: #1e1b18; --sky-chip: rgba(255, 255, 255, 0.45);
@@ -24,10 +29,14 @@
     --sky-fg: #ffe7c2; --sky-chip: rgba(255, 255, 255, 0.1);
     --shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.7);
     --danger: #ffb4ab;
+    --m-best-ink: #4fdc92; --m-good-ink: #c8e66b; --m-mid-ink: #ffb066; --m-low-ink: #ff8585;
+    --float-bg: rgba(255, 250, 242, 0.86); --float-fg: #1e1b18; --float-muted: #5e564c; --float-num: #ff4f8b;
     color-scheme: dark;
   }
 }
 :root[data-theme="dark"] {
+  --m-best-ink: #4fdc92; --m-good-ink: #c8e66b; --m-mid-ink: #ffb066; --m-low-ink: #ff8585;
+  --float-bg: rgba(255, 250, 242, 0.86); --float-fg: #1e1b18; --float-muted: #5e564c; --float-num: #ff4f8b;
   --bg: #1a1613; --surface: #26201b; --sand: #322a23; --line: #463c33; --fg: #f7ebd8; --muted: #b9ae9f; --faint: #998e80;
   --inv-bg: #f7ebd8; --inv-fg: #1e1b18; --inv-muted: #5e564c; --inv-soft: #efe0c9; --inv-line: #b8aa96;
   --sky: linear-gradient(180deg, #221a24 0%, #3a2233 45%, #6e2b4d 80%, #a83a6a 100%);
@@ -114,12 +123,12 @@ main.page { padding-block: 8px 56px; display: flex; flex-direction: column; gap:
 .sh0 { border-radius: 50%; }
 .sh1 { border-radius: 999px 999px 14px 14px; }
 .sh2 { border-radius: 62% 38% 46% 54% / 55% 48% 52% 45%; }
-.m-great .blob { background: var(--pink); color: var(--on-bright); }
-.m-good .blob { background: var(--blue); color: var(--on-blue); }
-.m-some .blob { background: var(--lime); color: var(--on-bright); }
-.m-diff .blob { background: transparent; color: var(--faint); box-shadow: inset 0 0 0 1.5px var(--faint); }
+.m-great .blob { background: var(--m-best); color: var(--on-bright); }
+.m-good .blob { background: var(--m-good); color: var(--on-bright); }
+.m-some .blob { background: var(--m-mid); color: var(--on-bright); }
+.m-diff .blob { background: var(--m-low); color: var(--on-bright); }
 .score > span:last-child { font-family: var(--font-mono); font-size: 10.5px; line-height: 1.25; color: var(--muted); }
-.c-great { color: var(--pink); } .c-good { color: var(--blue); } .c-some { color: var(--muted); } .c-diff { color: var(--faint); }
+.c-great { color: var(--m-best-ink); } .c-good { color: var(--m-good-ink); } .c-some { color: var(--m-mid-ink); } .c-diff { color: var(--m-low-ink); }
 
 /* sunset sky band */
 .sky { background: var(--sky); color: var(--sky-fg); border-radius: 40px; padding: 48px 32px 40px; text-align: center; position: relative; overflow: hidden; display: flex; flex-direction: column; align-items: center; gap: 18px; }
@@ -137,7 +146,6 @@ main.page { padding-block: 8px 56px; display: flex; flex-direction: column; gap:
 .examples button { border: 0; background: var(--sky-chip); color: var(--sky-fg); min-height: 40px; padding: 0 15px; border-radius: 999px; font-size: 14px; }
 .stickers { position: absolute; inset: 0; pointer-events: none; z-index: 0; }
 .sticker { position: absolute; border-radius: 999px; padding: 11px 18px; font-weight: 700; font-size: 15px; }
-.burst { position: absolute; }
 
 /* list + map layout */
 .split { display: grid; grid-template-columns: minmax(0, 520px) minmax(0, 1fr); gap: 24px; align-items: start; }
@@ -146,12 +154,19 @@ main.page { padding-block: 8px 56px; display: flex; flex-direction: column; gap:
 .list-head h2 { font-size: clamp(30px, 4vw, 46px); }
 .map-box { position: sticky; top: 96px; height: min(640px, calc(100vh - 120px)); border-radius: 40px; overflow: hidden; background: var(--sand); }
 .map-box .leaflet-container { width: 100%; height: 100%; background: var(--sand); font-family: var(--font-body); }
+/* the map tiles are GPU-composited and the rounded clip can leave a light sliver of them at the corners:
+   a panel-coloured inner ring drawn on top hides that edge */
+.map-box, .search3 .mapwrap { clip-path: inset(0 round 40px); }
+.search3 .mapwrap .map-box { clip-path: none; }
+.map-box::after, .search3 .mapwrap::after { content: ""; position: absolute; inset: 0; z-index: 650; border-radius: inherit; pointer-events: none; box-shadow: inset 0 0 0 3px var(--sand); }
+.search3 .mapwrap .map-box::after { content: none; }
 .leaflet-control-attribution { font-family: var(--font-mono); font-size: 10.5px; }
 .pin { display: grid; place-items: center; border-radius: 999px 999px 999px 4px; transform: rotate(-45deg); background: var(--fg); color: var(--bg); box-shadow: 0 6px 14px -6px rgba(0, 0, 0, 0.5); }
 .pin span { transform: rotate(45deg); font: italic 700 15px var(--font-display); }
 .pin.on { background: var(--pink); color: var(--on-bright); }
 .origin-dot { width: 18px; height: 18px; border-radius: 50%; background: var(--surface); box-shadow: inset 0 0 0 4px var(--fg); }
 .origin-dot.on { background: var(--lime); }
+.leaflet-container path.outside-pl { fill: var(--sand); fill-opacity: 1; /* same as the map panel behind it, so no seams at the rounded corners */ stroke: var(--fg); stroke-opacity: 0.35; }
 .leaflet-container path.route { stroke: var(--fg); stroke-opacity: 0.45; }
 .leaflet-container path.route.on { stroke: var(--pink); stroke-opacity: 0.95; }
 .leaflet-tooltip { font-family: var(--font-mono); font-size: 12px; background: var(--surface); color: var(--fg); border: 0; border-radius: 999px; padding: 3px 10px; box-shadow: 0 4px 10px -6px rgba(0, 0, 0, 0.4); }

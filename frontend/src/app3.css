@@ -36,14 +36,21 @@
 
 /* score shapes used in rows */
 .app3 .sc { display: flex; align-items: center; justify-content: center; flex: none; font-family: var(--font-display); font-style: italic; font-weight: 700; }
-.app3 .s-great { background: var(--pink); color: var(--on-bright); }
-.app3 .s-good { background: var(--blue); color: var(--on-blue); }
-.app3 .s-some { background: var(--lime); color: var(--on-bright); }
-.app3 .s-diff { background: var(--blush); color: var(--on-bright); }
+.app3 .s-great { background: var(--m-best); color: var(--on-bright); }
+.app3 .s-good { background: var(--m-good); color: var(--on-bright); }
+.app3 .s-some { background: var(--m-mid); color: var(--on-bright); }
+.app3 .s-diff { background: var(--m-low); color: var(--on-bright); }
 .app3 .s-none { box-shadow: inset 0 0 0 1.5px var(--faint); color: var(--faint); }
+/* all three shapes stay inside the circle they sit in, so they never poke out of a pill-shaped row */
 .app3 .round { border-radius: 50%; }
-.app3 .arch { border-radius: 999px 999px 14px 14px; }
-.app3 .blobby { border-radius: 62% 38% 46% 54% / 55% 48% 52% 45%; }
+.app3 .starry { clip-path: polygon(50.0% 0.0%, 60.9% 9.4%, 75.0% 6.7%, 79.7% 20.3%, 93.3% 25.0%, 90.6% 39.1%, 100.0% 50.0%, 90.6% 60.9%, 93.3% 75.0%, 79.7% 79.7%, 75.0% 93.3%, 60.9% 90.6%, 50.0% 100.0%, 39.1% 90.6%, 25.0% 93.3%, 20.3% 79.7%, 6.7% 75.0%, 9.4% 60.9%, 0.0% 50.0%, 9.4% 39.1%, 6.7% 25.0%, 20.3% 20.3%, 25.0% 6.7%, 39.1% 9.4%); }
+.app3 .hexa { clip-path: polygon(42.2% 4.5%, 45.3% 3.1%, 48.4% 2.3%, 51.6% 2.3%, 54.7% 3.1%, 57.8% 4.5%, 85.5% 20.5%, 88.3% 22.5%, 90.5% 24.8%, 92.1% 27.5%, 93.0% 30.6%, 93.3% 34.0%, 93.3% 66.0%, 93.0% 69.4%, 92.1% 72.5%, 90.5% 75.2%, 88.3% 77.5%, 85.5% 79.5%, 57.8% 95.5%, 54.7% 96.9%, 51.6% 97.7%, 48.4% 97.7%, 45.3% 96.9%, 42.2% 95.5%, 14.5% 79.5%, 11.7% 77.5%, 9.5% 75.2%, 7.9% 72.5%, 7.0% 69.4%, 6.7% 66.0%, 6.7% 34.0%, 7.0% 30.6%, 7.9% 27.5%, 9.5% 24.8%, 11.7% 22.5%, 14.5% 20.5%); }
+.app3 .squircle { border-radius: 32%; scale: 0.88; } /* rounded square, shrunk so its corners stay inside the circle */
+.app3 .sc { letter-spacing: -0.04em; }
+.app3 .blobby { border-radius: 62% 38% 46% 54% / 55% 48% 52% 45%; } /* driver avatar on the ride page */
+.app3 .sc.n3 { font-size: 0.7em; } /* "100" */
+/* an outline would get cut by the clip-path, so "no score" fills the cut shapes with a faint tint instead */
+.app3 .s-none:is(.starry, .hexa) { box-shadow: none; background: color-mix(in srgb, var(--faint) 22%, transparent); }
 
 /* the festival wristband */
 .app3 .wb { position: absolute; background: repeating-linear-gradient(0deg, var(--pink) 0 8px, var(--pink-2) 8px 11px); border-radius: 14px; display: flex; align-items: center; color: var(--on-bright); overflow: hidden; }
@@ -72,7 +79,7 @@
 .home3 .wait .cars { display: flex; gap: 10px; margin-top: 18px; flex-wrap: wrap; }
 .home3 .wait .car { flex: 1 1 180px; display: flex; align-items: center; gap: 12px; background: var(--bg); border-radius: 999px; padding: 8px 18px 8px 8px; text-decoration: none; min-width: 0; }
 .home3 .wait .car.off { background: transparent; box-shadow: inset 0 0 0 1.5px var(--line); color: var(--faint); }
-.home3 .wait .car .sc { width: 46px; height: 46px; font-size: 20px; }
+.home3 .wait .car .sc { width: 46px; height: 46px; font-size: 17px; }
 .home3 .wait .car b { font-weight: 600; }
 .home3 .wait .car small { font-size: 13px; color: var(--muted); }
 .home3 .wait p { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
@@ -88,8 +95,36 @@
 .home3 .sound .tier a:hover { color: var(--pink); }
 .home3 .sound .sub { font-family: var(--font-mono); font-size: 12px; margin-top: 8px; color: var(--inv-muted); }
 .home3 .sound .cta { display: inline-flex; margin-top: 24px; background: var(--inv-fg); color: var(--inv-bg); border-radius: 999px; padding: 13px 22px; font-size: 15px; font-weight: 600; }
-.home3 .try { display: block; background: var(--lime); color: var(--on-bright); border-radius: 32px; padding: 24px 26px; text-decoration: none; transition: transform 0.2s ease; }
-.home3 .try:hover { transform: translateY(-2px); }
+/* suggestions feed */
+/* the feed scrolls on its own, inside a panel that stays in view under the header; the page itself doesn't have to scroll */
+.home3 .feed3 { position: sticky; top: 104px; max-height: calc(100svh - 168px); overflow-y: auto; overscroll-behavior: contain;
+  padding-right: 6px; margin-right: -6px; padding-bottom: 28px;
+  -webkit-mask: linear-gradient(#000 calc(100% - 36px), transparent); mask: linear-gradient(#000 calc(100% - 36px), transparent); }
+/* slim rounded scrollbar thumb, no arrow buttons (Chrome/Edge/Safari); Firefox gets its thin native one */
+.home3 .feed3::-webkit-scrollbar { width: 6px; }
+.home3 .feed3::-webkit-scrollbar-button { display: none; height: 0; }
+.home3 .feed3::-webkit-scrollbar-track { background: transparent; }
+.home3 .feed3::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--fg) 22%, transparent); border-radius: 999px; }
+.home3 .feed3::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--fg) 40%, transparent); }
+@supports not selector(::-webkit-scrollbar) { .home3 .feed3 { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--fg) 25%, transparent) transparent; } }
+.home3 .feed3 > * { flex-shrink: 0; }
+.home3 .feed3 .feedhead { position: sticky; top: 0; z-index: 2; background: var(--bg); margin: 0; padding: 4px 4px 10px; }
+.home3 .feedhead { display: flex; align-items: center; gap: 10px; font-family: var(--font-mono); font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); margin: 4px 4px -6px; }
+.home3 .feedhead .dot { width: 9px; height: 9px; border-radius: 50%; background: var(--pink); box-shadow: 0 0 0 4px color-mix(in srgb, var(--pink) 22%, transparent); animation: feeddot 1.6s ease-in-out infinite; }
+@keyframes feeddot { 50% { box-shadow: 0 0 0 7px color-mix(in srgb, var(--pink) 0%, transparent); } }
+.home3 .ftag { font-family: var(--font-mono); font-size: 12px; letter-spacing: 0.08em; text-transform: uppercase; margin-bottom: 12px; }
+.home3 .picks { background: var(--surface); border-radius: 32px; padding: 22px 18px 14px; }
+.home3 .picks .ftag { margin-left: 8px; color: var(--muted); }
+.home3 .pick { display: flex; align-items: center; gap: 12px; padding: 8px; border-radius: 22px; text-decoration: none; transition: background-color 0.2s ease; }
+.home3 .pick:hover { background: var(--bg); }
+.home3 .pick .sc { width: 46px; height: 46px; font-size: 17px; flex: none; }
+.home3 .pick .pt { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.home3 .pick b { font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home3 .pick small { font-size: 13px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.home3 .try { background: var(--lime); color: var(--on-bright); border-radius: 32px; padding: 22px 26px 14px; }
+.home3 .try .sent { display: flex; justify-content: space-between; align-items: center; gap: 12px; padding: 12px 0; border-top: 1.5px solid color-mix(in srgb, var(--on-bright) 15%, transparent);
+  font-family: var(--font-display); font-style: italic; font-size: 21px; line-height: 1.2; text-decoration: none; }
+.home3 .try .sent:hover span { text-decoration: underline; text-underline-offset: 4px; }
 
 /* ---------- Find a ride (AppSearch3) ---------- */
 .search3 .sbar { margin-top: 8px; display: flex; align-items: center; gap: 10px; background: var(--surface); border-radius: 999px; padding: 8px 8px 8px 30px; font-size: 20px; font-weight: 500; }
@@ -116,7 +151,7 @@
 .app3 .row3:hover { background: var(--surface); transform: translateX(3px); }
 .app3 .row3.on { background: var(--surface); box-shadow: inset 0 0 0 2px var(--fg); }
 .app3 .row3.dim { color: var(--faint); }
-.app3 .row3 .sc { width: 64px; height: 64px; font-size: 30px; }
+.app3 .row3 .sc { width: 64px; height: 64px; font-size: 25px; }
 .app3 .row3 .who { flex: 1; min-width: 0; }
 .app3 .row3 .who b { font-size: 18px; font-weight: 700; }
 .app3 .row3 .who span { display: block; font-size: 14px; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -124,9 +159,11 @@
 .app3 .row3 .pr { font-family: var(--font-mono); font-size: 16px; white-space: nowrap; }
 .search3 .mapwrap { position: sticky; top: 110px; height: 580px; border-radius: 40px; overflow: hidden; background: var(--sand); }
 .search3 .mapwrap .map-box { position: absolute; inset: 0; height: 100%; border-radius: 0; top: 0; }
-.search3 .float { position: absolute; z-index: 500; left: 50%; top: 42%; background: var(--inv-bg); color: var(--inv-fg); border-radius: 24px; padding: 16px 20px; width: 260px; text-decoration: none; box-shadow: 0 20px 40px -20px rgba(0, 0, 0, 0.5); }
-.search3 .float .num { font-size: 30px; color: var(--pink-2); }
-.search3 .float .mono { font-size: 12px; color: var(--inv-muted); margin-top: 6px; }
+/* docked in the empty lower-left corner of the map (outside Poland), so it never covers pins or routes */
+.search3 .float { position: absolute; z-index: 500; left: 20px; bottom: 20px; background: var(--float-bg); color: var(--float-fg); border-radius: 22px; padding: 14px 18px; width: 256px; text-decoration: none;
+  -webkit-backdrop-filter: blur(14px) saturate(1.3); backdrop-filter: blur(14px) saturate(1.3); }
+.search3 .float .num { font-size: 30px; color: var(--float-num); }
+.search3 .float .mono { font-size: 12px; color: var(--float-muted); margin-top: 6px; }
 .search3 .form3 { margin-top: 14px; background: var(--surface); border-radius: 32px; padding: 20px 22px; }
 
 /* ---------- Ride detail (AppRide3) ---------- */
@@ -148,6 +185,9 @@
 .ride3 .bars3 .r { display: flex; justify-content: space-between; gap: 10px; }
 .ride3 .bars3 .t { height: 12px; border-radius: 999px; background: var(--sand); margin-top: 5px; overflow: hidden; }
 .ride3 .bars3 .t i { display: block; height: 100%; border-radius: 999px; }
+.ride3 .bars3 .yn-row { align-items: center; margin-top: 2px; }
+.ride3 .yn { border-radius: 999px; padding: 4px 12px; background: var(--sand); color: var(--muted); white-space: nowrap; }
+.ride3 .yn.on { background: var(--lime); color: var(--ink); }
 .ride3 .why3 { margin-top: 16px; display: flex; gap: 8px; font-size: 14.5px; line-height: 1.45; }
 .ride3 .why3 .ic { color: var(--pink); margin-top: 2px; }
 .ride3 .route { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 14px; align-items: center; font-family: var(--font-mono); font-size: 13px; }
@@ -164,6 +204,7 @@
 .ride3 aside .seats3 { margin-top: 22px; display: flex; gap: 8px; }
 .ride3 aside .seats3 span { flex: 1; border-radius: 999px; padding: 11px 0; text-align: center; font-size: 14px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ride3 aside .seats3 .t { background: var(--blue); color: var(--on-blue); }
+.ride3 aside .seats3 .t.me { font-weight: 600; box-shadow: inset 0 0 0 2px var(--lime); }
 .ride3 aside .seats3 .y { background: var(--lime); color: var(--on-bright); font-weight: 600; }
 .ride3 aside .seats3 .f { box-shadow: inset 0 0 0 1.5px var(--inv-line); color: var(--inv-muted); }
 .ride3 aside label { display: block; margin-top: 22px; font-size: 14px; color: var(--inv-muted); }
@@ -218,7 +259,7 @@
 .driver3 .tk .acts button { flex: 1; font: 500 15px var(--font-body); border: 0; border-radius: 999px; min-height: 48px; }
 .driver3 .tk .acts .no { background: var(--bg); color: var(--fg); }
 .driver3 .tk .acts .yes { background: var(--fg); color: var(--bg); font-weight: 700; }
-.c-great { color: var(--pink); } .c-good { color: var(--blue); } .c-some { color: var(--muted); } .c-diff { color: var(--faint); }
+.c-great { color: var(--m-best-ink); } .c-good { color: var(--m-good-ink); } .c-some { color: var(--m-mid-ink); } .c-diff { color: var(--m-low-ink); }
 
 /* ---------- My rides ---------- */
 .mine3 .h1 { font-size: clamp(42px, 4.6vw, 66px); margin-top: 18px; }
@@ -233,6 +274,7 @@
 /* ---------- responsive ---------- */
 @media (max-width: 1100px) {
   .home3, .ride3, .search3 .grid { grid-template-columns: minmax(0, 1fr); }
+  .home3 .feed3 { position: static; max-height: none; overflow: visible; -webkit-mask: none; mask: none; padding-right: 0; margin-right: 0; }
   .driver3 .tix3 { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .search3 .mapwrap { position: relative; top: auto; height: 380px; order: -1; }
   .ride3 aside { position: relative; top: auto; margin-top: 0; }
@@ -264,7 +306,7 @@
   .search3 .sbar .go { justify-content: center; }
   .search3 .chips3 .count { margin-left: 0; width: 100%; }
   .app3 .row3 { border-radius: 32px; gap: 12px; padding-right: 12px; }
-  .app3 .row3 .sc { width: 54px; height: 54px; font-size: 25px; }
+  .app3 .row3 .sc { width: 54px; height: 54px; font-size: 21px; }
   .ride3 .who3 { gap: 16px; }
   .ride3 .who3 .ava { width: 84px; height: 98px; font-size: 26px; }
   .ride3 .band-row { margin: 10px -16px 0; height: 110px; }

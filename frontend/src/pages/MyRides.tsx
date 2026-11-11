@@ -1,11 +1,10 @@
 import { Link } from "react-router-dom";
 import { api, type MyRequest } from "../api";
 import { Screen } from "../components/Layout";
-import { ErrorBox, Loading, matchKey } from "../components/ui";
+import { ErrorBox, Loading, matchKey, shapeFor } from "../components/ui";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n } from "../i18n";
 
-const SHAPES = ["round", "arch", "blobby"];
 
 /** My rides as a passenger: confirmed, waiting, and past/declined requests. */
 export default function MyRides() {
@@ -35,14 +34,14 @@ export default function MyRides() {
         <section key={title}>
           <h2 className="disp">{title}</h2>
           <div className="rows" style={{ display: "flex", flexDirection: "column", gap: 4, maxWidth: 760 }}>
-            {list.map((q, i) => {
+            {list.map((q) => {
               const k = q.ride.match ? matchKey(q.ride.match) : "diff";
               const dim = q.status === "declined" || parseLocal(q.ride.departure_time) <= now;
               return (
                 <Link key={q.id} to={`/rides/${q.ride.id}`} className={`row3${dim ? " dim" : ""}`}>
-                  <span className={`sc ${SHAPES[i % 3]} ${dim ? "s-none" : `s-${k}`}`}>{q.ride.match?.percent ?? "·"}</span>
+                  <span className={`sc ${shapeFor(k)} ${dim ? "s-none" : `s-${k}`}${q.ride.match?.percent === 100 ? " n3" : ""}`}>{q.ride.match?.percent ?? "·"}</span>
                   <span className="who"><b>{q.ride.event.name}</b>
-                    <span>{q.ride.driver.display_name} · {q.ride.origin_city.toLowerCase()} {time(q.ride.departure_time)} · {day(q.ride.departure_time)}</span></span>
+                    <span>{q.ride.origin_city.toLowerCase()} → {q.ride.event.city.toLowerCase()} · {day(q.ride.departure_time)} {time(q.ride.departure_time)} · {q.ride.driver.display_name}</span></span>
                   <span className={`st ${q.status}`}>{t(`ride.status.${q.status}`)}</span>
                 </Link>
               );
