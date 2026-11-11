@@ -225,6 +225,41 @@ def test_offer_drops_bad_values_and_keeps_unknown_event_as_hint(client, register
     assert (r["departure"], r["seats"], r["price"]) == (None, None, None)
 
 
+def test_offer_event_matching_handles_polish_forms_and_ambiguity():
+    from app.models import Event
+    from app.routers.ai import _event_candidates
+
+    def ev(i, name, day, city="Gdynia", venue=None):
+        return Event(id=i, external_id=f"t{i}", name=name, city=city, venue=venue, event_date=date.fromisoformat(day))
+
+    events = [
+        ev(1, "OPEN BEER FESTIWAL: Łydka Grubasa", "2026-12-12"),
+        ev(2, "Pol mi Lej", "2026-12-13", venue="Rock Club"),
+        ev(3, "Łydka Grubasa - Bekalog Tour", "2027-01-10", city="Łódź"),
+        ev(4, "Łydka Grubasa - Bekalog Tour", "2027-01-20", city="Kraków"),
+        ev(5, "Open'er Festival 2027", "2027-06-30"),
+        ev(6, "Pol'and'Rock Festival 2027", "2027-07-29", city="Czaplinek"),
+    ]
+    pick = lambda hint, day=None: _event_candidates(events, hint, day)
+    for hint in ("Openera", "opener 2027", "Open'er festiwal"):
+        assert pick(hint)[0].id == 5  # inflected / no apostrophe / extra words, not "OPEN BEER"
+    for hint in ("Pol and Rock", "polandrocka"):
+        assert pick(hint)[0].id == 6  # not "Pol" + venue "Rock Club"
+    event, options = pick("Łydka Grubasa")  # a tour: ask which date
+    assert event is None and {e.id for e in options} == {1, 3, 4}
+    assert pick("Łydkę Grubasa", date(2027, 1, 20))[0].id == 4  # the day settles it
+    assert pick("Łydka Grubasa Kraków")[0].id == 4  # so does the city
+    assert pick("Nonexistent Gig") == (None, [])
+    assert pick("festiwal 2027") == (None, [])
+
+
+def test_offer_suggests_events_when_unsure(client, register, fake_model):
+    fake_model({"event": "Test"})
+    r = client.post("/ai/offer", json={"text": "..."}, headers=register()).json()
+    assert r["event"]["name"] == "Test Fest"  # the only event: picked
+    assert r["event_options"] == []
+
+
 def test_offer_rules_fallback_without_ai(client, register):
     r = client.post("/ai/offer", json={"text": "jadę z Łodzi na test fest o 10, 2 miejsca po 30 zł, bez palenia"},
                     headers=register()).json()

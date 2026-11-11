@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, errorKey, type JoinRequest } from "../api";
 import { REQUESTS_CHANGED, Screen } from "../components/Layout";
 import { AiBadge, Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
@@ -10,6 +10,7 @@ import { parseLocal, useI18n, type Key } from "../i18n";
 export default function Drive() {
   const { t, lang, day, time, plural } = useI18n();
   const [params] = useSearchParams();
+  const nav = useNavigate();
   const rides = useAsync(() => api.myRides(), []);
   const now = new Date();
   const list = [...(rides.data ?? [])].sort((a, b) => {
@@ -31,8 +32,12 @@ export default function Drive() {
   const pending = reqs.filter((q) => q.status === "pending");
   const accepted = reqs.filter((q) => q.status === "accepted");
   const declined = reqs.filter((q) => q.status === "declined");
+  const withdrew = reqs.filter((q) => q.status === "cancelled");
+  const removed = reqs.filter((q) => q.status === "removed");
+  const [removing, setRemoving] = useState<number | null>(null); // seat asking "remove X?"
+  const [callingOff, setCallingOff] = useState(false); // "call off this ride?"
 
-  useEffect(() => { setWhy({}); }, [selectedId, lang]);
+  useEffect(() => { setWhy({}); setRemoving(null); setCallingOff(false); }, [selectedId, lang]);
   const pendingKey = pending.slice(0, 5).map((q) => q.id).join(",");
   useEffect(() => {
     const ids = pendingKey ? pendingKey.split(",").map(Number) : [];
@@ -48,6 +53,37 @@ export default function Drive() {
     try {
       await api.decide(q.id, status);
       rides.reload(); // `all` follows rides.data
+      window.dispatchEvent(new Event(REQUESTS_CHANGED));
+    } catch (err) {
+      setError(t(errorKey(err) as Key));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const remove = async (q: JoinRequest) => {
+    setBusy(q.id);
+    setError("");
+    try {
+      await api.removePassenger(q.id);
+      setRemoving(null);
+      rides.reload();
+    } catch (err) {
+      setError(t(errorKey(err) as Key));
+    } finally {
+      setBusy(null);
+    }
+  };
+
+  const callOff = async () => {
+    if (!ride) return;
+    setBusy(-ride.id);
+    setError("");
+    try {
+      await api.cancelRide(ride.id);
+      setCallingOff(false);
+      nav("/drive", { replace: true });
+      rides.reload();
       window.dispatchEvent(new Event(REQUESTS_CHANGED));
     } catch (err) {
       setError(t(errorKey(err) as Key));
@@ -93,11 +129,20 @@ export default function Drive() {
               </div>
               <div className="fill">{t("drive.fill", { n: ride.price * ride.seats_total })}</div>
             </div>
+            {ride.note && <p className="note3">“{ride.note}”</p>}
 
             <div className="seatbar" role="group" aria-label={t("ride.seatsAria", { taken: accepted.length, total: ride.seats_total })}>
-              {Array.from({ length: ride.seats_total }, (_, i) => accepted[i]
-                ? <div key={i} className="t">{accepted[i].passenger.display_name} <span>{t("drive.seatN", { n: i + 1 })}{accepted[i].match ? ` · ${accepted[i].match!.percent}` : ""}</span></div>
-                : <div key={i} className="f">{t("drive.seatFree", { n: i + 1 })}</div>)}
+              {Array.from({ length: ride.seats_total }, (_, i) => {
+                const q = accepted[i];
+                if (!q) return <div key={i} className="f">{t("drive.seatFree", { n: i + 1 })}</div>;
+                const first = q.passenger.display_name.split(" ")[0];
+                return removing === q.id
+                  ? <div key={i} className="t ask">{t("drive.removeSure", { name: first })}
+                      <button type="button" disabled={busy === q.id} onClick={() => remove(q)}>{t("drive.yes")}</button>
+                      <button type="button" disabled={busy === q.id} onClick={() => setRemoving(null)}>{t("drive.no")}</button></div>
+                  : <div key={i} className="t">{q.passenger.display_name} <span>{t("drive.seatN", { n: i + 1 })}{q.match ? ` · ${q.match.percent}` : ""}</span>
+                      {!departed && <button type="button" className="x" aria-label={t("drive.remove", { name: q.passenger.display_name })} title={t("drive.remove", { name: q.passenger.display_name })} onClick={() => setRemoving(q.id)}><Icon name="x" /></button>}</div>;
+              })}
             </div>
 
             <h2 className="want poster">{pending.length ? t("drive.want", { n: plural(pending.length, "person"), verb: verb(pending.length) }) : t("drive.noRequests")}</h2>
@@ -132,6 +177,24 @@ export default function Drive() {
             )}
             {declined.length > 0 && (
               <p className="note" style={{ marginTop: 18 }}>{t("drive.decided")}: {declined.map((q) => q.passenger.display_name).join(", ")}</p>
+            )}
+            {withdrew.length > 0 && (
+              <p className="note" style={{ marginTop: 8 }}>{t("drive.withdrew")}: {withdrew.map((q) => q.passenger.display_name).join(", ")}</p>
+            )}
+            {removed.length > 0 && (
+              <p className="note" style={{ marginTop: 8 }}>{t("drive.removed")}: {removed.map((q) => q.passenger.display_name).join(", ")}</p>
+            )}
+
+            {!departed && (
+              <div className="calloff">
+                {!callingOff
+                  ? <button type="button" className="linkish" onClick={() => setCallingOff(true)}>{t("drive.callOff")}</button>
+                  : <>
+                      <span>{pending.length + accepted.length ? t("drive.callOffSureWith") : t("drive.callOffSure")}</span>
+                      <button type="button" className="btn btn-sm" disabled={busy === -ride.id} onClick={callOff}>{t("drive.callOffYes")}</button>
+                      <button type="button" className="btn btn-ghost btn-sm" disabled={busy === -ride.id} onClick={() => setCallingOff(false)}>{t("drive.callOffNo")}</button>
+                    </>}
+              </div>
             )}
           </section>
         )}

@@ -1,9 +1,9 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
-import { api } from "../api";
+import { api, type AppNotification } from "../api";
 import { useAuth } from "../auth";
 import { initials } from "../geo";
-import { parseLocal, useI18n } from "../i18n";
+import { useI18n, type Key } from "../i18n";
 import { Icon } from "./ui";
 import "../app3.css";
 
@@ -30,32 +30,81 @@ function useTheme() {
   return { dark, toggle };
 }
 
-/** Fired by the driver dashboard after accepting/declining, so the bell updates. */
+/** Fired after any action on a ride or request, so the bell updates right away. */
 export const REQUESTS_CHANGED = "festride:requests-changed";
 
-/** Requests waiting for my yes/no as a driver: loaded once per login, and again
-    when the driver dashboard reports a decision. */
-function usePendingForMe(): number {
+/** The bell: what others did about my rides and requests. Loaded on login, on every
+    page change, after my own actions, and once a minute while the tab is open. */
+function useNotifications() {
   const { user } = useAuth();
-  const [n, setN] = useState(0);
+  const loc = useLocation();
+  const [items, setItems] = useState<AppNotification[]>([]);
+  const [unread, setUnread] = useState(0);
   const [tick, setTick] = useState(0);
   useEffect(() => {
     const bump = () => setTick((x) => x + 1);
     window.addEventListener(REQUESTS_CHANGED, bump);
-    return () => window.removeEventListener(REQUESTS_CHANGED, bump);
+    const every = setInterval(() => { if (document.visibilityState === "visible") bump(); }, 60_000);
+    return () => { window.removeEventListener(REQUESTS_CHANGED, bump); clearInterval(every); };
   }, []);
   useEffect(() => {
-    if (!user) { setN(0); return; }
+    if (!user) { setItems([]); setUnread(0); return; }
     let live = true;
-    (async () => {
-      const now = new Date();
-      const mine = (await api.myRides()).filter((r) => parseLocal(r.departure_time) > now);
-      const lists = await Promise.all(mine.map((r) => api.rideRequests(r.id)));
-      if (live) setN(lists.flat().filter((q) => q.status === "pending").length);
-    })().catch(() => { if (live) setN(0); });
+    api.notifications().then((r) => { if (live) { setItems(r.items); setUnread(r.unread); } }).catch(() => {});
     return () => { live = false; };
-  }, [user, tick]);
-  return n;
+  }, [user, tick, loc.pathname]);
+  const markRead = () => {
+    if (!unread) return;
+    setUnread(0); // items keep their own "read" flag, so this list still shows what was new
+    api.readNotifications().catch(() => {});
+  };
+  return { items, unread, markRead };
+}
+
+function Bell() {
+  const { t } = useI18n();
+  const { items, unread, markRead } = useNotifications();
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const close = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false); };
+    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setOpen(false); };
+    document.addEventListener("mousedown", close);
+    document.addEventListener("keydown", esc);
+    return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", esc); };
+  }, [open]);
+  const toggle = () => { if (!open) markRead(); setOpen(!open); };
+  return (
+    <div className="menu" ref={ref}>
+      <button className="bell" type="button" aria-expanded={open} aria-label={unread ? t("bell.unread", { n: unread }) : t("bell.label")} onClick={toggle}>
+        <Icon name="bell" />{unread > 0 && <b>{unread > 9 ? "9+" : unread}</b>}
+      </button>
+      {open && (
+        <div className="menu-pop bell-pop">
+          <div className="bell-head">{t("bell.label")}</div>
+          {!items.length && <p className="bell-empty">{t("bell.empty")}</p>}
+          {items.map((n) => (
+            <Link key={n.id} className={n.read ? "" : "new"} onClick={() => setOpen(false)}
+              to={n.kind === "request" || n.kind === "withdrew" ? `/drive?ride=${n.ride_id}` : `/rides/${n.ride_id}`}>
+              <span>{t(`bell.${n.kind}` as Key, { name: n.actor_name.split(" ")[0], event: n.event_name })}</span>
+              <small>{ago(n.created_at, t)}</small>
+            </Link>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
+/** "5 min ago" for a UTC timestamp from the API. */
+function ago(iso: string, t: ReturnType<typeof useI18n>["t"]): string {
+  const at = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + "Z");
+  const min = Math.max(0, Math.round((Date.now() - at) / 60_000));
+  if (min < 1) return t("bell.now");
+  if (min < 60) return t("bell.min", { n: min });
+  const h = Math.round(min / 60);
+  return h < 24 ? t("bell.h", { n: h }) : t("bell.d", { n: Math.round(h / 24) });
 }
 
 function AccountMenu() {
@@ -107,7 +156,6 @@ export function Header() {
   const { user } = useAuth();
   const { t, lang, setLang } = useI18n();
   const { dark, toggle } = useTheme();
-  const pending = usePendingForMe();
   const [menuOpen, setMenuOpen] = useState(false);
   const loc = useLocation();
   useEffect(() => setMenuOpen(false), [loc.pathname]);
@@ -151,9 +199,7 @@ export function Header() {
           </>}
           {user ? (
             <>
-              <Link className="bell" to="/drive" aria-label={pending ? t("nav.newRequests", { n: pending }) : t("nav.noRequests")}>
-                <Icon name="bell" />{pending > 0 && <b>{pending}</b>}
-              </Link>
+              <Bell />
               <AccountMenu />
             </>
           ) : (

@@ -22,6 +22,7 @@ export default function RideDetail() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
+  const [sure, setSure] = useState(false); // "are you sure?" before withdrawing
 
   useEffect(() => {
     setWhy(null);
@@ -39,12 +40,29 @@ export default function RideDetail() {
   const m = r.match;
   const k = m ? matchKey(m) : "diff";
   const own = user?.id === r.driver.id;
-  const req = (mine.data ?? []).find((q) => q.ride_id === r.id);
+  const found = (mine.data ?? []).find((q) => q.ride_id === r.id);
+  const req = found?.status === "cancelled" ? undefined : found; // withdrew: free to ask again
   const askedOthers = (mine.data ?? []).filter((q) => q.ride.event.id === r.event.id && q.ride_id !== r.id && q.status === "pending").length;
   const departed = parseLocal(r.departure_time) <= new Date();
   const taken = r.seats_total - r.seats_left;
   const firstName = r.driver.display_name.split(" ")[0];
   const carsHere = others.data?.length ?? 0;
+
+  const withdraw = async () => {
+    if (!req) return;
+    setBusy(true);
+    setError("");
+    try {
+      await api.cancelRequest(req.id);
+      setSure(false);
+      mine.reload();
+      ride.reload();
+    } catch (err) {
+      setError(t(errorKey(err) as Key));
+    } finally {
+      setBusy(false);
+    }
+  };
 
   const ask = async (e: FormEvent) => {
     e.preventDefault();
@@ -143,13 +161,28 @@ export default function RideDetail() {
               ? (req?.status === "accepted" && i === taken - 1
                 ? <span key={i} className="t me">{t("ride.yourSeat")}</span> /* your own seat once the driver said yes */
                 : <span key={i} className="t">{t("ride.taken")}</span>)
-              : i === taken && !own && !req && !departed ? <span key={i} className="y">{t("ride.you")}</span> : <span key={i} className="f">{t("ride.free")}</span>)}
+              : i === taken && !own && !req && !departed && !r.cancelled ? <span key={i} className="y">{t("ride.you")}</span> : <span key={i} className="f">{t("ride.free")}</span>)}
           </div>
 
           {!ready || (user && mine.loading) ? <Loading />
             : user && mine.error ? <ErrorBox error={mine.error} onRetry={mine.reload} />
+            : r.cancelled ? <><span className="state called_off">{t("ride.status.called_off")}</span><p className="fine">{t("ride.calledOffNote")}</p></>
             : own ? <><p style={{ marginTop: 22 }}>{t("ride.own")}</p><Link className="askbtn btn3" to={`/drive?ride=${r.id}`}>{t("ride.manage")}</Link></>
-            : req ? <><span className={`state ${req.status}`}>{t(`ride.status.${req.status}`)}</span>{req.status === "pending" && <p className="fine">{t("ride.sent")}</p>}</>
+            : req ? <>
+                <span className={`state ${req.status}`}>{t(`ride.status.${req.status}`)}</span>
+                {req.status === "pending" && <p className="fine">{t("ride.sent")}</p>}
+                {req.status === "removed" && <p className="fine">{t("ride.removedNote")}</p>}
+                {(req.status === "pending" || req.status === "accepted") && !departed && (
+                  <div className="quit">
+                    {!sure
+                      ? <button type="button" className="linkish" onClick={() => setSure(true)}>{t(req.status === "accepted" ? "ride.giveUp" : "ride.withdraw")}</button>
+                      : <><span>{t(req.status === "accepted" ? "ride.giveUpSure" : "ride.withdrawSure")}</span>
+                          <button type="button" className="btn btn-sm" disabled={busy} onClick={withdraw}>{t("ride.sureYes")}</button>
+                          <button type="button" className="btn btn-ghost btn-sm" disabled={busy} onClick={() => setSure(false)}>{t("ride.sureNo")}</button></>}
+                    {error && <p className="err" role="alert">{error}</p>}
+                  </div>
+                )}
+              </>
             : departed ? <p className="fine">{t("ride.left")}</p>
             : r.seats_left <= 0 ? <p className="fine">{t("ride.full")}</p>
             : !user ? <Link className="askbtn btn3" to={`/login?next=/rides/${r.id}`}>{t("ride.loginToAsk")}</Link>
@@ -161,7 +194,7 @@ export default function RideDetail() {
                 <button className="askbtn btn3" type="submit" disabled={busy}>{t("ride.askName", { name: firstName })}</button>
               </form>
             )}
-          {!own && <p className="fine">{askedOthers ? t("ride.askedOthers", { n: askedOthers }) : t("ride.multi")}</p>}
+          {!own && !r.cancelled && <p className="fine">{askedOthers ? t("ride.askedOthers", { n: askedOthers }) : t("ride.multi")}</p>}
         </aside>
       </div>
     </Screen>

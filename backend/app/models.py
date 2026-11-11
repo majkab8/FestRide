@@ -22,6 +22,9 @@ class RequestStatus(str, Enum):
     pending = "pending"
     accepted = "accepted"
     declined = "declined"
+    cancelled = "cancelled"  # the passenger withdrew (before or after a yes)
+    removed = "removed"  # the driver took an accepted passenger off the ride
+    called_off = "called_off"  # the driver called off the whole ride
 
 
 class User(SQLModel, table=True):
@@ -66,12 +69,16 @@ class Ride(SQLModel, table=True):
     price: float = 0.0
     smoking_allowed: bool = False  # in the car, during the ride (decision Q15)
     note: Optional[str] = None
+    # Called off by the driver after someone asked to join: kept so passengers
+    # see what happened, hidden from search. A ride nobody asked about is deleted.
+    cancelled: bool = False
 
     created_at: datetime = Field(default_factory=_utcnow)
 
 
 class RideRequest(SQLModel, table=True):
-    # One request per passenger per ride; a declined request is final.
+    # One request per passenger per ride; declined and removed are final, a
+    # cancelled request is reopened if the passenger asks again.
     __table_args__ = (UniqueConstraint("ride_id", "passenger_id"),)
 
     id: Optional[int] = Field(default=None, primary_key=True)
@@ -79,4 +86,25 @@ class RideRequest(SQLModel, table=True):
     passenger_id: int = Field(foreign_key="user.id", index=True)
     status: RequestStatus = Field(default=RequestStatus.pending)
     message: Optional[str] = None  # a line for the driver ("one small backpack")
+    created_at: datetime = Field(default_factory=_utcnow)
+
+
+class NotificationKind(str, Enum):
+    request = "request"  # to the driver: someone asks for a seat
+    withdrew = "withdrew"  # to the driver: a passenger withdrew or gave up their seat
+    accepted = "accepted"  # to the passenger
+    declined = "declined"  # to the passenger (not sent for requests closed by another yes)
+    removed = "removed"  # to the passenger: taken off the ride
+    called_off = "called_off"  # to the passenger: the driver called off the ride
+
+
+class Notification(SQLModel, table=True):
+    """One line in the bell: something another person did about a ride of yours."""
+
+    id: Optional[int] = Field(default=None, primary_key=True)
+    user_id: int = Field(foreign_key="user.id", index=True)  # who sees it
+    actor_id: int = Field(foreign_key="user.id")  # who did it
+    ride_id: int = Field(foreign_key="ride.id")
+    kind: NotificationKind
+    read: bool = False
     created_at: datetime = Field(default_factory=_utcnow)

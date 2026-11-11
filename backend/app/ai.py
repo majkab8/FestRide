@@ -215,7 +215,7 @@ def explain_matches(items: list[dict], lang: str = "en") -> dict[int, str]:
 _OFFER_SCHEMA = {
     "type": "OBJECT",
     "properties": {
-        "event": {"type": "STRING", "nullable": True, "description": "Event, artist or festival name as written"},
+        "event": {"type": "STRING", "nullable": True, "description": "Event, artist or festival name, base form"},
         "event_date": {"type": "STRING", "nullable": True, "description": "YYYY-MM-DD, the day of the event / ride"},
         "origin_city": {"type": "STRING", "nullable": True},
         "departure_time": {"type": "STRING", "nullable": True, "description": "HH:MM, 24h"},
@@ -230,7 +230,9 @@ _OFFER_SYSTEM = """A driver describes, in one sentence (Polish or English), a ca
 music event in Poland. Extract the fields for the "offer a ride" form. Today is {today} ({weekday}).
 
 Fields (null when the sentence doesn't say; never guess):
-- event: the event, artist or festival name exactly as the driver wrote it ("na Föllakzoid" -> "Föllakzoid").
+- event: the event, artist or festival name in its base form, without Polish case endings and
+  without words like "festiwal"/"koncert" ("na Föllakzoid" -> "Föllakzoid", "na Openera" -> "Open'er",
+  "na Mystica" -> "Mystic").
 - event_date: the day of the ride/event, YYYY-MM-DD, next occurrence from today ("4 grudnia", "w sobotę").
 - origin_city: where the car leaves from, Polish nominative ("z Łodzi" -> "Łódź").
 - departure_time: HH:MM 24h ("o 10" -> "10:00", "o wpół do ósmej wieczorem" -> "19:30").

@@ -232,6 +232,7 @@ class OfferDraft(BaseModel):
 
     event: Optional[Event] = None  # resolved to a real upcoming event, or None
     event_hint: Optional[str] = None  # what the sentence called it, when no event matched
+    event_options: list[Event] = []  # close matches to pick from, when no single event matched
     origin_city: Optional[str] = None
     departure: Optional[str] = None  # "YYYY-MM-DDTHH:MM", local time (for a datetime-local field)
     seats: Optional[int] = None
@@ -247,25 +248,65 @@ def _upcoming_events(session: Session, today) -> list[Event]:
     return list(session.exec(stmt).all())
 
 
-def _resolve_event(events: list[Event], hint: Optional[str], day) -> Optional[Event]:
-    """The upcoming event the driver means: its name contains the hint (or the hint contains the
-    name's main part); on the given day if there is one, else the soonest."""
-    if not hint or len(fold(hint).strip()) < 3:
+# Words that say nothing about which event it is ("festival", years, "tour", Polish prepositions).
+_EVENT_STOPWORDS = {
+    "festival", "festiwal", "festiwalu", "fest", "tour", "live", "koncert", "koncertu", "concert",
+    "the", "and", "of", "na", "do", "w", "we", "z", "i", "edition", "edycja",
+}
+
+
+def _event_words(text: str) -> list[str]:
+    return [w for w in re.findall(r"\w+", fold(text)) if w not in _EVENT_STOPWORDS and not re.fullmatch(r"(19|20)\d\d", w)]
+
+
+def _word_match(hint_word: str, name_word: str) -> int:
+    """2 = same word; 1 = the name word in a Polish case form: an ending added ("openera" ~ "opener")
+    or a final vowel changed ("łydkę" ~ "łydka", "warszawie" ~ "warszawa"); 0 = no match."""
+    if hint_word == name_word:
+        return 2
+    if len(name_word) >= 4 and hint_word.startswith(name_word) and len(hint_word) - len(name_word) <= 2:
+        return 1
+    stem = name_word[:-1]
+    if len(name_word) >= 5 and name_word[-1] in "aeiouy" and hint_word.startswith(stem) and 1 <= len(hint_word) - len(stem) <= 3:
+        return 1
+    return 0
+
+
+def _hint_score(words: list[str], ev: Event) -> Optional[tuple[bool, float, float]]:
+    """(every hint word found, share found in the name itself, match quality) for one event, or None
+    when no word is in its name. Each hint word must be in the name or the city/venue; words in the
+    name beat words only in the venue, and exact words beat inflected ones."""
+    name_words = _event_words(ev.name)
+    place_words = _event_words(f"{ev.city} {ev.venue or ''}")
+    in_name = [max((_word_match(w, n) for n in name_words), default=0) for w in words]
+    if not any(in_name):
         return None
-    h = fold(hint).strip()
-    found = []
+    found = [q or max((_word_match(w, p) for p in place_words), default=0) for w, q in zip(words, in_name)]
+    return all(found), sum(1 for q in in_name if q) / len(words), sum(found) / (2 * len(words))
+
+
+def _event_candidates(events: list[Event], hint: Optional[str], day) -> tuple[Optional[Event], list[Event]]:
+    """The upcoming event the driver means, or close candidates to choose from.
+    Word by word, so word order, "festival", years and Polish case endings don't matter; the hint
+    is also tried glued together ("pol and rock" -> "polandrock"). The best complete match wins
+    when it is the only one that good, or the only one on the given day."""
+    words = _event_words(hint or "")
+    glued = re.sub(r"\W", "", fold(hint or ""))
+    if not words:
+        return None, []
+    scored = []
     for ev in events:
-        name = fold(ev.name)
-        main = fold(re.split(r"\s[|–-]\s|:\s|\s\|", ev.name)[0]).strip()
-        if h in name or (len(main) >= 4 and main in h):
-            found.append(ev)
-    if not found:
-        return None
-    if day:
-        same_day = [ev for ev in found if ev.event_date == day]
-        if same_day:
-            return same_day[0]
-    return found[0]
+        tries = [sc for sc in (_hint_score(words, ev), _hint_score([glued], ev) if len(words) > 1 else None) if sc]
+        if tries:
+            complete, in_name, quality = max(tries)
+            scored.append(((complete, day is not None and ev.event_date == day, in_name, quality), ev))
+    # best first; sort is stable, so equal ones stay soonest-first
+    scored.sort(key=lambda t: t[0], reverse=True)
+    if scored and scored[0][0][0]:
+        top = scored[0][0]
+        if not any(key == top for key, _ in scored[1:]):
+            return scored[0][1], []
+    return None, [ev for _, ev in scored[:6]]
 
 
 def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dict:
@@ -319,7 +360,7 @@ def parse_offer(
 
     day = _pick(raw, "event_date", lambda v: v if isinstance(v, date_cls) else date_cls.fromisoformat(str(v)), lambda d: d >= today)
     hint = _pick(raw, "event", lambda v: " ".join(str(v).split())[:100])
-    event = _resolve_event(events, hint, day)
+    event, options = _event_candidates(events, hint, day)
     hhmm = _pick(raw, "departure_time", str, lambda v: re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", v) is not None)
     when = day or (event.event_date if event else None)
     departure = None
@@ -329,6 +370,7 @@ def parse_offer(
     draft = OfferDraft(
         event=event,
         event_hint=hint if not event else None,
+        event_options=options,
         origin_city=_pick(raw, "origin_city", lambda v: normalize_city(str(v))[:60]),
         departure=departure,
         seats=_pick(raw, "seats", int, lambda n: 1 <= n <= 8),
@@ -338,7 +380,7 @@ def parse_offer(
         source=source,
         understood=False,
     )
-    filled = draft.model_dump(exclude={"source", "understood"})
+    filled = draft.model_dump(exclude={"source", "understood", "event_options"})
     draft.understood = any(v is not None for v in filled.values())
     return draft
 

@@ -1,11 +1,12 @@
 import { useEffect, useRef, useState, type FormEvent } from "react";
-import { useNavigate, useSearchParams } from "react-router-dom";
+import { Link, useNavigate, useSearchParams } from "react-router-dom";
 import { api, errorKey, type Event } from "../api";
 import { Page } from "../components/Layout";
 import { EventRow } from "../components/Rows";
 import { AiBadge, Loading } from "../components/ui";
 import { cityCoords } from "../geo";
-import { useI18n, type Key } from "../i18n";
+import { useAsync } from "../hooks";
+import { parseLocal, useI18n, type Key } from "../i18n";
 
 export default function OfferRide() {
   const { t, lang } = useI18n();
@@ -16,6 +17,8 @@ export default function OfferRide() {
   const [event, setEvent] = useState<Event | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
+  // the AI's close matches for this query: shown as-is instead of a plain name search
+  const suggested = useRef<{ q: string; events: Event[] } | null>(null);
   useEffect(() => {
     if (!listOpen) return;
     const away = (e: MouseEvent) => { if (!pickerRef.current?.contains(e.target as Node)) setListOpen(false); };
@@ -31,6 +34,9 @@ export default function OfferRide() {
   const [smoking, setSmoking] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
+  // my upcoming rides: one car per driver per event
+  const myRides = useAsync(() => api.myRides(), []);
+  const existing = event ? (myRides.data ?? []).find((r) => r.event.id === event.id && parseLocal(r.departure_time) > new Date()) : undefined;
   const [busy, setBusy] = useState(false);
   // AI: the whole form from one sentence, and a note written for the driver
   const [sentence, setSentence] = useState("");
@@ -46,7 +52,12 @@ export default function OfferRide() {
     try {
       const d = await api.offerDraft(text);
       if (d.event) pick(d.event);
-      else if (d.event_hint) { setEvent(null); setQuery(d.event_hint); }
+      else if (d.event_hint) {
+        setEvent(null);
+        suggested.current = d.event_options.length ? { q: d.event_hint, events: d.event_options } : null;
+        setQuery(d.event_hint);
+        setListOpen(true);
+      }
       if (d.origin_city) setOrigin(d.origin_city);
       if (d.departure) setDeparture(d.departure);
       if (d.seats) setSeats(d.seats);
@@ -86,6 +97,7 @@ export default function OfferRide() {
     if (event) return;
     const q = query.trim();
     if (q.length < 2) { setResults(null); return; }
+    if (suggested.current?.q === query) { setResults(suggested.current.events); return; }
     let live = true;
     const h = setTimeout(() => api.events({ q, limit: 8 }).then((r) => { if (live) setResults(r); }).catch(() => { if (live) setResults([]); }), 250);
     return () => { live = false; clearTimeout(h); };
@@ -139,7 +151,11 @@ export default function OfferRide() {
               <div style={{ minWidth: 0, flex: 1 }}><EventRow ev={event} i={0} asStatic posters /></div>
               <button className="btn btn-ghost btn-sm" type="button" onClick={() => { setEvent(null); setQuery(""); }}>{t("offer.change")}</button>
             </div>
-          ) : (
+          ) : null}
+          {event && existing && (
+            <p className="error" role="alert">{t("offer.haveOne")} <Link to={`/drive?ride=${existing.id}`}>{t("offer.manageIt")}</Link></p>
+          )}
+          {event ? null : (
             <>
               <div className="ev-picker" ref={pickerRef}>
                 <div className="field"><label htmlFor="of-q" className="sr-only">{t("offer.event")}</label>
@@ -179,7 +195,7 @@ export default function OfferRide() {
         </div>
 
         {error && <p className="error" role="alert">{error}</p>}
-        <button className="btn btn-pink" type="submit" disabled={busy}>{t("offer.submit")}</button>
+        <button className="btn btn-pink" type="submit" disabled={busy || !!existing}>{t("offer.submit")}</button>
       </form>
     </Page>
   );

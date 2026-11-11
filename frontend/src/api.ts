@@ -3,7 +3,7 @@
 export const API_URL: string = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 export type DrivingStyle = "quiet" | "chatty" | "party";
-export type RequestStatus = "pending" | "accepted" | "declined";
+export type RequestStatus = "pending" | "accepted" | "declined" | "cancelled" | "removed" | "called_off";
 
 export interface User {
   id: number; email: string; display_name: string; music_genres: string[];
@@ -19,12 +19,17 @@ export interface Match { percent: number; label: string; music: number; style: n
 export interface Ride {
   id: number; event: EventSummary; driver: UserPublic; origin_city: string; origin_lat: number | null; origin_lng: number | null;
   departure_time: string; seats_total: number; seats_left: number; price: number; smoking_allowed: boolean;
-  note: string | null; created_at: string; match: Match | null;
+  note: string | null; cancelled: boolean; created_at: string; match: Match | null;
 }
 export interface JoinRequest {
   id: number; ride_id: number; passenger: UserPublic; status: RequestStatus; message: string | null; created_at: string; match: Match | null;
 }
 export interface MyRequest extends JoinRequest { ride: Ride; }
+export type NotificationKind = "request" | "withdrew" | "accepted" | "declined" | "removed" | "called_off";
+export interface AppNotification {
+  id: number; kind: NotificationKind; read: boolean; created_at: string; ride_id: number; event_name: string; actor_name: string;
+}
+export interface NotificationList { unread: number; items: AppNotification[]; }
 export interface SearchFilters {
   q?: string | null; event_city?: string | null; origin_city?: string | null; genre?: string | null;
   date_from?: string | null; date_to?: string | null; max_price?: number | null; min_seats?: number | null; no_smoking?: boolean;
@@ -34,7 +39,7 @@ export interface Explanations { rides: Record<string, string>; requests: Record<
 export interface CityCount { city: string; events: number; }
 /** "offer a ride" form values read from one sentence (every field optional) */
 export interface OfferDraft {
-  event: Event | null; event_hint: string | null; origin_city: string | null; departure: string | null;
+  event: Event | null; event_hint: string | null; event_options: Event[]; origin_city: string | null; departure: string | null;
   seats: number | null; price: number | null; smoking_allowed: boolean | null; note: string | null;
   source: "ai" | "rules"; understood: boolean;
 }
@@ -56,6 +61,8 @@ const DETAIL_KEYS: [RegExp, string][] = [
   [/accepted ride to this event/i, "err.alreadyGoing"],
   [/already left|in the future|on or before the event/i, "err.time"],
   [/own ride/i, "err.own"],
+  [/already offer a ride/i, "err.twoRides"],
+  [/called off/i, "err.calledOff"],
   [/request already/i, "err.decided"],
 ];
 export function errorKey(err: unknown): string {
@@ -136,6 +143,14 @@ export const api = {
   myRequests: () => request<MyRequest[]>("GET", "/requests/mine", { auth: "required" }),
   decide: (requestId: number, status: "accepted" | "declined") =>
     request<JoinRequest>("PATCH", `/requests/${requestId}`, { body: { status }, auth: "required" }),
+  /** passenger: withdraw a request or give up an accepted seat */
+  cancelRequest: (requestId: number) => request<JoinRequest>("POST", `/requests/${requestId}/cancel`, { auth: "required" }),
+  notifications: () => request<NotificationList>("GET", "/notifications", { auth: "required" }),
+  readNotifications: () => request<void>("POST", "/notifications/read", { auth: "required" }),
+  /** driver: call off a ride (deleted if nobody asked yet) */
+  cancelRide: (rideId: number) => request<void>("DELETE", `/rides/${rideId}`, { auth: "required" }),
+  /** driver: take an accepted passenger off the ride */
+  removePassenger: (requestId: number) => request<JoinRequest>("POST", `/requests/${requestId}/remove`, { auth: "required" }),
 
   search: (text: string) => request<SearchResult>("POST", "/ai/search", { body: { text }, auth: "none" }),
   explain: (data: { ride_ids?: number[]; request_ids?: number[]; lang: "pl" | "en" }) =>

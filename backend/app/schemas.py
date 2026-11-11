@@ -149,6 +149,7 @@ class RideRead(BaseModel):
     price: float
     smoking_allowed: bool
     note: Optional[str] = None
+    cancelled: bool = False  # called off by the driver
     created_at: datetime
     match: Optional[MatchRead] = None  # viewer vs driver; only when logged in, not on own rides
 
