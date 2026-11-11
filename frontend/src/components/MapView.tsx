@@ -41,6 +41,17 @@ function Fit({ points }: { points: [number, number][] }) {
   return null;
 }
 
+/** Glide to the given points (e.g. the focused ride's route) whenever they change. */
+function Focus({ points }: { points?: [number, number][] }) {
+  const map = useMap();
+  const key = points?.map((p) => p.join(",")).join("|") ?? "";
+  useEffect(() => {
+    if (points && points.length > 1) map.flyToBounds(L.latLngBounds(points), { padding: [36, 36], maxZoom: 8, duration: 0.6 });
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [key, map]);
+  return null;
+}
+
 /** Arc between two points, so overlapping routes stay readable. */
 function arc(a: [number, number], b: [number, number]): [number, number][] {
   const [lat1, lng1] = a, [lat2, lng2] = b;
@@ -53,8 +64,10 @@ function arc(a: [number, number], b: [number, number]): [number, number][] {
   return pts;
 }
 
-export function MapView({ pins = [], origins = [], routes = [], onPin, label }: {
+export function MapView({ pins = [], origins = [], routes = [], onPin, label, focus }: {
   pins?: MapPin[]; origins?: MapOrigin[]; routes?: MapRoute[]; onPin?: (id: string | number) => void; label: string;
+  /** points to keep in view, e.g. the focused ride's route on phones */
+  focus?: [number, number][];
 }) {
   const points = useMemo(() => [...pins.map((p) => p.pos), ...origins.map((o) => o.pos)], [pins, origins]);
   return (
@@ -81,6 +94,7 @@ export function MapView({ pins = [], origins = [], routes = [], onPin, label }: 
           </Marker>
         ))}
         <Fit points={points} />
+        <Focus points={focus} />
       </MapContainer>
     </div>
   );

@@ -20,7 +20,8 @@ app = FastAPI(title="FestRide API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[settings.frontend_origin],
+    # FRONTEND_ORIGIN may list several origins, comma-separated (e.g. localhost plus the LAN address for phone testing)
+    allow_origins=[o.strip() for o in settings.frontend_origin.split(",") if o.strip()],
     allow_credentials=False,  # auth is a bearer token in the Authorization header, not cookies
     allow_methods=["*"],
     allow_headers=["*"],

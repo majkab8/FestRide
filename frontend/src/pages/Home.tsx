@@ -1,3 +1,4 @@
+import { useRef, useState } from "react";
 import { Link } from "react-router-dom";
 import { api, type Event, type MyRequest } from "../api";
 import { useAuth } from "../auth";
@@ -22,6 +23,15 @@ export default function Home() {
     return out.sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? "")).slice(0, 6);
   }, [genres.join(",")]);
   const rides = useAsync(() => api.rides({ limit: 200, sort: "departure" }), []);
+  // phones/tablets: the feed is a swipeable carousel; which card is in view drives the dots
+  const slidesRef = useRef<HTMLDivElement>(null);
+  const [slide, setSlide] = useState(0);
+  const onSlides = () => {
+    const el = slidesRef.current;
+    if (!el || !el.children.length) return;
+    const w = (el.children[0] as HTMLElement).offsetWidth + 12;
+    setSlide(Math.round(el.scrollLeft / w));
+  };
 
   const now = new Date();
   const upcoming = (mine.data ?? []).filter((q) => parseLocal(q.ride.departure_time) > now);
@@ -110,25 +120,28 @@ export default function Home() {
 
         {/* right column: a feed of suggestions, each card marked as one */}
         <aside className="rcol feed3" aria-label={t("home.feed")}>
-          <div className="feedhead"><span className="dot" aria-hidden="true" />{t("home.feed")}</div>
+          <div className="feedhead"><span className="dot" aria-hidden="true" />{t("home.feed")}
+            <span className="dots" aria-hidden="true">{[0, 1, 2].slice(0, 2 + (picks.length > 0 ? 1 : 0)).map((i) => <i key={i} className={i === slide ? "on" : undefined} />)}</span>
+          </div>
+          <div className="slides" ref={slidesRef} onScroll={onSlides}>
 
           <div className="sound">
             {sound.data?.[0]?.image_url && <img className="bg" src={sound.data[0].image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />}
             <div className="eyebrow">✶ {t("home.forSound")} · {genres.join(", ")}</div>
             {sound.loading && <Loading />}
             {sound.data?.[0] && <>
-              <div className="tier poster" style={{ marginTop: 20, fontSize: "clamp(44px, 5.3vw, 76px)" }}>
+              <div className="tier poster t1" style={{ marginTop: 20, fontSize: "clamp(44px, 5.3vw, 76px)" }}>
                 <Link to={`/search?event_id=${sound.data[0].id}`} title={sound.data[0].name}>{billName(sound.data[0].name)}</Link>
               </div>
               <div className="sub">{sound.data[0].city.toLowerCase()} · {sound.data[0].event_date ? day(sound.data[0].event_date) : ""} · {plural(carsTo(sound.data[0].id), "car")}</div>
             </>}
             {sound.data && sound.data.length > 1 && (
-              <div className="tier poster" style={{ marginTop: 22, fontSize: 42, color: "var(--pink-2)" }}>
+              <div className="tier poster t2" style={{ marginTop: 22, fontSize: 42, color: "var(--pink-2)" }}>
                 {sound.data.slice(1, 3).map((e, i) => <span key={e.id}>{i > 0 && " · "}<Link to={`/search?event_id=${e.id}`} title={e.name}>{billName(e.name)}</Link></span>)}
               </div>
             )}
             {sound.data && sound.data.length > 3 && (
-              <div className="tier poster" style={{ marginTop: 16, fontSize: 26, lineHeight: 1.15, color: "var(--inv-muted)" }}>
+              <div className="tier poster t3" style={{ marginTop: 16, fontSize: 26, lineHeight: 1.15, color: "var(--inv-muted)" }}>
                 {sound.data.slice(3).map((e, i) => <span key={e.id}>{i > 0 && " · "}<Link to={`/search?event_id=${e.id}`} title={e.name}>{billName(e.name)}</Link></span>)}
               </div>
             )}
@@ -158,6 +171,7 @@ export default function Home() {
                 <span>“{q}”</span><Icon name="arrow" />
               </Link>
             ))}
+          </div>
           </div>
         </aside>
       </div>

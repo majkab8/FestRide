@@ -49,6 +49,9 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body { background: var(--bg); color: var(--fg); font-family: var(--font-body); font-size: 15px; line-height: 1.5; min-height: 100vh; }
+/* short pages: the content stretches so the footer sits on the bottom edge, no empty band below it */
+#root { min-height: 100vh; min-height: 100svh; display: flex; flex-direction: column; }
+#root > main { flex: 1 0 auto; }
 h1, h2, h3 { margin: 0; text-wrap: balance; }
 p { margin: 0; }
 a { color: inherit; }
@@ -90,6 +93,13 @@ main.page { padding-block: 8px 56px; display: flex; flex-direction: column; gap:
 .menu-pop .who { padding: 10px 14px 8px; }
 .menu-pop button, .menu-pop a { text-align: left; border: 0; background: none; padding: 11px 14px; border-radius: 16px; text-decoration: none; }
 .menu-pop button:hover, .menu-pop a:hover { background: var(--bg); }
+/* language + theme inside the account menu (logged-in users) */
+.menu-pop .prefs { display: flex; flex-direction: column; gap: 6px; padding: 4px 6px 8px; border-top: 1px solid var(--line); border-bottom: 1px solid var(--line); margin: 4px 0; }
+.menu-pop .pref { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 4px 8px; font-size: 15px; }
+.menu-pop .seg { display: inline-flex; gap: 2px; background: var(--sand); padding: 3px; border-radius: 999px; }
+.menu-pop .seg button { min-width: 40px; min-height: 34px; padding: 0 10px; border-radius: 999px; display: grid; place-items: center; font: 500 12.5px var(--font-mono); letter-spacing: 0.06em; color: var(--muted); }
+.menu-pop .seg button:hover { background: transparent; }
+.menu-pop .seg button[aria-pressed="true"] { background: var(--fg); color: var(--bg); }
 
 /* buttons, chips, fields */
 .btn { display: inline-flex; align-items: center; justify-content: center; gap: 10px; min-height: 48px; padding: 0 24px; border-radius: 999px; border: 0; font-weight: 600; font-size: 16px; background: var(--fg); color: var(--bg); text-decoration: none; transition: transform 0.18s; }
@@ -171,6 +181,8 @@ main.page { padding-block: 8px 56px; display: flex; flex-direction: column; gap:
 .leaflet-container path.route.on { stroke: var(--pink); stroke-opacity: 0.95; }
 .leaflet-tooltip { font-family: var(--font-mono); font-size: 12px; background: var(--surface); color: var(--fg); border: 0; border-radius: 999px; padding: 3px 10px; box-shadow: 0 4px 10px -6px rgba(0, 0, 0, 0.4); }
 .leaflet-tooltip::before { display: none; }
+/* long event names get an ellipsis instead of running off a narrow map */
+.leaflet-tooltip { max-width: min(280px, 50vw); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .map-label { font-family: var(--font-mono); font-size: 12px; background: var(--surface); color: var(--fg); border-radius: 999px; padding: 3px 9px; white-space: nowrap; box-shadow: 0 4px 10px -6px rgba(0, 0, 0, 0.4); }
 
 /* event rows */
@@ -337,14 +349,27 @@ a.ride:hover { background: var(--surface); transform: translateX(3px); }
 .tix .acts .btn { flex: 1; padding: 0 12px; }
 .lime-sticker { background: var(--lime); color: var(--on-bright); border-radius: 999px; padding: 14px 22px; transform: rotate(-3deg); font-weight: 700; font-size: 17px; }
 
-footer.site { position: relative; background: var(--inv-bg); color: var(--inv-fg); overflow: hidden; margin-top: 24px; }
+/* always the dark "night" footer, like the landing one, in both themes */
+footer.site { position: relative; background: #1e1b18; color: #f7ebd8; overflow: hidden; margin-top: 24px; }
 footer.site .in { padding-block: 64px 36px; position: relative; display: flex; flex-direction: column; gap: 22px; }
 footer.site .sun { position: absolute; right: -60px; top: -200px; width: 440px; height: 440px; border-radius: 50%; background: linear-gradient(180deg, var(--peach), var(--pink));
   -webkit-mask: linear-gradient(#0000 0 50%, #000 50% 58%, #0000 58% 63%, #000 63% 72%, #0000 72% 78%, #000 78%);
   mask: linear-gradient(#0000 0 50%, #000 50% 58%, #0000 58% 63%, #000 63% 72%, #0000 72% 78%, #000 78%); }
+footer.site .sunroad { position: absolute; right: -60px; top: -200px; width: 440px; height: 440px; border-radius: 50%; overflow: hidden; pointer-events: none; }
+footer.site .sunroad::before { content: ""; position: absolute; left: 0; right: 0; top: 87.5%; height: 3px; background: #1e1b18; }
+footer.site .footcar { --carw: 80px; position: absolute; left: 18%; top: calc(87.5% - 48px); width: var(--carw); height: 49px; animation: footcar 7s linear infinite; }
+@keyframes footcar { from { left: calc(18% - var(--carw)); } to { left: 82%; } }
 footer.site h2 { font-size: clamp(44px, 7vw, 92px); position: relative; }
 footer.site nav { display: flex; gap: 24px; flex-wrap: wrap; position: relative; }
-footer.site p { font-size: 13px; color: var(--inv-muted); position: relative; }
+footer.site p { font-size: 13px; color: #cfc5b6; position: relative; }
+@media (max-width: 600px) {
+  /* phones: a small corner sun with two bands, headline beside it, compact links (same as the landing footer) */
+  footer.site .in { padding-block: 26px 28px; gap: 16px; }
+  footer.site :is(.sun, .sunroad) { width: 200px; height: 200px; right: -40px; top: -118px; }
+  footer.site .footcar { --carw: 38px; height: 23px; top: calc(87.5% - 21px); }
+  footer.site h2 { font-size: 38px; max-width: calc(100% - 96px); }
+  footer.site nav { gap: 9px 22px; font-size: 15px; }
+}
 
 @media (max-width: 960px) {
   .split, .home-grid, .drive-grid, .wide-band { grid-template-columns: minmax(0, 1fr); }
@@ -361,7 +386,13 @@ footer.site p { font-size: 13px; color: var(--inv-muted); position: relative; }
   .ask { flex-direction: column; align-items: stretch; border-radius: 28px; padding: 10px; }
   .ask .ic { display: none; }
   .ride-more { padding-left: 0; }
-  .form { padding: 22px; border-radius: 28px; }
+  .form { padding: 20px; border-radius: 28px; gap: 14px; }
+  /* phones: auth forms compact enough that the whole page, footer included, fits one screen */
+  .form h1 { font-size: 30px; margin-top: 2px; }
+  .form .field { gap: 5px; }
+  .form .field input { min-height: 46px; }
+  .form .field .hint { font-size: 12px; }
+  main.page:has(> .form) { padding-block: 4px 16px; }
   .ev { border-radius: 28px; }
   .grid2 { grid-template-columns: minmax(0, 1fr); }
   .band .poster { font-size: 28px; }

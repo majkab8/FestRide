@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState, type ReactNode } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink, useLocation, useNavigate } from "react-router-dom";
 import { api } from "../api";
 import { useAuth } from "../auth";
 import { initials } from "../geo";
@@ -60,7 +60,8 @@ function usePendingForMe(): number {
 
 function AccountMenu() {
   const { user, logout } = useAuth();
-  const { t } = useI18n();
+  const { t, lang, setLang } = useI18n();
+  const { dark, toggle } = useTheme();
   const nav = useNavigate();
   const [open, setOpen] = useState(false);
   const ref = useRef<HTMLDivElement>(null);
@@ -79,6 +80,21 @@ function AccountMenu() {
       {open && (
         <div className="menu-pop">
           <div className="who"><div className="note">{t("nav.signedIn")}</div><b>{user.display_name}</b><div className="note">{user.email}</div></div>
+          {/* language and theme live here instead of the header */}
+          <div className="prefs">
+            <div className="pref"><span>{t("lang.label")}</span>
+              <div className="seg" role="group" aria-label={t("lang.label")}>
+                <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
+                <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+              </div>
+            </div>
+            <div className="pref"><span>{t("theme.label")}</span>
+              <div className="seg" role="group" aria-label={t("theme.label")}>
+                <button type="button" aria-pressed={!dark} onClick={() => dark && toggle()} aria-label={t("theme.light")}><Icon name="sun" /></button>
+                <button type="button" aria-pressed={dark} onClick={() => !dark && toggle()} aria-label={t("theme.dark")}><Icon name="moon" /></button>
+              </div>
+            </div>
+          </div>
           <button type="button" onClick={() => { logout(); setOpen(false); nav("/"); }}>{t("nav.logout")}</button>
         </div>
       )}
@@ -92,24 +108,47 @@ export function Header() {
   const { t, lang, setLang } = useI18n();
   const { dark, toggle } = useTheme();
   const pending = usePendingForMe();
+  const [menuOpen, setMenuOpen] = useState(false);
+  const loc = useLocation();
+  useEffect(() => setMenuOpen(false), [loc.pathname]);
+  // [path, label, short label for phones]
   const tabs = user
-    ? [["/home", t("nav.home")], ["/search", t("nav.find")], ["/my-rides", t("nav.myRides")], ["/drive", t("nav.drive")]]
-    : [["/events", t("nav.events")], ["/search", t("nav.find")], ["/drive", t("nav.drive")]];
+    ? [["/home", t("nav.home"), t("nav.home")], ["/search", t("nav.find"), t("nav.findShort")], ["/my-rides", t("nav.myRides"), t("nav.myRidesShort")], ["/drive", t("nav.drive"), t("nav.drive")]]
+    : [["/events", t("nav.events"), t("nav.events")], ["/search", t("nav.find"), t("nav.findShort")], ["/drive", t("nav.drive"), t("nav.drive")]];
   return (
-    <header className="app-head">
+    <header className={`app-head${user ? "" : " guest"}${menuOpen ? " menu-open" : ""}`}>
       <div className="in">
         <Link className="logo" to={user ? "/home" : "/"}>festride</Link>
-        <nav className="tabs3" aria-label={t("nav.main")}>
-          {tabs.map(([to, label]) => <NavLink key={to} to={to} end={to === "/drive"} className={({ isActive }) => (isActive ? "active" : undefined)}>{label}</NavLink>)}
+        <nav className="tabs3" id="main-tabs" aria-label={t("nav.main")}>
+          {tabs.map(([to, label, short]) => (
+            <NavLink key={to} to={to} end={to === "/drive"} className={({ isActive }) => (isActive ? "active" : undefined)} aria-label={label}>
+              <span className="lg">{label}</span><span className="sm" aria-hidden="true">{short}</span>
+            </NavLink>
+          ))}
         </nav>
+        {!user && (
+          /* phones, logged out: language + theme sit at the bottom of the hamburger dropdown */
+          <div className="guest-prefs">
+            <div className="mini" role="group" aria-label={t("lang.label")}>
+              <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
+              <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+            </div>
+            <div className="mini">
+              <button type="button" onClick={toggle} aria-label={dark ? t("theme.toLight") : t("theme.toDark")}><Icon name={dark ? "sun" : "moon"} /></button>
+            </div>
+          </div>
+        )}
         <div className="right">
-          <div className="mini" role="group" aria-label={t("lang.label")}>
-            <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
-            <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
-          </div>
-          <div className="mini">
-            <button type="button" onClick={toggle} aria-label={dark ? t("theme.toLight") : t("theme.toDark")}><Icon name={dark ? "sun" : "moon"} /></button>
-          </div>
+          {/* logged out: language + theme in the header; logged in they live in the account menu */}
+          {!user && <>
+            <div className="mini" role="group" aria-label={t("lang.label")}>
+              <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
+              <button type="button" aria-pressed={lang === "en"} onClick={() => setLang("en")}>EN</button>
+            </div>
+            <div className="mini">
+              <button type="button" onClick={toggle} aria-label={dark ? t("theme.toLight") : t("theme.toDark")}><Icon name={dark ? "sun" : "moon"} /></button>
+            </div>
+          </>}
           {user ? (
             <>
               <Link className="bell" to="/drive" aria-label={pending ? t("nav.newRequests", { n: pending }) : t("nav.noRequests")}>
@@ -118,7 +157,12 @@ export function Header() {
               <AccountMenu />
             </>
           ) : (
-            <><Link className="btn btn-ghost btn-sm" to="/login">{t("nav.login")}</Link><Link className="btn btn-sm" to="/signup">{t("nav.signup")}</Link></>
+            <>{/* on the log-in page offer sign-up first (and vice versa) instead of a button to the page you're on */}
+              {loc.pathname === "/login"
+                ? <Link className="btn btn-ghost btn-sm" to="/signup">{t("nav.signup")}</Link>
+                : <><Link className="btn btn-ghost btn-sm" to="/login">{t("nav.login")}</Link>{loc.pathname !== "/signup" && <Link className="btn btn-sm" to="/signup">{t("nav.signup")}</Link>}</>}
+              {/* phones, logged out: the tabs fold into this menu */}
+              <button type="button" className="burger" aria-expanded={menuOpen} aria-controls="main-tabs" aria-label={t("nav.menu")} onClick={() => setMenuOpen((o) => !o)}><span /><span /><span /></button></>
           )}
         </div>
       </div>
@@ -131,6 +175,15 @@ export function Footer() {
   return (
     <footer className="site">
       <div className="sun" aria-hidden="true" />
+      {/* the same little car as on the landing, driving across the sun and back in from the left */}
+      <div className="sunroad" aria-hidden="true">
+        <svg className="footcar" viewBox="-17 -18 31 19">
+          <path d="M-7.6 -6.4 L-5.2 -11.2 Q-4.6 -12.2 -3.4 -12.2 L3.6 -12.2 Q4.8 -12.2 5.4 -11.2 L8.2 -6.4 Z" fill="#1E1B18" />
+          <path d="M-12 -6.4 Q-12 -8.6 -9.8 -8.6 L10.2 -8.6 Q12.6 -8.6 12.6 -6.2 L12.6 -2.6 Q12.6 -1.4 11.4 -1.4 L-10.8 -1.4 Q-12 -1.4 -12 -2.6 Z" fill="#1E1B18" />
+          <circle cx="-6.4" cy="-1.2" r="2.5" fill="#1E1B18" /><circle cx="6.8" cy="-1.2" r="2.5" fill="#1E1B18" />
+          <rect x="10.4" y="-6.6" width="2.2" height="1.6" rx=".6" fill="#D7FF4A" />
+        </svg>
+      </div>
       <div className="in wrap gut">
         <h2 className="disp">{t("footer.title")}</h2>
         <nav aria-label={t("nav.footer")}>
