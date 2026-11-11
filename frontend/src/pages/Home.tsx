@@ -2,12 +2,11 @@ import { Link } from "react-router-dom";
 import { api, type Event, type MyRequest } from "../api";
 import { useAuth } from "../auth";
 import { Screen } from "../components/Layout";
-import { CountUp, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
+import { CountUp, ErrorBox, Icon, Loading, matchKey, shapeFor } from "../components/ui";
 import { billName } from "../geo";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n } from "../i18n";
 
-const SHAPES = ["round", "arch", "blobby"];
 
 /** Home, logged in (v3 AppHome3 board). */
 export default function Home() {
@@ -30,6 +29,14 @@ export default function Home() {
   const waitingBy = new Map<number, MyRequest[]>();
   for (const q of upcoming.filter((x) => x.status !== "accepted")) waitingBy.set(q.ride.event.id, [...(waitingBy.get(q.ride.event.id) ?? []), q]);
   const waiting = [...waitingBy.values()].filter((g) => g.some((q) => q.status === "pending"));
+
+  // feed: the best-matching cars still leaving with a free seat, to events you don't already have a ride or open requests for
+  const covered = new Set(upcoming.filter((q) => q.status !== "declined").map((q) => q.ride.event.id));
+  const picks = (rides.data ?? [])
+    .filter((r) => r.match && r.driver.id !== user?.id && !covered.has(r.event.id) && r.seats_left > 0 && parseLocal(r.departure_time) > now)
+    .sort((a, b) => (b.match?.percent ?? 0) - (a.match?.percent ?? 0))
+    .slice(0, 3);
+  const sentences = [t("landing.example"), ...(genres[0] ? [t("home.trySentenceGenre", { genre: genres[0] })] : [])];
 
   const carsTo = (eventId: number) => (rides.data ?? []).filter((r) => r.event.id === eventId).length;
   const first = (user?.display_name ?? "").split(" ")[0];
@@ -83,12 +90,12 @@ export default function Home() {
                   <span className="mono" style={{ fontSize: 13, color: "var(--muted)" }}>{ev.event_date ? day(ev.event_date) : ""} · {t("home.askedN", { n: group.length })}</span>
                 </div>
                 <div className="cars">
-                  {group.map((q, i) => {
+                  {group.map((q) => {
                     const off = q.status === "declined" || q.ride.seats_left <= 0;
                     const k = q.ride.match ? matchKey(q.ride.match) : "diff";
                     return (
                       <Link key={q.id} to={`/rides/${q.ride.id}`} className={`car${off ? " off" : ""}`}>
-                        <span className={`sc ${SHAPES[i % 3]} ${off ? "s-none" : `s-${k}`}`}>{q.ride.match?.percent ?? "·"}</span>
+                        <span className={`sc ${shapeFor(k)} ${off ? "s-none" : `s-${k}`}${q.ride.match?.percent === 100 ? " n3" : ""}`}>{q.ride.match?.percent ?? "·"}</span>
                         <span style={{ flex: 1, minWidth: 0 }}><b>{q.ride.driver.display_name}</b><br />
                           <small>{off ? (q.status === "declined" ? t("ride.status.declined") : t("ride.full")) : `${q.ride.origin_city.toLowerCase()} ${time(q.ride.departure_time)}`}</small></span>
                       </Link>
@@ -101,11 +108,13 @@ export default function Home() {
           })}
         </div>
 
-        {/* right column */}
-        <div className="rcol">
+        {/* right column: a feed of suggestions, each card marked as one */}
+        <aside className="rcol feed3" aria-label={t("home.feed")}>
+          <div className="feedhead"><span className="dot" aria-hidden="true" />{t("home.feed")}</div>
+
           <div className="sound">
             {sound.data?.[0]?.image_url && <img className="bg" src={sound.data[0].image_url} alt="" loading="lazy" referrerPolicy="no-referrer" />}
-            <div className="eyebrow">{t("home.forSound")} · {genres.join(", ")}</div>
+            <div className="eyebrow">✶ {t("home.forSound")} · {genres.join(", ")}</div>
             {sound.loading && <Loading />}
             {sound.data?.[0] && <>
               <div className="tier poster" style={{ marginTop: 20, fontSize: "clamp(44px, 5.3vw, 76px)" }}>
@@ -125,14 +134,32 @@ export default function Home() {
             )}
             <Link className="cta btn3" to="/events">{t("landing.allEvents")}</Link>
           </div>
-          <Link className="try" to="/search">
-            <div className="mono" style={{ fontSize: 12, letterSpacing: "0.08em", textTransform: "uppercase" }}>{t("home.trySentence")}</div>
-            <div style={{ marginTop: 10, fontFamily: "var(--font-display)", fontStyle: "italic", fontSize: 24, lineHeight: 1.2 }}>“{t("landing.example")}”</div>
-            <div style={{ marginTop: 14, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-              <span style={{ fontWeight: 600 }}>{t("home.findRide")}</span><Icon name="arrow" />
+
+          {picks.length > 0 && (
+            <div className="picks">
+              <div className="ftag">✶ {t("home.feedRides")}</div>
+              {picks.map((r) => (
+                <Link key={r.id} to={`/rides/${r.id}`} className="pick">
+                  <span className={`sc ${shapeFor(matchKey(r.match!))} s-${matchKey(r.match!)}${r.match!.percent === 100 ? " n3" : ""}`}>{r.match!.percent}</span>
+                  <span className="pt">
+                    <b title={r.event.name}>{r.event.name}</b>
+                    <small>{r.origin_city.toLowerCase()} → {r.event.city.toLowerCase()} · {day(r.departure_time)} {time(r.departure_time)} · {r.driver.display_name}</small>
+                  </span>
+                  <Icon name="arrow" />
+                </Link>
+              ))}
             </div>
-          </Link>
-        </div>
+          )}
+
+          <div className="try">
+            <div className="ftag">✶ {t("home.trySentence")}</div>
+            {sentences.map((q) => (
+              <Link key={q} className="sent" to={`/search?text=${encodeURIComponent(q)}`}>
+                <span>“{q}”</span><Icon name="arrow" />
+              </Link>
+            ))}
+          </div>
+        </aside>
       </div>
     </Screen>
   );

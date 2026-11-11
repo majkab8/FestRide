@@ -4,7 +4,7 @@ export type Lang = "pl" | "en";
 
 const pl = {
   "nav.myRides": "Moje przejazdy", "nav.newRequests": "Nowe prośby: {n}", "nav.noRequests": "Brak nowych próśb",
-  "home.nextLine": "{event} {when}. {driver} rusza z: {from} o {time}.", "home.trySentence": "Napisz, dokąd jedziesz",
+  "home.nextLine": "{event} {when}. {driver} rusza z: {from} o {time}.", "home.trySentence": "Spróbuj napisać tak",
   "mine.title": "Moje przejazdy", "mine.going": "Jedziesz", "mine.waiting": "Czekasz na odpowiedź", "mine.past": "Minione i odrzucone",
   "mine.none": "Nie prosiłeś jeszcze o miejsce w żadnym aucie.",
   "search.again": "Szukaj ponownie", "search.addFilter": "+ dodaj filtr",
@@ -56,9 +56,10 @@ const pl = {
   "style.quiet": "cicho", "style.chatty": "rozmownie", "style.party": "impreza",
   "styleT.quiet": "Cicho", "styleT.chatty": "Rozmownie", "styleT.party": "Impreza",
   "styleD.quiet": "Słuchawki na uszach, mało gadania.", "styleD.chatty": "Chętnie pogadam całą drogę.", "styleD.party": "Głośna muzyka i śpiewanie.",
+  "smoke.bothNo": "oboje nie palicie", "smoke.bothYes": "oboje palicie", "smoke.youOnly": "ty palisz, {name} nie", "smoke.driverOnly": "{name} pali, ty nie",
   "ride.smokingOk": "można palić", "ride.noSmoking": "bez palenia", "ride.with": "{name} za kierownicą",
   "ride.why": "Skąd {n}%", "ride.route": "Trasa", "ride.perSeat": "za miejsce, dzielimy paliwo",
-  "ride.seatsAria": "zajęte miejsca: {taken} z {total}", "ride.taken": "zajęte", "ride.you": "ty?", "ride.free": "wolne",
+  "ride.seatsAria": "zajęte miejsca: {taken} z {total}", "ride.taken": "zajęte", "ride.you": "ty?", "ride.yourSeat": "zajęte (ty)", "ride.free": "wolne",
   "ride.message": "Wiadomość dla kierowcy", "ride.messagePh": "Np. mam mały plecak, chętnie podzielę się playlistą.",
   "ride.ask": "Poproś o miejsce", "ride.loginToAsk": "Zaloguj się, żeby poprosić o miejsce", "ride.own": "To twój przejazd",
   "ride.manage": "Zarządzaj przejazdem", "ride.status.pending": "prośba wysłana", "ride.status.accepted": "jedziesz!",
@@ -70,6 +71,7 @@ const pl = {
   "home.nextIn": "{event} już {when}.", "home.noRide": "Nie masz jeszcze zaplanowanego przejazdu.", "home.noRideCta": "Znajdź auto na koncert albo sam zaproponuj przejazd.",
   "home.next": "Twój najbliższy przejazd", "home.details": "Szczegóły przejazdu", "home.waiting": "Czekasz na „tak”: {event}",
   "home.askedN": "poproszono aut: {n}", "home.firstYes": "Pierwszy kierowca, który się zgodzi, zabiera cię. Pozostałe prośby zamkną się same.",
+  "home.feed": "Propozycje dla ciebie", "home.feedRides": "Auta, które do ciebie pasują", "home.trySentenceGenre": "na {genre}, max 60 zł",
   "home.forSound": "Dla twojego brzmienia", "home.findRide": "Znajdź przejazd", "home.offer": "Zaproponuj przejazd",
 
   "drive.yours": "Przejazdy, które oferujesz", "drive.new": "+ Zaproponuj przejazd", "drive.none": "Nie oferujesz jeszcze żadnego przejazdu.",
@@ -109,7 +111,7 @@ export type Key = keyof Dict;
 
 const en: Dict = {
   "nav.myRides": "My rides", "nav.newRequests": "{n} new requests", "nav.noRequests": "No new requests",
-  "home.nextLine": "{event} is {when}. {driver} leaves {from} at {time}.", "home.trySentence": "Say where you're going",
+  "home.nextLine": "{event} is {when}. {driver} leaves {from} at {time}.", "home.trySentence": "Try typing this",
   "mine.title": "My rides", "mine.going": "You're going", "mine.waiting": "Waiting for a yes", "mine.past": "Past and declined",
   "mine.none": "You haven't asked any car for a seat yet.",
   "search.again": "Search again", "search.addFilter": "+ add filter",
@@ -161,9 +163,10 @@ const en: Dict = {
   "style.quiet": "quiet", "style.chatty": "chatty", "style.party": "party",
   "styleT.quiet": "Quiet", "styleT.chatty": "Chatty", "styleT.party": "Party",
   "styleD.quiet": "Headphones on, little talk.", "styleD.chatty": "Happy to talk the whole way.", "styleD.party": "Music loud, singing along.",
+  "smoke.bothNo": "neither of you smokes", "smoke.bothYes": "you both smoke", "smoke.youOnly": "you smoke, {name} doesn't", "smoke.driverOnly": "{name} smokes, you don't",
   "ride.smokingOk": "smoking allowed", "ride.noSmoking": "no smoking", "ride.with": "Ride with {name}",
   "ride.why": "Why {n}%", "ride.route": "The route", "ride.perSeat": "per seat, fuel split",
-  "ride.seatsAria": "{taken} of {total} seats taken", "ride.taken": "taken", "ride.you": "you?", "ride.free": "free",
+  "ride.seatsAria": "{taken} of {total} seats taken", "ride.taken": "taken", "ride.you": "you?", "ride.yourSeat": "taken (you)", "ride.free": "free",
   "ride.message": "A line for the driver", "ride.messagePh": "E.g. one small backpack, happy to share the playlist.",
   "ride.ask": "Ask for a seat", "ride.loginToAsk": "Log in to ask for a seat", "ride.own": "This is your ride",
   "ride.manage": "Manage this ride", "ride.status.pending": "request sent", "ride.status.accepted": "you're in!",
@@ -175,6 +178,7 @@ const en: Dict = {
   "home.nextIn": "{event} is {when}.", "home.noRide": "No ride planned yet.", "home.noRideCta": "Find a car to a show, or offer a ride yourself.",
   "home.next": "Your next ride", "home.details": "Ride details", "home.waiting": "Waiting for a yes: {event}",
   "home.askedN": "asked {n} cars", "home.firstYes": "The first driver who says yes gets you. The other requests close on their own.",
+  "home.feed": "Picked for you", "home.feedRides": "Cars that match you", "home.trySentenceGenre": "{genre}, max 60 zł",
   "home.forSound": "For your sound", "home.findRide": "Find a ride", "home.offer": "Offer a ride",
 
   "drive.yours": "Rides you offer", "drive.new": "+ Offer a new ride", "drive.none": "You're not offering any rides yet.",

@@ -66,8 +66,12 @@ export default function RideDetail() {
   const bars: [string, number, number, string][] = m ? [
     [`${t("landing.music")}${m.shared_genres.length ? `: ${m.shared_genres.join(", ")}` : ""}`, m.music, 60, "var(--pink)"],
     [`${t("landing.style")}: ${t(`style.${r.driver.driving_style}`)}`, m.style, 25, "var(--blue)"],
-    [`${t("landing.smoking")}: ${r.smoking_allowed ? t("ride.smokingOk") : t("ride.noSmoking")}`, m.smoking, 15, "var(--lime)"],
   ] : [];
+  // smoking is yes/no (both smoke or both don't): +15 or 0, shown as a chip rather than a bar
+  const meSmokes = !!user?.smoker, driverSmokes = r.driver.smoker;
+  const smokingWords = meSmokes === driverSmokes
+    ? t(meSmokes ? "smoke.bothYes" : "smoke.bothNo")
+    : t(meSmokes ? "smoke.youOnly" : "smoke.driverOnly", { name: firstName });
 
   return (
     <Screen>
@@ -105,6 +109,9 @@ export default function RideDetail() {
                       <div className="t"><i style={{ width: `${score * 100}%`, background: color }} /></div>
                     </div>
                   ))}
+                  {m && (
+                    <div className="r yn-row"><span>{t("landing.smoking")}</span><span className={`yn${m.smoking ? " on" : ""}`}>{smokingWords} · {m.smoking ? "+15" : "0"}</span></div>
+                  )}
                 </div>
                 {why && <div className="why3"><Icon name="spark" /><span>{why}</span></div>}
               </div>
@@ -133,7 +140,9 @@ export default function RideDetail() {
           </div>
           <div className="seats3" role="group" aria-label={t("ride.seatsAria", { taken, total: r.seats_total })}>
             {Array.from({ length: r.seats_total }, (_, i) => i < taken
-              ? <span key={i} className="t">{t("ride.taken")}</span>
+              ? (req?.status === "accepted" && i === taken - 1
+                ? <span key={i} className="t me">{t("ride.yourSeat")}</span> /* your own seat once the driver said yes */
+                : <span key={i} className="t">{t("ride.taken")}</span>)
               : i === taken && !own && !req && !departed ? <span key={i} className="y">{t("ride.you")}</span> : <span key={i} className="f">{t("ride.free")}</span>)}
           </div>
 

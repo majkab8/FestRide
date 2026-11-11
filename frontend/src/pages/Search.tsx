@@ -4,8 +4,8 @@ import { api, type Ride, type SearchFilters } from "../api";
 import { useAuth } from "../auth";
 import { Screen } from "../components/Layout";
 import { MapView, type MapOrigin, type MapPin, type MapRoute } from "../components/MapView";
-import { Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
-import { cityCoords, fold } from "../geo";
+import { Empty, ErrorBox, Icon, Loading, matchKey, shapeFor } from "../components/ui";
+import { billName, cityCoords, fold } from "../geo";
 import { useAsync } from "../hooks";
 import { useI18n, type Key } from "../i18n";
 
@@ -14,7 +14,6 @@ import { useI18n, type Key } from "../i18n";
 const FILTER_KEYS = ["event_id", "q", "origin_city", "event_city", "genre", "date_from", "date_to", "max_price", "min_seats", "no_smoking"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 type Filters = Partial<Record<FilterKey, string>>;
-const SHAPES = ["round", "arch", "blobby"];
 
 function toParams(f: SearchFilters): Record<string, string> {
   const out: Record<string, string> = {};
@@ -146,7 +145,7 @@ export default function Search() {
     const to = event.data?.id === r.event.id && event.data.latitude != null ? [event.data.latitude, event.data.longitude!] as [number, number] : cityCoords(r.event.city);
     const from = r.origin_lat != null && r.origin_lng != null ? [r.origin_lat, r.origin_lng] as [number, number] : cityCoords(r.origin_city);
     if (to && !seenEv.has(r.event.id)) { seenEv.add(r.event.id); pins.push({ id: r.event.id, pos: to, label: "✶", title: r.event.name, on: r.event.id === sel?.event.id }); }
-    if (from && !seenOr.has(r.origin_city)) { seenOr.add(r.origin_city); origins.push({ id: r.origin_city, pos: from, title: r.origin_city.toLowerCase(), on: r.origin_city === sel?.origin_city }); }
+    if (from && !seenOr.has(r.origin_city)) { seenOr.add(r.origin_city); origins.push({ id: r.origin_city, pos: from, title: r.origin_city, on: r.origin_city === sel?.origin_city }); }
     if (from && to) routes.push({ id: r.id, from, to, on });
   }
 
@@ -196,13 +195,13 @@ export default function Search() {
           {(rides.loading || awaitingParse) && <Loading />}
           {rides.error != null && <ErrorBox error={rides.error} onRetry={rides.reload} />}
           {rides.data && !list.length && <Empty title={t("search.empty")}><p className="muted">{t("search.emptyHint")}</p></Empty>}
-          {list.map((r, i) => {
+          {list.map((r) => {
             const k = r.match ? matchKey(r.match) : "diff";
             return (
               <Link key={r.id} to={`/rides/${r.id}`} className={`row3${r.id === sel?.id ? " on" : ""}`} onMouseEnter={() => setSelected(r.id)} onFocus={() => setSelected(r.id)}>
-                <span className={`sc ${SHAPES[i % 3]} ${r.match ? `s-${k}` : "s-none"}`}>{r.match?.percent ?? "·"}</span>
+                <span className={`sc ${shapeFor(k)} ${r.match ? `s-${k}` : "s-none"}${r.match?.percent === 100 ? " n3" : ""}`}>{r.match?.percent ?? "·"}</span>
                 <span className="who"><b>{r.driver.display_name}</b>
-                  <span>{[r.match && t(`match.${k}`), t(`style.${r.driver.driving_style}`), `${r.origin_city.toLowerCase()} ${time(r.departure_time)}`, !filters.event_id && r.event.name].filter(Boolean).join(" · ")}</span></span>
+                  <span>{[!filters.event_id && billName(r.event.name), `${r.origin_city.toLowerCase()} → ${r.event.city.toLowerCase()}`, time(r.departure_time), r.match && t(`match.${k}`), t(`style.${r.driver.driving_style}`)].filter(Boolean).join(" · ")}</span></span>
                 <span className="pr">{r.price} zł</span>
               </Link>
             );

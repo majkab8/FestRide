@@ -38,6 +38,9 @@ export function matchKey(m: Pick<Match, "percent"> | number): MatchKey {
   return p >= 85 ? "great" : p >= 60 ? "good" : p >= 30 ? "some" : "diff";
 }
 
+/** Score blob shape by match tier: star = great, circle = good, rounded square = something in common, hexagon = different vibes. */
+export const shapeFor = (k: MatchKey) => ({ great: "starry", good: "round", some: "squircle", diff: "hexa" })[k];
+
 /** The match % inside a coloured blob; `shape` varies the blob down a list. */
 export function Score({ match, shape = 0, size }: { match: Match; shape?: number; size?: number }) {
   const { t } = useI18n();

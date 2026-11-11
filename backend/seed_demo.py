@@ -5,7 +5,7 @@ Usage (from backend/, after import_events.py):
     python seed_demo.py --reset   # remove previous demo data first
 
 Log in as  demo@example.com / festride-demo  (techno & house, party, non-smoker):
-- GET /rides?event_id=<showcase>  -> 5 drivers to the same event, ranked by match
+- GET /rides?event_id=<showcase>  -> 6 drivers to the same event, ranked by match (one per match level)
 - GET /rides/mine, /rides/{id}/requests -> your own ride with 2 pending requests
 All demo accounts end in "@example.com" and use the same password.
 """
@@ -25,16 +25,18 @@ PASSWORD = "festride-demo"
 DEMO_EMAIL = "demo@example.com"
 
 # name, genres, driving style, smoker, origin city, price, smoking allowed in the car, note
+# (notes and messages are what users would type, so they are in Polish like the app's audience)
 DRIVERS = [
-    ("Kuba", ["techno", "house"], "party", False, "Łódź", 35, False, "Techno all the way, bring snacks!"),
-    ("Ola", ["pop", "disco"], "chatty", False, "Łódź", 30, False, "Happy to chat and share playlists."),
+    ("Kuba", ["techno", "house"], "party", False, "Łódź", 35, False, "Techno przez całą drogę, weźcie przekąski!"),
+    ("Ola", ["pop", "disco"], "chatty", False, "Łódź", 30, False, "Chętnie pogadam i wymienię się playlistami."),
+    ("Bartek", ["house", "disco"], "chatty", False, "Gdańsk", 40, False, "W radiu house, chętnie pogadam."),  # "good" (69%)
     ("Zosia", ["hip-hop", "r&b"], "chatty", False, "Kraków", 40, False, None),
-    ("Piotr", ["jazz", "blues"], "quiet", False, "Poznań", 45, False, "Quiet ride, leaving on time."),
-    ("Marek", ["rock", "metal"], "quiet", True, "Wrocław", 25, True, "I smoke during breaks and in the car."),
+    ("Piotr", ["jazz", "blues"], "quiet", False, "Poznań", 45, False, "Cicha jazda, wyjeżdżam punktualnie."),
+    ("Marek", ["rock", "metal"], "quiet", True, "Wrocław", 25, True, "Palę na postojach i w aucie."),
 ]
 PASSENGERS = [  # name, genres, style, smoker, message to the driver
-    ("Tomek", ["house", "electronic"], "party", False, "Hi! I can meet you at Łódź Fabryczna."),
-    ("Kasia", ["rock", "indie"], "chatty", True, "Is there room for a small backpack?"),
+    ("Tomek", ["house", "electronic"], "party", False, "Cześć! Mogę podejść pod Łódź Fabryczną."),
+    ("Kasia", ["rock", "indie"], "chatty", True, "Zmieści się mały plecak?"),
 ]
 
 
@@ -117,7 +119,7 @@ def main() -> int:
             print("Demo data already exists. Use --reset to recreate it.")
             return 0
 
-        # An electronic event, so "techno ..." sentences find the showcase (Kuba = 100%).
+        # An electronic event, so "techno ..." sentences find the showcase (Kuba = 100%, Bartek 69%, Ola 43%, Piotr 15%).
         showcase = (_upcoming(session, 5, city="Kraków", genre="Dance/Electronic")
                     or _upcoming(session, 5, genre="Dance/Electronic")
                     or _upcoming(session, 5, city="Kraków") or _upcoming(session, 5))
@@ -132,7 +134,7 @@ def main() -> int:
             drivers[name] = _user(session, name, genres, style, smoker)
             _ride(session, drivers[name], showcase, origin, price, smoking, note)
 
-        own = _ride(session, demo, mine, "Łódź", 30, False, "Leaving from Łódź Fabryczna.", seats=2)
+        own = _ride(session, demo, mine, "Łódź", 30, False, "Ruszam spod Łodzi Fabrycznej.", seats=2)
         for name, genres, style, smoker, message in PASSENGERS:
             passenger = _user(session, name, genres, style, smoker)
             session.add(RideRequest(ride_id=own.id, passenger_id=passenger.id, message=message))
@@ -143,17 +145,17 @@ def main() -> int:
         going = _upcoming(session, 4, exclude=used)
         if going:
             used.append(going.id)
-            ride = _ride(session, drivers["Kuba"], going, "Łódź", 35, False, "Techno all the way, bring snacks!")
-            session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, status=RequestStatus.accepted, message="Hi! Small backpack only."))
+            ride = _ride(session, drivers["Kuba"], going, "Łódź", 35, False, "Techno przez całą drogę, weźcie przekąski!")
+            session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, status=RequestStatus.accepted, message="Cześć! Mam tylko mały plecak."))
         waiting = _upcoming(session, 6, exclude=used)
         if waiting:
             for name, origin, price in (("Ola", "Łódź", 30), ("Piotr", "Łódź", 40)):
                 ride = _ride(session, drivers[name], waiting, origin, price, False, None)
-                session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, message="Hi! Is there room for one?"))
+                session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, message="Cześć! Znajdzie się miejsce dla jednej osoby?"))
         session.commit()
 
         print(f"Log in as {DEMO_EMAIL} / {PASSWORD}")
-        print(f"Showcase event (5 drivers, ranked by match): #{showcase.id} {showcase.name} - "
+        print(f"Showcase event (6 drivers, ranked by match): #{showcase.id} {showcase.name} - "
               f"{showcase.city}, {showcase.event_date}  ->  GET /rides?event_id={showcase.id}")
         print(f"Your own ride (2 pending requests): ride #{own.id} to {mine.name} - {mine.city}, "
               f"{mine.event_date}  ->  GET /rides/{own.id}/requests")

@@ -32,8 +32,8 @@ python seed_demo.py           # demo users, rides and join requests on real upco
 python seed_demo.py --reset   # recreate it
 ```
 
-Log in as `demo@example.com` / `festride-demo`. The script prints a showcase event with five
-drivers (ranked by match for the demo user) and the demo user's own ride with two pending
+Log in as `demo@example.com` / `festride-demo`. The script prints a showcase event with six
+drivers (ranked by match for the demo user, one per match level) and the demo user's own ride with two pending
 requests.
 
 ### Run the API
