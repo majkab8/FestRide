@@ -4,9 +4,9 @@ import { api, type Ride, type SearchFilters } from "../api";
 import { useAuth } from "../auth";
 import { Screen } from "../components/Layout";
 import { MapView, type MapOrigin, type MapPin, type MapRoute } from "../components/MapView";
-import { Empty, ErrorBox, Icon, Loading, matchKey, shapeFor } from "../components/ui";
+import { AiBadge, Empty, ErrorBox, Icon, Loading, matchKey, shapeFor } from "../components/ui";
 import { billName, cityCoords, fold } from "../geo";
-import { useAsync } from "../hooks";
+import { useFittingPlaceholder, useAsync } from "../hooks";
 import { useI18n, type Key } from "../i18n";
 
 /* Filters live in the URL, so a search can be shared and survives a reload.
@@ -78,6 +78,7 @@ export default function Search() {
   const [formOpen, setFormOpen] = useState(false);
   const [selected, setSelected] = useState<number | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const [phRef, ph] = useFittingPlaceholder([t("landing.example"), ...t("landing.exampleShort").split("|")]);
   const rowsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
@@ -223,12 +224,14 @@ export default function Search() {
       <form className="sbar" role="search" onSubmit={submit}>
         <label htmlFor="s-q" className="sr-only">{t("landing.ask")}</label>
         {editingText || !text ? (
-          <input id="s-q" ref={inputRef} value={input} placeholder={t("landing.example")} onChange={(e) => setInput(e.target.value)} />
+          <input id="s-q" ref={(node) => { inputRef.current = node; phRef(node); }} value={input} placeholder={ph} onChange={(e) => setInput(e.target.value)} />
         ) : (
           <button type="button" id="s-q" className="said" onClick={() => setEditingText(true)} aria-label={`${t("search.edit")}: ${text}`}>
             <Highlighted text={text.trim()} filters={filters} />
           </button>
         )}
+        {/* the sentence is read by AI: say so right where people type it */}
+        <span className="sbar-ai"><AiBadge title={t("search.aiHint")} /></span>
         <button className="go btn3" type="submit" disabled={parsing} onClick={(e) => { if (!editingText && text) { e.preventDefault(); send(text); } }}>
           {text ? t("search.again") : t("search.cta")}
         </button>
@@ -298,12 +301,32 @@ function FilterForm({ filters, onApply }: { filters: Filters; onApply: (f: Recor
   const [f, setF] = useState<Record<string, string>>(() => ({ ...filters }));
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target.checked ? "true" : "") : e.target.value });
   const fields: [FilterKey, Key, string][] = [["origin_city", "f.from", "text"], ["event_city", "f.to", "text"], ["q", "f.q", "text"], ["genre", "f.genre", "text"], ["date_from", "f.dateFrom", "date"], ["date_to", "f.dateTo", "date"], ["max_price", "f.price", "number"], ["min_seats", "f.seats", "number"]];
+
+  // suggestions while typing: event names matching the "Event" field, and the cities that have events
+  const cities = useAsync(() => api.cities(), []);
+  const [eventHints, setEventHints] = useState<string[]>([]);
+  const q = (f.q ?? "").trim();
+  useEffect(() => {
+    if (q.length < 2) { setEventHints([]); return; }
+    let live = true;
+    const id = setTimeout(() => {
+      api.events({ q, limit: 8 }).then((evs) => { if (live) setEventHints([...new Set(evs.map((e) => e.name))]); }).catch(() => {});
+    }, 250);
+    return () => { live = false; clearTimeout(id); };
+  }, [q]);
+  const lists: Partial<Record<FilterKey, string[]>> = {
+    q: eventHints,
+    origin_city: (cities.data ?? []).map((c) => c.city),
+    event_city: (cities.data ?? []).map((c) => c.city),
+  };
   return (
     <form className="filters-form" onSubmit={(e) => { e.preventDefault(); onApply(Object.fromEntries(Object.entries(f).filter(([, v]) => v))); }}>
       {fields.map(([k, label, type]) => (
         <div className="field" key={k}>
           <label htmlFor={`ff-${k}`}>{t(label)}</label>
-          <input id={`ff-${k}`} type={type} min={type === "number" ? (k === "min_seats" ? 1 : 0) : undefined} max={k === "min_seats" ? 8 : undefined} value={f[k] ?? ""} onChange={set(k)} />
+          <input id={`ff-${k}`} type={type} min={type === "number" ? (k === "min_seats" ? 1 : 0) : undefined} max={k === "min_seats" ? 8 : undefined} value={f[k] ?? ""} onChange={set(k)}
+            list={lists[k] ? `ffl-${k}` : undefined} autoComplete={lists[k] ? "off" : undefined} />
+          {lists[k] && <datalist id={`ffl-${k}`}>{lists[k]!.map((o) => <option key={o} value={o} />)}</datalist>}
         </div>
       ))}
       <label className="switch"><input type="checkbox" checked={!!f.no_smoking} onChange={set("no_smoking")} />{t("f.smoke")}</label>

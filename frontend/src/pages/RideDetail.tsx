@@ -3,7 +3,7 @@ import { Link, useNavigate, useParams } from "react-router-dom";
 import { api, ApiError, errorKey } from "../api";
 import { useAuth } from "../auth";
 import { Screen } from "../components/Layout";
-import { CountUp, Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
+import { AiBadge, CountUp, Empty, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
 import { initials } from "../geo";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n, type Key } from "../i18n";
@@ -113,7 +113,7 @@ export default function RideDetail() {
                     <div className="r yn-row"><span>{t("landing.smoking")}</span><span className={`yn${m.smoking ? " on" : ""}`}>{smokingWords} · {m.smoking ? "+15" : "0"}</span></div>
                   )}
                 </div>
-                {why && <div className="why3"><Icon name="spark" /><span>{why}</span></div>}
+                {why && <div className="why3"><Icon name="spark" /><span>{why} <AiBadge /></span></div>}
               </div>
             )}
             <div className="cd">

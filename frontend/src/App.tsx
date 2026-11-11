@@ -1,17 +1,21 @@
-import { useEffect } from "react";
+import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, RequireAuth, useAuth } from "./auth";
 import { Footer, Header } from "./components/Layout";
 import { I18nProvider } from "./i18n";
-import { Login, Signup } from "./pages/Auth";
-import Drive from "./pages/Drive";
-import Events from "./pages/Events";
-import Home from "./pages/Home";
 import Landing from "./pages/Landing";
-import MyRides from "./pages/MyRides";
-import OfferRide from "./pages/OfferRide";
-import RideDetail from "./pages/RideDetail";
-import Search from "./pages/Search";
+
+// Every page except the landing is its own chunk, loaded when first visited:
+// the landing no longer downloads the map library and the app screens up front.
+const Login = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Login })));
+const Signup = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Signup })));
+const Drive = lazy(() => import("./pages/Drive"));
+const Events = lazy(() => import("./pages/Events"));
+const Home = lazy(() => import("./pages/Home"));
+const MyRides = lazy(() => import("./pages/MyRides"));
+const OfferRide = lazy(() => import("./pages/OfferRide"));
+const RideDetail = lazy(() => import("./pages/RideDetail"));
+const Search = lazy(() => import("./pages/Search"));
 
 function ScrollToTop() {
   const { pathname } = useLocation();
@@ -41,6 +45,7 @@ export default function App() {
         <BrowserRouter>
           <ScrollToTop />
           <Chrome>
+          <Suspense fallback={null}>
           <Routes>
             <Route path="/" element={<Root />} />
             <Route path="/events" element={<Events />} />
@@ -54,6 +59,7 @@ export default function App() {
             <Route path="/drive/new" element={<RequireAuth><OfferRide /></RequireAuth>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          </Suspense>
           </Chrome>
         </BrowserRouter>
       </AuthProvider>

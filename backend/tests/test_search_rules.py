@@ -103,3 +103,14 @@ def test_describe_chips():
 def test_filters_swap_reversed_dates():
     f = SearchFilters(date_from=date(2026, 12, 31), date_to=date(2026, 12, 1))
     assert (f.date_from, f.date_to) == (date(2026, 12, 1), date(2026, 12, 31))
+
+
+def test_known_event_name_is_recognised():
+    names = ["Koncert Chopinowski", "Open'er Festival 2027", "Koncert przy świecach – Girl Power", "Nasty"]
+    f = parse_rules("z gdyni na koncert chopinowski", TODAY, CITIES, names)
+    assert (f.origin_city, f.q) == ("Gdynia", "Koncert Chopinowski")
+    assert parse_rules("na open'er festival z poznania", TODAY, CITIES, names).q == "Open'er Festival"
+    # the main part of a long name counts, the longest match wins
+    assert parse_rules("koncert przy swiecach w warszawie", TODAY, CITIES, names).q == "Koncert przy świecach"
+    # short one-word names are not matched (too easy to hit by accident)
+    assert parse_rules("nasty ride to krakow", TODAY, CITIES, names).q is None

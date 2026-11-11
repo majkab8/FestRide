@@ -20,7 +20,7 @@ const pl = {
   "landing.eyebrow": "Wspólne dojazdy na koncerty i festiwale w Polsce",
   "landing.title": "Każda droga kończy się pod sceną.",
   "landing.ask": "Opisz swoją trasę", "landing.cta": "Znajdź auto",
-  "landing.example": "z Łodzi na techno do Krakowa w grudniu, max 50 zł",
+  "landing.example": "z Łodzi na techno do Krakowa w grudniu, max 50 zł", "landing.exampleShort": "z Łodzi na techno do Krakowa w grudniu|z Łodzi na techno do Krakowa|z Łodzi na techno",
   "landing.sticker1": "dopasowanie po muzyce ♫", "landing.sticker2": "wydarzeń w bazie",
   "landing.lineupTitle": "Auta jadą na te koncerty", "landing.lineupEmpty": "Najbliższe koncerty",
   "landing.allEvents": "Wszystkie wydarzenia na mapie",
@@ -40,7 +40,7 @@ const pl = {
   "events.showRides": "Pokaż przejazdy", "events.empty": "Brak wydarzeń dla tych filtrów", "events.more": "Pokaż więcej",
 
   "search.title": "Dokąd jedziesz?", "search.sub": "Opisz trasę jednym zdaniem. Zamienimy je na filtry, które możesz poprawić.",
-  "search.cta": "Szukaj", "search.read": "Jak to zrozumieliśmy", "search.ai": "odczytane przez AI", "search.rules": "uproszczona interpretacja",
+  "search.cta": "Szukaj", "search.read": "Jak to zrozumieliśmy", "search.ai": "odczytane przez AI", "search.aiHint": "AI zamienia twoje zdanie na filtry wyszukiwania", "search.rules": "uproszczona interpretacja",
   "search.rulesNote": "AI jest teraz niedostępne, więc zdanie odczytaliśmy prościej. Sprawdź filtry poniżej.",
   "search.notUnderstood": "Nie udało się odczytać zdania. Ustaw filtry ręcznie.",
   "search.edit": "Edytuj filtry", "search.hideEdit": "Ukryj filtry", "search.apply": "Zastosuj", "search.clear": "Wyczyść",
@@ -82,6 +82,7 @@ const pl = {
 
   "offer.title": "Zaproponuj przejazd", "offer.event": "Na jakie wydarzenie?", "offer.eventPh": "Wpisz nazwę, miasto albo miejsce",
   "offer.change": "Zmień", "offer.origin": "Skąd wyjeżdżasz?", "offer.originPh": "np. Łódź",
+  "offer.aiLabel": "Opisz przejazd jednym zdaniem", "offer.aiPh": "np. jadę z Łodzi na Föllakzoid 4 grudnia o 10, 3 miejsca po 35 zł, bez palenia", "offer.aiFill": "Wypełnij", "offer.aiBusy": "Czytam…", "offer.ai.ai": "Wypełniliśmy formularz ze zdania. Sprawdź i popraw, jeśli trzeba.", "offer.ai.rules": "AI jest teraz niedostępne, więc zdanie odczytaliśmy prościej. Sprawdź pola poniżej.", "offer.ai.none": "Nie udało się nic odczytać. Spróbuj podać wydarzenie, miasto i godzinę.", "offer.ai.error": "Coś poszło nie tak. Wypełnij formularz ręcznie.", "offer.writeForMe": "Napisz za mnie", "offer.writing": "Piszę…", "offer.noteByAi": "napisane przez AI, możesz poprawić", "offer.noteByTemplate": "AI niedostępne, wstawiliśmy prosty opis",
   "offer.when": "Wyjazd", "offer.seats": "Wolne miejsca", "offer.price": "Cena za miejsce (zł)", "offer.smoking": "W aucie można palić",
   "offer.note": "Kilka słów dla pasażerów (opcjonalnie)", "offer.notePh": "Np. ruszam spod dworca, wracam po koncercie.",
   "offer.submit": "Opublikuj przejazd", "offer.needEvent": "Wybierz wydarzenie z listy.",
@@ -127,7 +128,7 @@ const en: Dict = {
   "landing.eyebrow": "Carpools to Polish gigs & festivals",
   "landing.title": "Every road ends at a stage.",
   "landing.ask": "Describe your trip", "landing.cta": "Find a car",
-  "landing.example": "from Łódź to techno in Kraków in December, max 50 zł",
+  "landing.example": "from Łódź to techno in Kraków in December, max 50 zł", "landing.exampleShort": "from Łódź to techno in Kraków in December|from Łódź to techno in Kraków|techno in Kraków",
   "landing.sticker1": "match by music ♫", "landing.sticker2": "gigs loaded",
   "landing.lineupTitle": "Cars are leaving for these shows", "landing.lineupEmpty": "Coming up soon",
   "landing.allEvents": "All events on the map",
@@ -147,7 +148,7 @@ const en: Dict = {
   "events.showRides": "Show rides", "events.empty": "No events for these filters", "events.more": "Show more",
 
   "search.title": "Where are you headed?", "search.sub": "Describe your trip in one sentence. We turn it into filters you can adjust.",
-  "search.cta": "Search", "search.read": "How we read it", "search.ai": "read by AI", "search.rules": "simplified reading",
+  "search.cta": "Search", "search.read": "How we read it", "search.ai": "read by AI", "search.aiHint": "AI turns your sentence into search filters", "search.rules": "simplified reading",
   "search.rulesNote": "AI is unavailable right now, so we used a simpler reading of your sentence. Check the filters below.",
   "search.notUnderstood": "We couldn't read that sentence. Set the filters by hand.",
   "search.edit": "Edit filters", "search.hideEdit": "Hide filters", "search.apply": "Apply", "search.clear": "Clear",
@@ -189,6 +190,7 @@ const en: Dict = {
 
   "offer.title": "Offer a ride", "offer.event": "Which event?", "offer.eventPh": "Type a name, city or venue",
   "offer.change": "Change", "offer.origin": "Leaving from", "offer.originPh": "e.g. Łódź",
+  "offer.aiLabel": "Describe the ride in one sentence", "offer.aiPh": "e.g. driving from Łódź to Föllakzoid on 4 December at 10, 3 seats at 35 zł, no smoking", "offer.aiFill": "Fill in", "offer.aiBusy": "Reading…", "offer.ai.ai": "We filled in the form from your sentence. Check it and fix anything that's off.", "offer.ai.rules": "AI is unavailable right now, so we read the sentence more simply. Check the fields below.", "offer.ai.none": "Couldn't read anything. Try naming the event, the city and the time.", "offer.ai.error": "Something went wrong. Please fill in the form yourself.", "offer.writeForMe": "Write it for me", "offer.writing": "Writing…", "offer.noteByAi": "written by AI, edit as you like", "offer.noteByTemplate": "AI unavailable, here's a simple note",
   "offer.when": "Departure", "offer.seats": "Free seats", "offer.price": "Price per seat (zł)", "offer.smoking": "Smoking allowed in the car",
   "offer.note": "A few words for passengers (optional)", "offer.notePh": "E.g. leaving from the station, driving back after the show.",
   "offer.submit": "Publish ride", "offer.needEvent": "Pick an event from the list.",
@@ -232,6 +234,8 @@ interface I18n {
   t: (key: Key, vars?: Record<string, string | number>) => string;
   plural: (n: number, noun: Noun) => string;
   day: (iso: string) => string;
+  /** full weekday and month, e.g. "środa, 11 listopada" — where there is room for it */
+  dayLong: (iso: string) => string;
   dayTime: (iso: string) => string;
   time: (iso: string) => string;
   month: (iso: string) => string;
@@ -268,6 +272,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
     const dict = DICTS[lang];
     const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(loc, o);
     const fDay = fmt({ weekday: "short", day: "numeric", month: "short" });
+    const fDayLong = fmt({ weekday: "long", day: "numeric", month: "long" });
     const fTime = fmt({ hour: "2-digit", minute: "2-digit" });
     const fMonth = fmt({ month: "long", year: "numeric" });
     const rel = new Intl.RelativeTimeFormat(loc, { numeric: "auto" });
@@ -285,6 +290,7 @@ export function I18nProvider({ children }: { children: ReactNode }) {
         return `${n} ${forms[rules.select(n)] ?? forms.other}`;
       },
       day: (iso) => fDay.format(parseLocal(iso)),
+      dayLong: (iso) => fDayLong.format(parseLocal(iso)),
       time: (iso) => fTime.format(parseLocal(iso)),
       dayTime: (iso) => `${fDay.format(parseLocal(iso))} · ${fTime.format(parseLocal(iso))}`,
       month: (iso) => { const m = fMonth.format(parseLocal(iso)); return m.charAt(0).toUpperCase() + m.slice(1); },

@@ -199,3 +199,53 @@ def test_explain_language_reaches_prompt_and_cache(client, register, make_ride, 
     assert len(systems) == 2  # second "pl" call served from cache
     assert "Polish" in systems[0] and "English" in systems[1]
     assert client.post("/ai/explain", json={"ride_ids": [ride], "lang": "de"}, headers=me).status_code == 422
+
+
+# --- offer a ride from one sentence, "write it for me" note ---------------------------
+
+
+def test_offer_from_sentence_with_ai(client, register, fake_model):
+    from datetime import timedelta
+
+    from app.clock import today_pl
+
+    day = (today_pl() + timedelta(days=10)).isoformat()
+    fake_model({"event": "test fest", "event_date": day, "origin_city": "lodz", "departure_time": "9:30",
+                "seats": 3, "price": 35, "smoking_allowed": False, "note": "  Zbiórka   pod dworcem. ", "bogus": 1})
+    r = client.post("/ai/offer", json={"text": "..."}, headers=register()).json()
+    assert r["event"]["name"] == "Test Fest" and r["event_hint"] is None
+    assert (r["origin_city"], r["departure"], r["seats"], r["price"], r["smoking_allowed"]) == ("Łódź", f"{day}T09:30", 3, 35, False)
+    assert (r["note"], r["source"], r["understood"]) == ("Zbiórka pod dworcem.", "ai", True)
+
+
+def test_offer_drops_bad_values_and_keeps_unknown_event_as_hint(client, register, fake_model):
+    fake_model({"event": "Nonexistent Gig", "event_date": "2020-01-01", "departure_time": "25:99", "seats": 40, "price": -3})
+    r = client.post("/ai/offer", json={"text": "..."}, headers=register()).json()
+    assert r["event"] is None and r["event_hint"] == "Nonexistent Gig"
+    assert (r["departure"], r["seats"], r["price"]) == (None, None, None)
+
+
+def test_offer_rules_fallback_without_ai(client, register):
+    r = client.post("/ai/offer", json={"text": "jadę z Łodzi na test fest o 10, 2 miejsca po 30 zł, bez palenia"},
+                    headers=register()).json()
+    assert r["source"] == "rules" and r["event"]["name"] == "Test Fest"
+    assert (r["origin_city"], r["seats"], r["price"], r["smoking_allowed"]) == ("Łódź", 2, 30, False)
+    assert r["departure"].endswith("T10:00")  # the event's day + the hour from the sentence
+
+
+def test_offer_needs_login(client):
+    assert client.post("/ai/offer", json={"text": "z łodzi"}).status_code == 401
+
+
+def test_ride_note_ai_and_template(client, register, event_id, fake_model):
+    headers = register(["techno", "house"], "party")
+    body = {"event_id": event_id, "origin_city": "lodz", "departure": "2030-01-01T10:00", "hint": "zbiórka pod dworcem"}
+    # no AI: a plain template from the same facts, in the requested language
+    r = client.post("/ai/ride-note", json=body, headers=headers).json()
+    assert r["source"] == "template"
+    assert "Test Fest" in r["text"] and "Łódź" in r["text"] and "10:00" in r["text"] and "zbiórka pod dworcem" in r["text"]
+    # AI: the model's text, whitespace tidied
+    calls = fake_model({"text": "  Jadę na Test Fest,\n w aucie techno. "})
+    r = client.post("/ai/ride-note", json=body, headers=headers).json()
+    assert r == {"text": "Jadę na Test Fest, w aucie techno.", "source": "ai"}
+    assert '"driver_genres": ["techno", "house"]' in calls[-1] and "zbiórka pod dworcem" in calls[-1]

@@ -86,6 +86,7 @@
 .home3 .wait .car b { font-weight: 600; }
 .home3 .wait .car small { font-size: 13px; color: var(--muted); }
 .home3 .wait p { margin: 14px 0 0; font-size: 14px; color: var(--muted); }
+.home3 :is(.wait, .sound) .meta > span { white-space: nowrap; } /* "asked 2 cars" breaks as a whole, never leaving the number alone */
 .home3 .rcol { display: flex; flex-direction: column; gap: 20px; }
 .home3 .sound { background: var(--inv-bg); color: var(--inv-fg); border-radius: 32px; padding: 28px; text-align: center;
   position: relative; overflow: hidden; isolation: isolate; }
@@ -110,7 +111,7 @@
 .home3 .feed3::-webkit-scrollbar-thumb { background: color-mix(in srgb, var(--fg) 22%, transparent); border-radius: 999px; }
 .home3 .feed3::-webkit-scrollbar-thumb:hover { background: color-mix(in srgb, var(--fg) 40%, transparent); }
 @supports not selector(::-webkit-scrollbar) { .home3 .feed3 { scrollbar-width: thin; scrollbar-color: color-mix(in srgb, var(--fg) 25%, transparent) transparent; } }
-.home3 .feed3 > * { flex-shrink: 0; }
+.home3 .feed3 > *, .home3 .feed3 .slides > * { flex-shrink: 0; } /* the cards sit inside .slides (display: contents), so they need the rule too */
 .home3 .feed3 .slides { display: contents; } /* desktop: the cards simply stack in the feed column */
 .home3 .feedhead .dots { display: none; }
 .home3 .feed3 .feedhead { position: sticky; top: 0; z-index: 2; background: var(--bg); margin: 0; padding: 4px 4px 10px; }
@@ -192,7 +193,7 @@
 .ride3 .bars3 .t i { display: block; height: 100%; border-radius: 999px; }
 .ride3 .bars3 .yn-row { align-items: center; margin-top: 2px; }
 .ride3 .yn { border-radius: 999px; padding: 4px 12px; background: var(--sand); color: var(--muted); white-space: nowrap; }
-.ride3 .yn.on { background: var(--lime); color: var(--ink); }
+.ride3 .yn.on { background: var(--lime); color: var(--on-bright); } /* --ink only exists on the landing; this keeps dark text on lime in both themes */
 .ride3 .why3 { margin-top: 16px; display: flex; gap: 8px; font-size: 14.5px; line-height: 1.45; }
 .ride3 .why3 .ic { color: var(--pink); margin-top: 2px; }
 .ride3 .route { display: grid; grid-template-columns: auto 1fr auto; gap: 6px 14px; align-items: center; font-family: var(--font-mono); font-size: 13px; }
@@ -311,7 +312,7 @@
   .ride3 .cards { grid-template-columns: minmax(0, 1fr); }
   .driver3 .tix3 { grid-template-columns: minmax(0, 1fr); }
   .app-head .in { flex-wrap: wrap; }
-  .app-head .tabs3 { order: 3; width: 100%; }
+  .app-head .tabs3 { order: 3; width: 100%; justify-content: center; } /* own row on tablets: tabs centred, not stuck to the left */
 }
 @media (max-width: 600px) {
   .app-head .in { padding-block: 12px; gap: 10px; }
@@ -336,7 +337,9 @@
   .app-head.guest .right .mini { display: none; }
   .app-head.guest.menu-open .guest-prefs { display: flex; gap: 8px; order: 4; width: 100%; padding: 2px 4px 4px; }
   /* phones: short labels, all tabs share the width equally so none gets cut off */
-  .app-head .tabs3 { display: grid; grid-auto-flow: column; grid-auto-columns: minmax(0, 1fr); }
+  /* each tab as wide as its label plus an equal share of the spare room, so long ones ("Kierowca") get more space */
+  .app-head .tabs3 { display: flex; }
+  .app-head .tabs3 a { flex: 1 1 auto; }
   .app-head .tabs3 a { padding: 9px 6px; font-size: 15px; text-align: center; }
   .app-head .tabs3 .lg { display: none; }
   .app-head .tabs3 .sm { display: inline; }
@@ -357,7 +360,7 @@
   .home3 .empty-next .btn { min-height: 42px; padding: 0 16px; font-size: 15px; }
   .home3 .lead { font-size: 17px; margin-top: 8px; }
   .home3 .sound .t1 { font-size: 30px !important; }
-  .home3 .next .wb .poster { font-size: 32px; }
+  .home3 .next .wb .poster { display: none; }
   .home3 .next .wb .stub { margin-left: 44px; }
   .home3 .next .acts { left: 20px; right: 20px; justify-content: flex-end; }
   .search3 .sbar { flex-direction: column; align-items: stretch; border-radius: 28px; padding: 12px 14px; font-size: 18px; }
@@ -365,11 +368,33 @@
   .search3 .chips3 .count { margin-left: 0; width: 100%; }
   .app3 .row3 { border-radius: 32px; gap: 12px; padding-right: 12px; }
   .app3 .row3 .sc { width: 54px; height: 54px; font-size: 21px; }
+  /* My rides: status pill goes under the details so event names get the full width (two lines max) */
+  .mine3 .row3 { display: grid; grid-template-columns: auto minmax(0, 1fr); column-gap: 12px; row-gap: 6px; padding-right: 16px; }
+  .mine3 .row3 .sc { grid-row: span 2; align-self: center; }
+  .mine3 .row3 .who b { display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; font-size: 16px; line-height: 1.25; }
+  .mine3 .row3 .st { grid-column: 2; justify-self: start; padding: 4px 10px; font-size: 11px; }
   .ride3 .who3 { gap: 16px; }
   .ride3 .who3 .ava { width: 84px; height: 98px; font-size: 26px; }
   .ride3 .band-row { margin: 10px -16px 0; height: 110px; }
   .ride3 .band-row .wb .stub { margin-left: 30px; }
-  .ride3 .band-row .wb .poster { font-size: 30px; }
+  .ride3 .band-row .wb .poster { display: none; } /* no room next to the stub on phones: it only showed a cut-off word */
   .driver3 .seatbar { flex-direction: column; }
   .driver3 .seatbar div { height: 60px; }
 }
+
+/* the narrowest phones (≤360px, down to 320px) */
+@media (max-width: 360px) {
+  .app-head .tabs3 { padding: 4px; gap: 2px; }
+  .app-head .tabs3 a { padding: 8px 2px; font-size: 13.5px; }
+  .home3 .next .wb .stub { margin-left: 36px; padding: 8px 12px; gap: 10px; }
+  .home3 .next .wb .stub .num { font-size: 36px; }
+  .home3 .next .wb .stub span:last-child { font-size: 10.5px; white-space: normal; max-width: 140px; }
+  .ride3 .band-row .wb .stub { margin-left: 24px; }
+  .ride3 .band-row .wb .stub span:last-child { font-size: 10.5px; }
+  .home3 .wait { padding: 20px 18px; }
+  .home3 .wait h2 { font-size: 19px; line-height: 1.25; }
+}
+
+/* "✶ AI" next to the sentence search: AI reads what you type */
+.search3 .sbar-ai { flex: none; display: flex; align-items: center; margin-right: 4px; }
+@media (max-width: 600px) { .search3 .sbar-ai { align-self: flex-start; order: -1; margin: 0 0 2px 4px; } }

@@ -16,7 +16,11 @@ and a dark theme.
   "yes" takes the seat and the passenger's other requests to the same event close automatically
 - **Match score** (0–100 %): music 60 % (shared genres, related genre families), ride style 25 %,
   smoking 15 %, with a label from "great match" to "different vibes"
-- **Sentence search** with Google Gemini, falling back to a rule-based parser when there is no key
+- **AI (Google Gemini)**, marked with a "✶ AI" badge wherever it is used, each with a no-AI fallback:
+  - sentence search: a sentence becomes filters (rule-based parser without a key, which also recognises known event names)
+  - offer a ride in one sentence: *"jadę z Łodzi na Föllakzoid 4 grudnia o 10, 3 miejsca po 35 zł"* fills the whole form
+  - "✶ Write it for me": a short note for passengers, written in the driver's voice from the ride and their profile
+  - one line on why you'd get along with a driver or passenger
 - **Map** of the routes (Leaflet + OpenStreetMap), limited to Poland
 - **Responsive**: phones get a pinned map with the focused ride, swipeable suggestions, hamburger menus
 
@@ -63,6 +67,8 @@ Open **http://localhost:5173** and log in with **`demo@example.com` / `festride-
    The showcase event has six drivers, one at every match level (green star, circle, square, hexagon).
 4. Open a ride: the score breakdown, the route, and the seats; ask for a seat.
 5. **Kierowca / Drive**: your own ride as a driver, with two passengers waiting to be accepted.
+   **+ Zaproponuj przejazd / Offer a ride**: describe the ride in one sentence and press *Wypełnij*,
+   then *✶ Napisz za mnie* for the note (with a Gemini key; without one, simpler fallbacks).
 6. Switch **PL / EN** and the theme in the account menu (top right).
 
 ## Optional: real events and AI
@@ -72,7 +78,7 @@ Put keys in `backend/.env`:
 | Key | What it adds | Without it |
 |---|---|---|
 | `TICKETMASTER_API_KEY` ([get one](https://developer.ticketmaster.com)) | ~500+ real upcoming events from Ticketmaster | 8 sample festivals (2027) |
-| `GEMINI_API_KEY` ([free key](https://aistudio.google.com)) | AI sentence search and one-line "why you'd get along" | rule-based search; match % and labels still work |
+| `GEMINI_API_KEY` ([free key](https://aistudio.google.com)) | AI sentence search, ride offer from one sentence, "write it for me" notes, one-line "why you'd get along" | rule-based search and offer parsing, a template note; match % and labels still work |
 
 After adding the Ticketmaster key, run `python import_events.py` again, then `python seed_demo.py --reset`.
 

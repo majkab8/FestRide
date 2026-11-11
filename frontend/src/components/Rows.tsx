@@ -3,15 +3,15 @@ import type { Event, Ride } from "../api";
 import { useI18n } from "../i18n";
 import { Avatar, Icon, Score, Thumb } from "./ui";
 
-export function EventRow({ ev, i, on, rides, onSelect, asStatic }: { ev: Event; i: number; on?: boolean; rides?: number; onSelect?: () => void; asStatic?: boolean }) {
-  const { day, plural } = useI18n();
+export function EventRow({ ev, i, on, rides, onSelect, asStatic, posters }: { ev: Event; i: number; on?: boolean; rides?: number; onSelect?: () => void; asStatic?: boolean; posters?: boolean }) {
+  const { dayLong, plural } = useI18n();
   const body = (
     <>
-      <Thumb genre={ev.genre} shape={i} />
+      <Thumb genre={ev.genre} shape={posters ? 3 /* uniform rounded square */ : i} image={posters ? ev.image_url : null} />
       <span style={{ minWidth: 0 }}>
         <span className="ev-title">{ev.name}</span>
         <span className="meta" style={{ marginTop: 3 }}>
-          {ev.event_date && <span className="tag">{day(ev.event_date)}</span>}
+          {ev.event_date && <span className="tag">{dayLong(ev.event_date)}</span>}
           <span className="tag">{[ev.venue, ev.city].filter(Boolean).join(", ").toLowerCase()}</span>
         </span>
       </span>

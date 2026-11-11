@@ -65,9 +65,16 @@ export function Avatar({ name, shape = 2, size = 60 }: { name: string; shape?: n
 }
 
 /* ---------- genre thumb ---------- */
-export function Thumb({ genre, shape = 0, big = false }: { genre: string | null; shape?: number; big?: boolean }) {
+/** "✶ AI" marker next to everything the AI wrote or read, so it is clear where AI is used. */
+export function AiBadge({ title }: { title?: string }) {
+  return <span className="ai-badge" title={title}>✶ AI</span>;
+}
+
+export function Thumb({ genre, shape = 0, big = false, image }: { genre: string | null; shape?: number; big?: boolean; image?: string | null }) {
+  // with a poster image: one uniform rounded-square shape; without: the genre tile as before
+  if (image) return <img className={`thumb photo${big ? " big" : ""}`} src={image} alt="" loading="lazy" referrerPolicy="no-referrer" aria-hidden="true" />;
   return (
-    <span className={`thumb poster sh${shape % 3} g-${familyOf(genre)}${big ? " big" : ""}`} aria-hidden="true">
+    <span className={`thumb poster ${shape === 3 ? "sh3" : `sh${shape % 3}`} g-${familyOf(genre)}${big ? " big" : ""}`} aria-hidden="true">
       {genre ? genre.replace("Dance/Electronic", "Electronic").replace("Hip-Hop/Rap", "Hip-hop") : "live"}
     </span>
   );
