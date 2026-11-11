@@ -34,7 +34,6 @@ const COPY = {
     driveText: "Post your route and time. People who like your music ask for a seat, you pick who comes.",
     offer: "Offer a ride", perSeat: "45 zł / seat",
     footTitle: "See you at the gate.", footLines: ["See you", "at the gate."], foot: ["Find a ride", "Offer a ride", "Sign up"],
-    credit: "Photos: Thesupermat (CC BY-SA 3.0), Nathan (CC BY-SA 2.0), via Wikimedia Commons.",
   },
   pl: {
     nav: ["Wydarzenia", "Przejazdy", "Kierowca"], start: "Start", menu: "Menu", login: "Zaloguj się", langLabel: "Język",
@@ -59,7 +58,6 @@ const COPY = {
     driveText: "Dodaj trasę i godzinę. Osoby, które lubią twoją muzykę, poproszą o miejsce, a ty wybierasz, kto jedzie.",
     offer: "Zaproponuj przejazd", perSeat: "45 zł / miejsce",
     footTitle: "Do zobaczenia pod bramą.", footLines: ["Do zobaczenia", "pod bramą."], foot: ["Znajdź przejazd", "Zaproponuj przejazd", "Załóż konto"],
-    credit: "Zdjęcia: Thesupermat (CC BY-SA 3.0), Nathan (CC BY-SA 2.0), Wikimedia Commons.",
   },
 };
 
@@ -493,7 +491,6 @@ export default function Landing() {
         <div className="in">
           <h2 aria-label={c.footTitle}><span>{c.footLines[0]}</span> <span className="l2">{c.footLines[1]}</span></h2>
           <div className="links">{footLinks}<span>hello@festride.example</span></div>
-          <p className="credit">{c.credit}</p>
         </div>
       </footer>
     </div>

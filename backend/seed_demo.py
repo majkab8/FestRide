@@ -3,6 +3,10 @@
 Usage (from backend/, after import_events.py):
     python seed_demo.py           # create demo users, rides and requests
     python seed_demo.py --reset   # remove previous demo data first
+    python seed_demo.py --reset --lead-days 3   # events at least 3 days out (default 7)
+
+Every demo event is at least --lead-days after today, so the data stays "upcoming"
+for a week after seeding (re-seed before a demo if it is older than that).
 
 Log in as  demo@example.com / festride-demo  (techno & house, party, non-smoker):
 - GET /rides?event_id=<showcase>  -> 6 drivers to the same event, ranked by match (one per match level)
@@ -109,7 +113,12 @@ def _ride(session: Session, driver: User, event: Event, origin, price, smoking, 
 def main() -> int:
     parser = argparse.ArgumentParser(description="Create FestRide demo data")
     parser.add_argument("--reset", action="store_true", help="delete existing *@example.com demo data first")
+    parser.add_argument("--lead-days", type=int, default=7, help="every demo event is at least this many days from today (default 7)")
     args = parser.parse_args()
+
+    # event names have Polish letters; the Windows console code page can't print them otherwise
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
     init_db()
     with Session(engine) as session:
@@ -120,10 +129,11 @@ def main() -> int:
             return 0
 
         # An electronic event, so "techno ..." sentences find the showcase (Kuba = 100%, Bartek 69%, Ola 43%, Piotr 15%).
-        showcase = (_upcoming(session, 5, city="Kraków", genre="Dance/Electronic")
-                    or _upcoming(session, 5, genre="Dance/Electronic")
-                    or _upcoming(session, 5, city="Kraków") or _upcoming(session, 5))
-        mine = _upcoming(session, 3, city="Warszawa", exclude=[showcase.id]) if showcase else None
+        lead = max(0, args.lead_days)
+        showcase = (_upcoming(session, lead + 5, city="Kraków", genre="Dance/Electronic")
+                    or _upcoming(session, lead + 5, genre="Dance/Electronic")
+                    or _upcoming(session, lead + 5, city="Kraków") or _upcoming(session, lead + 5))
+        mine = _upcoming(session, lead + 3, city="Warszawa", exclude=[showcase.id]) if showcase else None
         if showcase is None or mine is None:
             print("No upcoming events found. Run `python import_events.py` first.")
             return 1
@@ -142,12 +152,12 @@ def main() -> int:
         # Ania as a passenger on two other events: one confirmed ride (Home's
         # wristband card) and two requests still waiting for a yes.
         used = [showcase.id, mine.id]
-        going = _upcoming(session, 4, exclude=used)
+        going = _upcoming(session, lead + 4, exclude=used)
         if going:
             used.append(going.id)
             ride = _ride(session, drivers["Kuba"], going, "Łódź", 35, False, "Techno przez całą drogę, weźcie przekąski!")
             session.add(RideRequest(ride_id=ride.id, passenger_id=demo.id, status=RequestStatus.accepted, message="Cześć! Mam tylko mały plecak."))
-        waiting = _upcoming(session, 6, exclude=used)
+        waiting = _upcoming(session, lead + 6, exclude=used)
         if waiting:
             for name, origin, price in (("Ola", "Łódź", 30), ("Piotr", "Łódź", 40)):
                 ride = _ride(session, drivers[name], waiting, origin, price, False, None)
