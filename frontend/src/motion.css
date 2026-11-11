@@ -1,0 +1,66 @@
+/* Motion polish for the v3 screens.
+   Everything here is decoration: content is fully visible without it, and the
+   global prefers-reduced-motion rule in styles.css switches all of it off.
+   Uses the individual `translate` / `scale` properties so it never fights the
+   `transform` rotations and hover lifts already in app3.css / landing.css. */
+
+:root { --ease-out: cubic-bezier(0.2, 0.75, 0.2, 1); }
+
+@keyframes rise { from { opacity: 0; translate: 0 18px; } }
+@keyframes band { from { opacity: 0; translate: -48px 0; } }
+@keyframes fill { from { scale: 0 1; } }
+@keyframes pop { 0% { scale: 0.92; opacity: 0; } 60% { scale: 1.03; opacity: 1; } }
+
+/* ---------- app screens: cards rise in, one after another ---------- */
+:is(
+  .home3 > * > *,
+  .search3 > *,
+  .search3 .rows > *,
+  .ride3 > div > *,
+  .ride3 > aside,
+  .driver3 .side3 > *,
+  .driver3 > section > *,
+  .driver3 .tix3 > *,
+  .mine3 > *,
+  .mine3 .rows > *
+) {
+  animation: rise 0.55s var(--ease-out) backwards;
+  animation-delay: calc(var(--d, 0) * 60ms);
+}
+:is(.home3 > * > *, .search3 .rows > *, .ride3 > div > *, .driver3 .side3 > *, .driver3 > section > *, .driver3 .tix3 > *, .mine3 > *, .mine3 .rows > *):nth-child(2) { --d: 1; }
+:is(.home3 > * > *, .search3 .rows > *, .ride3 > div > *, .driver3 .side3 > *, .driver3 > section > *, .driver3 .tix3 > *, .mine3 > *, .mine3 .rows > *):nth-child(3) { --d: 2; }
+:is(.home3 > * > *, .search3 .rows > *, .ride3 > div > *, .driver3 .side3 > *, .driver3 > section > *, .driver3 .tix3 > *, .mine3 > *, .mine3 .rows > *):nth-child(4) { --d: 3; }
+:is(.home3 > * > *, .search3 .rows > *, .ride3 > div > *, .driver3 .side3 > *, .driver3 > section > *, .driver3 .tix3 > *, .mine3 > *, .mine3 .rows > *):nth-child(5) { --d: 4; }
+:is(.home3 > * > *, .search3 .rows > *, .ride3 > div > *, .driver3 .side3 > *, .driver3 > section > *, .driver3 .tix3 > *, .mine3 > *, .mine3 .rows > *):nth-child(6) { --d: 5; }
+:is(.home3 > * > *, .search3 .rows > *, .ride3 > div > *, .driver3 .side3 > *, .driver3 > section > *, .driver3 .tix3 > *, .mine3 > *, .mine3 .rows > *):nth-child(n + 7) { --d: 6; }
+/* right column follows the left one */
+.home3 > .rcol > :nth-child(1) { --d: 2; }
+.home3 > .rcol > :nth-child(2) { --d: 3; }
+.ride3 > aside { --d: 3; }
+
+/* the wristband slides onto the card */
+.app3 .wb { animation: band 0.8s 0.2s var(--ease-out) backwards; }
+
+/* match bars fill up */
+.ride3 .bars3 .t i { transform-origin: left center; animation: fill 0.9s var(--ease-out) backwards; }
+.ride3 .bars3 > :nth-child(1) .t i { animation-delay: 0.35s; }
+.ride3 .bars3 > :nth-child(2) .t i { animation-delay: 0.5s; }
+.ride3 .bars3 > :nth-child(3) .t i { animation-delay: 0.65s; }
+
+/* a freshly taken seat / a request state lands with a small pop */
+.driver3 .seatbar .t, .ride3 aside .state { animation: pop 0.45s var(--ease-out) backwards; }
+
+/* ---------- landing: sections come in on scroll (classes added by Landing.tsx) ----------
+   A one-off animation, not a transition, so the children keep their own hover
+   transitions and nothing is left delayed after the reveal. */
+@keyframes reveal { from { opacity: 0; translate: 0 28px; } }
+.v3 section.rv:not(.seen) .in > * { opacity: 0; }
+.v3 section.rv.seen .in > * { animation: reveal 0.8s var(--ease-out) backwards; }
+/* the line-up bills itself tier by tier, like a poster being read */
+.v3 section.rv.seen .in > :nth-child(2) { animation-delay: 0.08s; }
+.v3 section.rv.seen .in > :nth-child(3) { animation-delay: 0.16s; }
+.v3 section.rv.seen .in > :nth-child(4) { animation-delay: 0.24s; }
+.v3 section.rv.seen .in > :nth-child(5) { animation-delay: 0.32s; }
+.v3 section.rv.seen .in > :nth-child(6) { animation-delay: 0.4s; }
+.v3 section.rv.seen .in > :nth-child(7) { animation-delay: 0.48s; }
+.v3 section.rv.seen .in > :nth-child(n + 8) { animation-delay: 0.56s; }

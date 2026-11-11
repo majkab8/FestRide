@@ -2,7 +2,7 @@ import { Link } from "react-router-dom";
 import { api, type Event, type MyRequest } from "../api";
 import { useAuth } from "../auth";
 import { Screen } from "../components/Layout";
-import { ErrorBox, Icon, Loading, matchKey } from "../components/ui";
+import { CountUp, ErrorBox, Icon, Loading, matchKey } from "../components/ui";
 import { billName } from "../geo";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n } from "../i18n";
@@ -56,7 +56,7 @@ export default function Home() {
               <div className="lbl">{t("home.next")} · {day(next.ride.departure_time)}</div>
               <div className="wb">
                 <div className="stub">
-                  <span className="num">{next.ride.match ? `${next.ride.match.percent}%` : "✶"}</span>
+                  <span className="num">{next.ride.match ? <CountUp to={next.ride.match.percent} suffix="%" /> : "✶"}</span>
                   <span>{next.ride.driver.display_name}<br />{time(next.ride.departure_time)} → {(next.ride.event.venue || next.ride.event.city).toLowerCase()}</span>
                 </div>
                 <span className="poster">{next.ride.origin_city} ✶ {next.ride.event.name} ✶ {next.ride.event.city}</span>
