@@ -370,6 +370,8 @@ footer.site .footcar { --carw: 80px; position: absolute; left: 18%; top: calc(87
 footer.site h2 { font-size: clamp(44px, 7vw, 92px); position: relative; }
 footer.site nav { display: flex; gap: 24px; flex-wrap: wrap; position: relative; }
 footer.site p { font-size: 13px; color: #cfc5b6; position: relative; }
+/* author credit under every page, on the same night colour as the footers so it reads as their last line */
+.credit { background: #1e1b18; color: #cfc5b6; border-top: 1px solid rgba(247, 235, 216, .12); font-size: 13px; text-align: center; padding: 14px 16px calc(14px + env(safe-area-inset-bottom)); }
 @media (max-width: 600px) {
   /* phones: a small corner sun with two bands, headline beside it, compact links (same as the landing footer) */
   footer.site .in { padding-block: 26px 28px; gap: 16px; }
