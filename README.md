@@ -1,67 +1,103 @@
 <p align="center">
-  <img src="docs/header.svg" width="800" alt="FestRide: Carpooling to concerts and festivals in Poland">
+  <img src="docs/header.svg" width="800" alt="FestRide">
 </p>
+
+<h3 align="center">Wspólne dojazdy na koncerty i festiwale w Polsce</h3>
 
 <p align="center">
   <br>
-  Pick a gig, find a car that's going, and see how well you'd get along<br>
-  with the driver <b>before you ask for a seat</b>.
+  Wybierz koncert, znajdź auto, które tam jedzie, i sprawdź, czy dogadasz się<br>
+  z kierowcą, <b>zanim poprosisz o miejsce</b>.
   <br><br>
 </p>
 
-> [!TIP]
-> **✨ Creative twist: a vibe check before the ride**
+
+> **✨ Kreatywny twist: vibe check przed jazdą**
 >
-> Other carpooling apps show you the route, the price and the time. FestRide also tells you **whether you'll get along in the car**. Every driver and passenger gets a **match score** built from music taste, ride style (quiet, chatty or party) and smoking, plus a one-line AI note on why you'd click. A few hours on the road to a festival is a lot more fun with someone who likes the same music.
+> Inne aplikacje do wspólnych przejazdów pokazują trasę, cenę i godzinę. FestRide mówi też, **czy dogadacie się w aucie**. Każdy kierowca i pasażer dostaje **wynik dopasowania** liczony z gustu muzycznego, stylu jazdy (cicho, pogadać albo impreza) i palenia, do tego jedno zdanie od AI o tym, dlaczego złapiecie kontakt. Kilka godzin drogi na festiwal to dużo lepsza zabawa z kimś, kto słucha tej samej muzyki.
 
-### 📸 Screenshots
+### 📸 Zrzuty ekranu
 <img src="docs/divider.svg" width="200" alt="">
 
-![Landing page: "Every road ends at a stage", sentence search with the AI badge](docs/screenshots/landing.webp)
+![Strona główna: „Każda droga kończy się pod sceną”, wyszukiwanie jednym zdaniem z plakietką AI](docs/screenshots/landing.webp)
 
-| | |
-|---|---|
-| ![Start: the next ride as a wristband card, requests waiting for a yes, picks for you](docs/screenshots/home.webp) | ![Search: six drivers to one show, ranked by match, routes on a map of Poland](docs/screenshots/search.webp) |
-| **Start**: your next ride, requests still waiting, suggestions | **Find a ride**: drivers ranked by match, routes on the map |
-| ![Ride detail: 69 % good match, score breakdown, AI line on why you'd get along](docs/screenshots/ride.webp) | ![Driver panel: two passengers asking, each with their match score](docs/screenshots/drive.webp) |
-| **A ride**: why the score is what it is, with a one-line AI summary | **Drive**: passengers waiting for a yes, with their match |
-| ![Offer a ride: one sentence filled in the event, city, departure, seats and price](docs/screenshots/offer.webp) | <img src="docs/screenshots/phone-home.webp" width="49%" alt="Start on a phone"> <img src="docs/screenshots/phone-search.webp" width="49%" alt="Search on a phone, with the pinned map"> |
-| **Offer a ride**: one sentence fills the whole form | **On a phone**: Start and search with the pinned map |
+<details>
+<summary><b>📸 <ins>Więcej ekranów</ins></b></summary>
 
-### 🎪 Features
+| |                                                                                                                                                                                                |
+|---|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| ![Start: najbliższy przejazd jako karta-opaska, prośby czekające na „tak”, propozycje dla ciebie](docs/screenshots/home.webp) | ![Wyszukiwanie: sześciu kierowców na jeden koncert, posortowanych po dopasowaniu, trasy na mapie Polski](docs/screenshots/search.webp)                                                         |
+| **Start**: najbliższy przejazd, prośby czekające na odpowiedź, propozycje | **Znajdź przejazd**: kierowcy według dopasowania, trasy na mapie                                                                                                                              |
+| ![Szczegóły przejazdu: 69 % dobrego dopasowania, rozbicie wyniku, zdanie od AI o tym, dlaczego się dogadacie](docs/screenshots/ride.webp) | ![Panel kierowcy: Julia ma już miejsce, Magda i Tomek proszą o miejsce, każde z wynikiem dopasowania](docs/screenshots/drive.webp)                                                                                  |
+| **Przejazd**: skąd się wziął wynik, plus jedno zdanie podsumowania od AI | **Kierowca**: kto już jedzie i kto czeka na „tak”, z dopasowaniem                                                                                                                                       |
+| ![Zaoferuj przejazd: jedno zdanie uzupełnia wydarzenie, miasto, wyjazd, miejsca i cenę](docs/screenshots/offer.webp) | <img src="docs/screenshots/phone-home.webp" width="49%" alt="Start na telefonie"> <img src="docs/screenshots/phone-search.webp" width="49%" alt="Wyszukiwanie na telefonie, z przypiętą mapą"> |
+| **Zaoferuj przejazd**: jedno zdanie wypełnia cały formularz | **Na telefonie**: Start i wyszukiwanie z przypiętą mapą, wszystko jest w pełni responsywne                                                                                                     |
+
+</details>
+
+### 🎪 Funkcje
 <img src="docs/divider.svg" width="200" alt="">
 
-#### 🎧 Know your driver before you ride
-A **match score** from music taste, ride style and smoking, so you know who you're getting into the car with.
+#### 🎧 Poznaj kierowcę, zanim wsiądziesz
+**Wynik dopasowania** z gustu muzycznego, stylu jazdy i palenia, żeby wiedzieć, z kim jedziesz.
 
-#### 💬 Just say where you're going
-Type *"z Łodzi na techno do Krakowa, max 50 zł"* and it turns into filters. Drivers can offer a ride in **one sentence** too.
+#### 💬 Po prostu powiedz, dokąd jedziesz
+Wpisz *„z Łodzi na techno do Krakowa, max 50 zł”*, a zamieni się to w filtry. Kierowcy też mogą dodać przejazd **jednym zdaniem**.
 
-#### ✨ AI that helps, not takes over
-Gemini writes the driver's note and **one line on why you'd get along**. No key? The app still works.
+#### ✨ AI, które pomaga, a nie przejmuje stery
+Gemini pisze notkę kierowcy i **jedno zdanie o tym, dlaczego się dogadacie**. Nie masz klucza? Aplikacja i tak działa.
 
-#### 🎟️ One seat, one yes
-The **first "yes" takes the seat** and closes your other requests to that event.
+#### 🎟️ Jedno miejsce, jedno „tak”
+**Pierwsze „tak” zajmuje miejsce** i zamyka twoje pozostałe prośby na to samo wydarzenie.
 
-#### 🌅 Made for the road
-Route map, phone layout, Polish / English and a dark theme.
+#### 📱 Wygodne też na telefonie
+Strona **dopasowuje się do każdego ekranu**, od telefonu po laptopa, a mapa trasy zostaje pod ręką. Do tego polski / angielski i ciemny motyw.
 
-### 🛠️ Technologies
+<details>
+<summary><b>📋 <ins>Pełna lista funkcji</ins></b></summary>
+
+**Konto**
+- Rejestracja z profilem: gust muzyczny, styl jazdy, palenie
+- Logowanie i wylogowanie
+- Edycja profilu
+
+**Wydarzenia i wyszukiwanie**
+- Przeglądanie koncertów i festiwali z filtrem po mieście
+- Wyszukiwanie przejazdów jednym zdaniem (AI) lub filtrami
+- Wyniki posortowane według dopasowania, trasy na mapie
+
+**Jako kierowca**
+- Dodawanie przejazdu (formularzem albo jednym zdaniem)
+- Odwoływanie przejazdu
+- Akceptowanie i odrzucanie próśb o miejsce
+- Usuwanie pasażera z przejazdu
+
+**Jako pasażer**
+- Wysyłanie prośby o miejsce z wiadomością do kierowcy
+- Wycofywanie prośby albo rezygnacja z potwierdzonego miejsca
+- Lista własnych próśb i ich statusów
+
+**Powiadomienia**
+- O nowych prośbach, akceptacji, odrzuceniu, wycofaniu i odwołaniu przejazdu
+
+</details>
+
+### 🛠️ Technologie
 <img src="docs/divider.svg" width="200" alt="">
 
-| Category | Stack |
+| Kategoria | Stack |
 |---|---|
 | **Backend** | ![Python](https://img.shields.io/badge/Python-3776AB?style=flat-square&logo=python&logoColor=white) ![FastAPI](https://img.shields.io/badge/FastAPI-009688?style=flat-square&logo=fastapi&logoColor=white) ![SQLModel](https://img.shields.io/badge/SQLModel-7E56C2?style=flat-square&logo=python&logoColor=white) ![SQLite](https://img.shields.io/badge/SQLite-003B57?style=flat-square&logo=sqlite&logoColor=white) |
-| **Auth** | ![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white) |
+| **Logowanie** | ![JWT](https://img.shields.io/badge/JWT-000000?style=flat-square&logo=jsonwebtokens&logoColor=white) |
 | **Frontend** | ![React 19](https://img.shields.io/badge/React_19-20232A?style=flat-square&logo=react&logoColor=61DAFB) ![TypeScript](https://img.shields.io/badge/TypeScript-3178C6?style=flat-square&logo=typescript&logoColor=white) ![Vite](https://img.shields.io/badge/Vite-646CFF?style=flat-square&logo=vite&logoColor=white) |
-| **Map** | ![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white) ![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white) |
-| **AI & data** | ![Google Gemini (optional)](https://img.shields.io/badge/Google_Gemini-optional-8E75B2?style=flat-square&logo=googlegemini&logoColor=white) ![Ticketmaster API (optional)](https://img.shields.io/badge/Ticketmaster_API-optional-026CDF?style=flat-square&logo=ticketmaster&logoColor=white) |
-| **Testing** | ![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white) |
+| **Mapa** | ![Leaflet](https://img.shields.io/badge/Leaflet-199900?style=flat-square&logo=leaflet&logoColor=white) ![OpenStreetMap](https://img.shields.io/badge/OpenStreetMap-7EBC6F?style=flat-square&logo=openstreetmap&logoColor=white) |
+| **AI i dane** | ![Google Gemini (opcjonalnie)](https://img.shields.io/badge/Google_Gemini-opcjonalnie-8E75B2?style=flat-square&logo=googlegemini&logoColor=white) ![Ticketmaster API (opcjonalnie)](https://img.shields.io/badge/Ticketmaster_API-opcjonalnie-026CDF?style=flat-square&logo=ticketmaster&logoColor=white) |
+| **Testy** | ![pytest](https://img.shields.io/badge/pytest-0A9EDC?style=flat-square&logo=pytest&logoColor=white) |
 
-### 🚀 Quick start
+### 🚀 Szybki start
 <img src="docs/divider.svg" width="200" alt="">
 
-About 5 minutes, no API keys needed. You need **Python 3.11+** and **Node 20+**, and two terminals.
+Około 5 minut, bez kluczy API. Potrzebujesz **Pythona 3.11+**, **Node 20+** i dwóch terminali.
 
 **1. Backend**
 
@@ -73,8 +109,8 @@ python -m venv .venv
 pip install -r requirements.txt
 cp .env.example .env              # Windows (cmd): copy .env.example .env
 
-python import_events.py           # events (Ticketmaster with a key, otherwise 8 samples)
-python seed_demo.py               # demo users, rides and requests
+python import_events.py           # wydarzenia (z Ticketmastera, jeśli masz klucz, inaczej 8 przykładowych)
+python seed_demo.py               # demo: użytkownicy, przejazdy i prośby
 uvicorn app.main:app --reload --port 8000
 ```
 
@@ -86,75 +122,72 @@ npm install
 npm run dev
 ```
 
-**3. Open** http://localhost:5173 and log in:
+**3. Otwórz** http://localhost:5173 i zaloguj się:
 
-> **Email:** `demo@example.com` &nbsp;·&nbsp; **Password:** `festride-demo`
+> **E-mail:** `demo@example.com` &nbsp;·&nbsp; **Hasło:** `festride-demo`
 
-Demo events stay upcoming for about a week; refresh them with `python seed_demo.py --reset`.
+Wydarzenia demo są aktualne przez około tydzień; odświeżysz je poleceniem `python seed_demo.py --reset`.
 
-**Optional keys** in `backend/.env`: `TICKETMASTER_API_KEY` ([get one](https://developer.ticketmaster.com)) for real events,
-`GEMINI_API_KEY` ([free](https://aistudio.google.com)) for AI. After adding the Ticketmaster key, run `import_events.py` and `seed_demo.py --reset` again.
+**Opcjonalne klucze** w `backend/.env`: `TICKETMASTER_API_KEY` ([do pobrania tutaj](https://developer.ticketmaster.com)) dla prawdziwych wydarzeń,
+`GEMINI_API_KEY` ([za darmo](https://aistudio.google.com)) dla AI. Po dodaniu klucza Ticketmastera uruchom jeszcze raz `import_events.py` i `seed_demo.py --reset`.
 
-### ✨ How I used AI tools
+**Testy** (backend, 107 testów):
+
+```bash
+cd backend
+pytest
+```
+
+### ✨ Jak korzystałam z narzędzi AI
 <img src="docs/divider.svg" width="200" alt="">
 
-I built FestRide with **Claude Code** (CLI), but I made the key decisions and reviewed the code myself.
+FestRide zbudowałam z pomocą **Claude Code** (CLI), ale kluczowe decyzje podejmowałam sama i sama przeglądałam kod.
 
-#### 1. Planning with grill-me
+#### 1. Planowanie z grill-me
 
-I started with the **grill-me** skill. I described the app and the features I wanted, and Claude asked me questions until the plan was clear: the technologies, the scope and how each feature should work. Every decision went into [`docs/decisions.md`](docs/decisions.md). I also asked Claude to open a pull request after every step of that plan.
+Zaczęłam od skilla **grill-me**. Opisałam aplikację i funkcje, które chciałam mieć, a Claude zadawał mi pytania, dopóki plan nie był jasny: technologie, zakres i działanie każdej funkcji. Każda decyzja trafiła do [`docs/decisions.md`](docs/decisions.md). Poprosiłam też Claude'a, żeby po każdym kroku planu otwierał pull request.
 
-#### 2. Subagents
+#### 2. Subagenci
 
-I set up three subagents, each with its own job:
+Przygotowałam trzech subagentów, każdego do innego zadania:
 
-- **code-reviewer** checked the code after every step, before the pull request
-- **match-evaluator** checked that the match algorithm scores and ranks people correctly
-- **ai-prompt-tester** sent real and tricky prompts to the AI features and checked how they responded
+- **code-reviewer** sprawdzał kod po każdym kroku, przed pull requestem
+- **match-evaluator** sprawdzał, czy algorytm dopasowania dobrze liczy wyniki i układa ranking
+- **ai-prompt-tester** wysyłał do funkcji AI prawdziwe i podchwytliwe zapytania i sprawdzał odpowiedzi
 
-Claude then wrote the backend step by step, and I checked it live and reviewed each pull request.
+Potem Claude pisał backend krok po kroku, a ja sprawdzałam go na żywo i przeglądałam każdy pull request.
 
-#### 3. Finding the visual direction
+#### 3. Szukanie kierunku wizualnego
 
-When the backend was working, it was time for the frontend. As I'm not a graphic designer and wasn't sure about the look, I turned to AI for help and tried three combinations. Each one ran in a separate CLI session and a fresh project folder, so it didn't know about the other skills or designs:
+Kiedy backend działał, przyszła pora na frontend. Nie jestem graficzką i nie byłam pewna wyglądu, więc poprosiłam o pomoc AI i wypróbowałam trzy połączenia. Każde działało w osobnej sesji CLI i w nowym folderze projektu, więc nie wiedziało o pozostałych skillach ani projektach:
 
-| Combination | Result |
+| Połączenie | Efekt |
 |---|---|
-| Claude Design + frontend-design | Clean, but basic. You could tell it was made by AI from a mile away. |
-| Claude + Mobbin + impeccable | The same structure every time. It never had the vibe of the app and felt like another project dropped into it. |
-| **Claude + Mobbin + taste-skill** | **The winner.** A colourful site with a real festival vibe, not the usual AI look. Mobbin gave the design patterns and taste-skill made the screens. |
+| Claude Design + frontend-design | Czysto, ale prosto. Z daleka było widać, że zrobiło to AI. |
+| Claude + Mobbin + impeccable | Za każdym razem ten sam układ. Nie miało klimatu aplikacji i wyglądało jak inny projekt wrzucony w środek. |
+| **Claude + Mobbin + taste-skill** | **Zwycięzca.** Kolorowa strona z prawdziwym festiwalowym klimatem, bez typowego wyglądu „od AI”. Mobbin dał wzorce projektowe, a taste-skill zrobił ekrany. |
 
-I gave my feedback and added details that show it's a carpooling app for music fans, not just another music app. I also asked a friend whether the design had its own visual identity before I made the final choice. I'm really happy with the result, and Mobbin turned out to be a great help for good-looking UI/UX.
+Przekazałam swoje uwagi i dodałam szczegóły, które pokazują, że to aplikacja do wspólnych dojazdów dla fanów muzyki, a nie kolejna aplikacja muzyczna. Zanim wybrałam ostatecznie, zapytałam też koleżankę, czy projekt ma własną tożsamość wizualną. Jestem bardzo zadowolona z efektu, a Mobbin okazał się świetną pomocą przy ładnym UI/UX.
 
-#### 4. Building and testing
+#### 4. Budowanie i testowanie
 
-Claude built the chosen design 1:1 in code while I followed the changes as they happened. Then I tested the site, listed the mistakes I found, and did the same for the mobile version until it was fully responsive. For testing I used the **claude-in-chrome** skill, so Claude could check the page in my browser, while I also tested it manually myself.
+Claude zbudował wybrany projekt 1:1 w kodzie, a ja śledziłam zmiany na bieżąco. Potem testowałam stronę, spisywałam znalezione błędy i robiłam to samo z wersją mobilną, aż była w pełni responsywna. Do testów używałam skilla **claude-in-chrome**, żeby Claude mógł sprawdzać stronę w mojej przeglądarce, a równolegle testowałam ją też ręcznie.
 
-The subagents were really worth it, especially **code-reviewer**. It found a lot of bugs after each step, and they were fixed before the pull request. I used match-evaluator and ai-prompt-tester once each, to test those features at the end.
+Subagenci naprawdę się opłacili, zwłaszcza **code-reviewer**. Po każdym kroku znajdował sporo błędów, które były poprawiane przed pull requestem. Z match-evaluatora i ai-prompt-testera skorzystałam po razie, żeby na koniec przetestować te funkcje.
 
-#### Summary
+#### <ins>Podsumowanie</ins>
 
- I used AI in almost every part of the project, but I still checked the code myself and tested the site and its features manually. I chose technologies I know, so I could understand what is happening in the code.
+AI używałam prawie na każdym etapie projektu, ale kod i tak sprawdzałam sama, a stronę i jej funkcje testowałam ręcznie. Wybrałam technologie, które znam, żeby rozumieć, co dzieje się w kodzie.
 
-The subagents were really worth it, especially code-reviewer: it found a lot of bugs after each step, and they were fixed before the pull request. Overall, the things that helped most were planning with grill-me before writing any code, the code reviews, and Mobbin with taste-skill for a design that doesn't look AI-made.
+Najbardziej pomogło mi planowanie z grill-me, zanim powstała pierwsza linijka kodu, code review po każdym kroku oraz Mobbin z taste-skill przy projekcie, który nie wygląda na zrobiony przez AI.
 
-AI made the work much faster: building a site like this by hand would have taken me far more time.
+Dzięki AI praca poszła dużo szybciej, zbudowanie takiej strony ręcznie zajęłoby mi o wiele więcej czasu.
 
-### 💌 Contact
+### 🙏 Podziękowania
 <img src="docs/divider.svg" width="200" alt="">
 
-Built by **Maja** — feel free to reach out:
+- **Xelerit**, za możliwość zbudowania tego projektu
+- **[Ticketmaster Discovery API](https://developer.ticketmaster.com)**, za dane o wydarzeniach
+- Współtwórcom **[OpenStreetMap](https://www.openstreetmap.org/copyright)** i **[Leaflet](https://leafletjs.com)**, za mapę
+- **Krzysztofowi Popławskiemu**, za zdjęcia z festiwali na stronie głównej (CC BY 4.0)
 
-- GitHub: [@majkab8](https://github.com/majkab8)
-- Email: [majab.praca@gmail.com](mailto:majab.praca@gmail.com)
-- LinkedIn: [Maja Bednarek](https://www.linkedin.com/in/maja-bednarek-599119324/)
-
-### 🙏 Acknowledgements
-<img src="docs/divider.svg" width="200" alt="">
-
-- **Xelerit**, for the opportunity to build this project
-- **[Ticketmaster Discovery API](https://developer.ticketmaster.com)**, for the event data
-- **[OpenStreetMap](https://www.openstreetmap.org/copyright)** contributors and **[Leaflet](https://leafletjs.com)**, for the map
-- **[Natural Earth](https://www.naturalearthdata.com)**, for Poland's border (public domain)
-- **Krzysztof Popławski**, for the festival photos on the landing page (CC BY 4.0)
-- **[Google Gemini](https://ai.google.dev)**, for the AI features
