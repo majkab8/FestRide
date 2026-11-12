@@ -251,3 +251,12 @@ export function Page({ children }: { children: ReactNode }) {
 export function Screen({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <main className={`app3 ${className}`}>{children}</main>;
 }
+
+/** The author credit: a slim strip on the very bottom of every page. */
+export function Credit() {
+  return (
+    <div className="credit">
+      Made by Maja Bednarek with love for Xelerit
+    </div>
+  );
+}

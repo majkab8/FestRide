@@ -1,7 +1,7 @@
 import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, RequireAuth, useAuth } from "./auth";
-import { Footer, Header } from "./components/Layout";
+import { Credit, Footer, Header } from "./components/Layout";
 import { I18nProvider } from "./i18n";
 import Landing from "./pages/Landing";
 
@@ -28,7 +28,7 @@ function Chrome({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const { user, ready } = useAuth();
   const landing = pathname === "/" && (!ready || !user);
-  return <>{!landing && <Header />}{children}{!landing && !user && <Footer />}</>;
+  return <>{!landing && <Header />}{children}{!landing && !user && <Footer />}<Credit /></>;
 }
 
 /** "/" is the landing page for visitors; logged-in users go to their home. */
