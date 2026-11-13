@@ -556,11 +556,19 @@
     color-mix(in srgb, var(--inv-bg) 88%, transparent)
   );
 }
+.home-page .sound::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 130px;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(30 27 24 / 0.9), transparent);
+}
 .home-page .sound .eyebrow {
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: var(--inv-accent);
+  color: var(--lime);
   text-transform: uppercase;
 }
 .home-page .sound .tier a {
