@@ -9,9 +9,6 @@ export interface MapOrigin { id: string | number; pos: [number, number]; title: 
 export interface MapRoute { id: string | number; from: [number, number]; to: [number, number]; on?: boolean; }
 
 const POLAND_CENTER: [number, number] = [52.0, 19.2];
-
-/* FestRide only covers Poland for now: the map can't pan away from it, and everything outside the
-   border is covered with the page colour, so only Poland shows. */
 const POLAND_BOUNDS = L.latLngBounds([48.7, 13.9], [55.1, 24.4]);
 const WORLD: [number, number][] = [[-89, -179], [-89, 179], [89, 179], [89, -179]];
 
@@ -28,7 +25,6 @@ function pinIcon(label: string, on: boolean) {
 }
 const originIcon = (on: boolean) => L.divIcon({ className: "", html: `<div class="origin-dot${on ? " on" : ""}"></div>`, iconSize: [18, 18], iconAnchor: [9, 9] });
 
-/** Re-fit the view whenever the set of points changes. */
 function Fit({ points }: { points: [number, number][] }) {
   const map = useMap();
   const key = points.map((p) => p.join(",")).join("|");
@@ -36,23 +32,19 @@ function Fit({ points }: { points: [number, number][] }) {
     if (points.length === 0) map.setView(POLAND_CENTER, 6);
     else if (points.length === 1) map.setView(points[0], 9);
     else map.fitBounds(L.latLngBounds(points), { padding: [48, 48], maxZoom: 10 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, map]);
   return null;
 }
 
-/** Glide to the given points (e.g. the focused ride's route) whenever they change. */
 function Focus({ points }: { points?: [number, number][] }) {
   const map = useMap();
   const key = points?.map((p) => p.join(",")).join("|") ?? "";
   useEffect(() => {
     if (points && points.length > 1) map.flyToBounds(L.latLngBounds(points), { padding: [36, 36], maxZoom: 8, duration: 0.6 });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [key, map]);
   return null;
 }
 
-/** Arc between two points, so overlapping routes stay readable. */
 function arc(a: [number, number], b: [number, number]): [number, number][] {
   const [lat1, lng1] = a, [lat2, lng2] = b;
   const mid: [number, number] = [(lat1 + lat2) / 2 + (lng2 - lng1) * 0.12, (lng1 + lng2) / 2 - (lat2 - lat1) * 0.12];
@@ -66,7 +58,6 @@ function arc(a: [number, number], b: [number, number]): [number, number][] {
 
 export function MapView({ pins = [], origins = [], routes = [], onPin, label, focus }: {
   pins?: MapPin[]; origins?: MapOrigin[]; routes?: MapRoute[]; onPin?: (id: string | number) => void; label: string;
-  /** points to keep in view, e.g. the focused ride's route on phones */
   focus?: [number, number][];
 }) {
   const points = useMemo(() => [...pins.map((p) => p.pos), ...origins.map((o) => o.pos)], [pins, origins]);

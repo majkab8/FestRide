@@ -1,6 +1,3 @@
-/* Coordinates for ride origins: rides only store the city name, so the map
-   looks it up here. Keys are folded (lowercase, no diacritics). */
-
 export function fold(s: string): string {
   return s.trim().replace(/ł/g, "l").replace(/Ł/g, "L").normalize("NFKD").replace(/[̀-ͯ]/g, "").toLowerCase();
 }
@@ -24,7 +21,6 @@ export function cityCoords(city: string): [number, number] | null {
   return CITY_COORDS[fold(city)] ?? null;
 }
 
-/* Genre families, mirrored from the backend's matching.py, used for colour. */
 const FAMILIES: Record<string, string[]> = {
   electronic: ["electronic", "dance", "edm", "techno", "house", "trance", "drum and bass", "dnb", "dubstep", "ambient", "minimal", "electro", "hardstyle", "elektronika"],
   rock: ["rock", "alternative", "indie", "punk", "grunge", "emo", "metal", "hardcore", "metalcore"],
@@ -44,12 +40,10 @@ export function familyOf(genre: string | null | undefined): string {
   return "other";
 }
 
-/** Up to two initials from letters only ("Ania (demo)" -> "AD", not "A("). */
 export function initials(name: string): string {
   return name.split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, "")[0]).filter(Boolean).join("").slice(0, 2).toUpperCase() || "?";
 }
 
-/** Poster billing uses the act, not the tour: "REDZED: Darkside Europe Tour" -> "REDZED". */
 export function billName(name: string): string {
   return name.split(/\s[|–-]\s|:\s|\s\|/)[0].trim() || name;
 }

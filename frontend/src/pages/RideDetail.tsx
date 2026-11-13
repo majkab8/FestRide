@@ -8,7 +8,6 @@ import { initials } from "../geo";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n, type Key } from "../i18n";
 
-/** Ride detail + ask for a seat (v3 AppRide3 board). */
 export default function RideDetail() {
   const { id } = useParams();
   const rideId = Number(id);
@@ -22,7 +21,7 @@ export default function RideDetail() {
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
-  const [sure, setSure] = useState(false); // "are you sure?" before withdrawing
+  const [sure, setSure] = useState(false);
 
   useEffect(() => {
     setWhy(null);
@@ -41,7 +40,7 @@ export default function RideDetail() {
   const k = m ? matchKey(m) : "diff";
   const own = user?.id === r.driver.id;
   const found = (mine.data ?? []).find((q) => q.ride_id === r.id);
-  const req = found?.status === "cancelled" ? undefined : found; // withdrew: free to ask again
+  const req = found?.status === "cancelled" ? undefined : found;
   const askedOthers = (mine.data ?? []).filter((q) => q.ride.event.id === r.event.id && q.ride_id !== r.id && q.status === "pending").length;
   const departed = parseLocal(r.departure_time) <= new Date();
   const taken = r.seats_total - r.seats_left;
@@ -85,7 +84,6 @@ export default function RideDetail() {
     [`${t("landing.music")}${m.shared_genres.length ? `: ${m.shared_genres.join(", ")}` : ""}`, m.music, 60, "var(--pink)"],
     [`${t("landing.style")}: ${t(`style.${r.driver.driving_style}`)}`, m.style, 25, "var(--blue)"],
   ] : [];
-  // smoking is yes/no (both smoke or both don't): +15 or 0, shown as a chip rather than a bar
   const meSmokes = !!user?.smoker, driverSmokes = r.driver.smoker;
   const smokingWords = meSmokes === driverSmokes
     ? t(meSmokes ? "smoke.bothYes" : "smoke.bothNo")

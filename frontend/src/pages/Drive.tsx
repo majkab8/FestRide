@@ -6,7 +6,6 @@ import { AiBadge, Empty, ErrorBox, Icon, Loading, matchKey } from "../components
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n, type Key } from "../i18n";
 
-/** Driver dashboard (v3 AppDriver3 board). */
 export default function Drive() {
   const { t, lang, day, time, plural } = useI18n();
   const [params] = useSearchParams();
@@ -19,7 +18,6 @@ export default function Drive() {
   });
   const ride = list.find((r) => r.id === Number(params.get("ride"))) ?? list[0];
   const selectedId = ride?.id;
-  // requests for every ride, so the sidebar can show "N new"
   const all = useAsync(async () => {
     const entries = await Promise.all((rides.data ?? []).map(async (r) => [r.id, await api.rideRequests(r.id)] as const));
     return new Map<number, JoinRequest[]>(entries);
@@ -34,8 +32,8 @@ export default function Drive() {
   const declined = reqs.filter((q) => q.status === "declined");
   const withdrew = reqs.filter((q) => q.status === "cancelled");
   const removed = reqs.filter((q) => q.status === "removed");
-  const [removing, setRemoving] = useState<number | null>(null); // seat asking "remove X?"
-  const [callingOff, setCallingOff] = useState(false); // "call off this ride?"
+  const [removing, setRemoving] = useState<number | null>(null);
+  const [callingOff, setCallingOff] = useState(false);
 
   useEffect(() => { setWhy({}); setRemoving(null); setCallingOff(false); }, [selectedId, lang]);
   const pendingKey = pending.slice(0, 5).map((q) => q.id).join(",");
@@ -52,7 +50,7 @@ export default function Drive() {
     setError("");
     try {
       await api.decide(q.id, status);
-      rides.reload(); // `all` follows rides.data
+      rides.reload();
       window.dispatchEvent(new Event(REQUESTS_CHANGED));
     } catch (err) {
       setError(t(errorKey(err) as Key));

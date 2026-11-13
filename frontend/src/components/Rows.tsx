@@ -24,7 +24,6 @@ export function EventRow({ ev, i, on, rides, onSelect, asStatic, posters }: { ev
     : <Link className="ev" to={`/search?event_id=${ev.id}`}>{body}</Link>;
 }
 
-/** A ride in a result list: score blob, driver, route, price, and the AI line. */
 export function RideRow({ ride, i, why, own }: { ride: Ride; i: number; why?: string; own?: boolean }) {
   const { t, time, day, plural } = useI18n();
   return (

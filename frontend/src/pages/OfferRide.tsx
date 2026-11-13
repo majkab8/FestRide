@@ -17,7 +17,6 @@ export default function OfferRide() {
   const [event, setEvent] = useState<Event | null>(null);
   const [listOpen, setListOpen] = useState(false);
   const pickerRef = useRef<HTMLDivElement>(null);
-  // the AI's close matches for this query: shown as-is instead of a plain name search
   const suggested = useRef<{ q: string; events: Event[] } | null>(null);
   useEffect(() => {
     if (!listOpen) return;
@@ -34,11 +33,9 @@ export default function OfferRide() {
   const [smoking, setSmoking] = useState(false);
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
-  // my upcoming rides: one car per driver per event
   const myRides = useAsync(() => api.myRides(), []);
   const existing = event ? (myRides.data ?? []).find((r) => r.event.id === event.id && parseLocal(r.departure_time) > new Date()) : undefined;
   const [busy, setBusy] = useState(false);
-  // AI: the whole form from one sentence, and a note written for the driver
   const [sentence, setSentence] = useState("");
   const [drafting, setDrafting] = useState(false);
   const [draftInfo, setDraftInfo] = useState<"" | "ai" | "rules" | "none" | "error">("");
@@ -85,14 +82,11 @@ export default function OfferRide() {
     }
   };
 
-  // Preselected event (?event_id=) from an event page.
   useEffect(() => {
     const id = Number(params.get("event_id"));
     if (id) api.event(id).then(pick).catch(() => {});
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
-  // Debounced event search.
   useEffect(() => {
     if (event) return;
     const q = query.trim();

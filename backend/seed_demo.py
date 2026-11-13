@@ -1,29 +1,8 @@
-"""Demo data for trying FestRide by hand (and for presenting it).
-
-Usage (from backend/, after import_events.py):
-    python seed_demo.py           # create demo users, rides and requests
-    python seed_demo.py --reset   # remove previous demo data first
-    python seed_demo.py --reset --lead-days 3   # events at least 3 days out (default 7)
-
-Every demo event is at least --lead-days after today, so the data stays "upcoming"
-for a week after seeding (re-seed before a demo if it is older than that).
-
-Log in as  demo@example.com / festride-demo  -> Mateusz (techno & house, party, non-smoker):
-- GET /rides?event_id=<showcase>  -> 6 drivers to the same event, ranked by match (one per match level)
-- GET /rides/mine, /rides/{id}/requests -> his own ride: Julia already in, Magda and Tomek asking
-- a confirmed seat in Paweł's car (Magda rides along), two requests waiting, one declined
-- plus a crowd of ~40 users with rides and requests to ~45 other events, so search,
-  the map and "picks for you" have plenty to show (fixed random seed: same data every run)
-All demo accounts end in "@example.com" and use the same password.
-"""
-
 import argparse
 import random
 import sys
 from datetime import datetime, time, timedelta
-
 from sqlmodel import Session, col, select
-
 from app.cities import fold
 from app.clock import today_pl
 from app.database import engine, init_db
@@ -33,31 +12,25 @@ from app.security import hash_password
 PASSWORD = "festride-demo"
 DEMO_EMAIL = "demo@example.com"
 
-# name, genres, driving style, smoker, origin city, price, smoking allowed in the car, note
-# (notes and messages are what users would type, so they are in Polish like the app's audience)
 DRIVERS = [
     ("Kuba", ["techno", "house"], "party", False, "Łódź", 35, False, "Techno przez całą drogę, weźcie przekąski!"),
     ("Ola", ["pop", "disco"], "chatty", False, "Łódź", 30, False, "Chętnie pogadam i wymienię się playlistami."),
-    ("Bartek", ["house", "disco"], "chatty", False, "Gdańsk", 40, False, "W radiu house, chętnie pogadam."),  # "good" (69%)
+    ("Bartek", ["house", "disco"], "chatty", False, "Gdańsk", 40, False, "W radiu house, chętnie pogadam."),
     ("Zosia", ["hip-hop", "r&b"], "chatty", False, "Kraków", 40, False, None),
     ("Piotr", ["jazz", "blues"], "quiet", False, "Poznań", 45, False, "Cicha jazda, wyjeżdżam punktualnie."),
     ("Marek", ["rock", "metal"], "quiet", True, "Wrocław", 25, True, "Palę na postojach i w aucie."),
 ]
 
-# The people around Mateusz: Magda (a friend from the scene) and Paweł, who drives
-# him to his next gig with Magda riding along.
 MAGDA = ("Magda", ["house", "techno", "pop"], "party", False, "female")
 PAWEL = ("Paweł", ["techno", "electronic", "rock"], "chatty", False, "male")
 
-PASSENGERS = [  # on Mateusz's own ride: name, genres, style, smoker, gender, message, status
+PASSENGERS = [
     ("Julia", ["house", "disco"], "chatty", False, "female", "Super, to do zobaczenia na miejscu!", "accepted"),
     ("Magda", None, None, None, None, "Hej Mateusz! Zabierzesz mnie? Biorę głośnik.", "pending"),
     ("Tomek", ["house", "electronic"], "party", False, "male", "Cześć! Mogę podejść pod Łódź Fabryczną.", "pending"),
 ]
 
-# The crowd: everyone else using the app. Genres lean on the families in
-# matching.py so match scores spread across every level.
-CROWD = [  # name, gender, genres, style, smoker
+CROWD = [
     ("Kasia", "female", ["rock", "indie"], "chatty", True),
     ("Wiktoria", "female", ["pop", "dance pop"], "party", False),
     ("Natalia", "female", ["indie", "alternative"], "quiet", False),
@@ -95,6 +68,7 @@ CROWD = [  # name, gender, genres, style, smoker
     ("Alex", "non-binary", ["indie", "electronic"], "chatty", False),
     ("Sam", "non-binary", ["synthpop", "house"], "party", False),
 ]
+
 ORIGINS = ["Warszawa", "Kraków", "Łódź", "Wrocław", "Poznań", "Gdańsk", "Katowice", "Lublin",
            "Szczecin", "Białystok", "Bydgoszcz", "Toruń", "Rzeszów", "Kielce", "Opole", "Olsztyn"]
 NOTES = [
@@ -110,6 +84,7 @@ NOTES = [
     "Auto z klimą, wygodnie i bez stresu.",
     "Zrzutka na paliwo, reszta to dobra zabawa.",
 ]
+
 MESSAGES = [
     "Cześć! Znajdzie się miejsce dla jednej osoby?",
     "Hej, mogę dołączyć? Mam tylko plecak.",
@@ -121,7 +96,7 @@ MESSAGES = [
 
 
 def _email(name: str) -> str:
-    return f"{fold(name)}@example.com"  # "Paweł" -> pawel@example.com
+    return f"{fold(name)}@example.com"
 
 
 def _reset(session: Session) -> int:
@@ -194,8 +169,6 @@ def _ride(session: Session, driver: User, event: Event, origin, price, smoking, 
 
 
 def _crowd(session: Session, lead: int, used: list[int], extra_drivers: list[User], n_events: int = 45) -> int:
-    """Lots of ordinary rides and requests, so the app looks lived-in. A fixed seed
-    keeps the data the same on every run (screenshots stay reproducible)."""
     rng = random.Random(2026)
     people = [_user(session, name, genres, style, smoker, gender=gender) for name, gender, genres, style, smoker in CROWD]
     everyone = people + extra_drivers
@@ -207,12 +180,12 @@ def _crowd(session: Session, lead: int, used: list[int], extra_drivers: list[Use
     ).all()
     if not events:
         return 0
-    picked = events[:: max(1, len(events) // n_events)][:n_events]  # spread over the whole calendar
+    picked = events[:: max(1, len(events) // n_events)][:n_events]
 
     count = 0
     for event in picked:
         drivers = rng.sample(everyone, k=rng.choice([1, 2, 2, 3, 3, 4]))
-        taken = {d.id for d in drivers}  # one car per person per event
+        taken = {d.id for d in drivers}
         for driver in drivers:
             seats = rng.choice([2, 3, 3, 4, 4])
             ride = _ride(
@@ -226,7 +199,7 @@ def _crowd(session: Session, lead: int, used: list[int], extra_drivers: list[Use
                 minute=rng.choice([0, 15, 30, 45]),
             )
             count += 1
-            accepted = rng.randint(0, seats - 1)  # always at least one free seat
+            accepted = rng.randint(0, seats - 1)
             pending = rng.randint(0, 2)
             pool = [p for p in people if p.id not in taken]
             for i, passenger in enumerate(rng.sample(pool, k=min(len(pool), accepted + pending))):
@@ -242,7 +215,6 @@ def main() -> int:
     parser.add_argument("--lead-days", type=int, default=7, help="every demo event is at least this many days from today (default 7)")
     args = parser.parse_args()
 
-    # event names have Polish letters; the Windows console code page can't print them otherwise
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
@@ -254,7 +226,6 @@ def main() -> int:
             print("Demo data already exists. Use --reset to recreate it.")
             return 0
 
-        # An electronic event, so "techno ..." sentences find the showcase (Kuba = 100%, Bartek 69%, Ola 43%, Piotr 15%).
         lead = max(0, args.lead_days)
         showcase = (_upcoming(session, lead + 5, city="Kraków", genre="Dance/Electronic")
                     or _upcoming(session, lead + 5, genre="Dance/Electronic")
@@ -272,7 +243,6 @@ def main() -> int:
             drivers[name] = _user(session, name, genres, style, smoker)
             _ride(session, drivers[name], showcase, origin, price, smoking, note)
 
-        # Mateusz's own ride: Julia already has a seat, Magda and Tomek are asking.
         own = _ride(session, demo, mine, "Łódź", 30, False, "Ruszam spod Łodzi Fabrycznej.", seats=3)
         for name, genres, style, smoker, gender, message, status in PASSENGERS:
             passenger = magda if name == "Magda" else _user(session, name, genres, style, smoker, gender=gender)
@@ -280,8 +250,6 @@ def main() -> int:
             session.add(Notification(user_id=demo.id, actor_id=passenger.id, ride_id=own.id,
                                      kind=NotificationKind.request, read=status != "pending"))
 
-        # Mateusz as a passenger: a confirmed seat in Paweł's car (Home's wristband
-        # card, Magda rides along), two requests still waiting, one declined.
         used = [showcase.id, mine.id]
         going = _upcoming(session, lead + 4, exclude=used)
         if going:

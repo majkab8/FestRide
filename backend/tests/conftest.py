@@ -1,14 +1,10 @@
-"""Test fixtures: the real app on a fresh in-memory SQLite DB per test."""
-
 from datetime import date, timedelta
-
 import pytest
 from fastapi.testclient import TestClient
 from sqlalchemy import event
 from sqlalchemy.pool import StaticPool
 from sqlmodel import Session, SQLModel, create_engine
-
-from app import models  # noqa: F401  (registers tables on SQLModel.metadata)
+from app import models
 from app.clock import today_pl
 from app.database import _register_sql_functions, get_session
 from app.main import app

@@ -1,30 +1,19 @@
-"""Sentence -> ride-search filters (decision Q8), the AI-free parts.
-
-`SearchFilters` mirrors the query parameters of GET /rides, so whatever
-produced it (Gemini in ai.py, or `parse_rules` here when AI is unavailable)
-the frontend just passes the filters on. `describe` turns filters into the
-"here's what I understood" chips, in code, so the preview always matches
-exactly what is queried.
-"""
-
 import calendar
 import re
 from datetime import date, timedelta
 from typing import Annotated, Optional
-
 from pydantic import BaseModel, Field, StringConstraints, model_validator
-
 from .cities import alias_pairs, fold, normalize_city
 
 _Short = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=60)]
 
 
 class SearchFilters(BaseModel):
-    q: Optional[_Short] = None  # event / artist / festival name
+    q: Optional[_Short] = None
     event_city: Optional[_Short] = None
     origin_city: Optional[_Short] = None
     genre: Optional[Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=40)]] = None
-    date_from: Optional[date] = None  # departure date range
+    date_from: Optional[date] = None
     date_to: Optional[date] = None
     max_price: Optional[float] = Field(default=None, ge=0, le=1000)
     min_seats: Optional[int] = Field(default=None, ge=1, le=8)
@@ -32,8 +21,6 @@ class SearchFilters(BaseModel):
 
     @model_validator(mode="after")
     def _tidy(self):
-        # q goes to a parameterised LIKE, so this isn't about SQL safety: it keeps
-        # junk ("; DROP TABLE...", "99999") out of the "Event: ..." chip.
         if self.q and (re.search(r"[;=<>{}\[\]\\|`$*]", self.q) or not re.search(r"[^\W\d_]", self.q)):
             self.q = None
         for name in ("event_city", "origin_city"):
@@ -45,15 +32,11 @@ class SearchFilters(BaseModel):
         return self
 
 
-# --- interpretation preview -----------------------------------------------------
-
-
 def _fmt_day(d: date) -> str:
     return f"{d.day} {calendar.month_abbr[d.month]} {d.year}"
 
 
 def describe(f: SearchFilters) -> list[str]:
-    """Human-readable chips, e.g. ["From Łódź", "To Kraków", "techno", ...]."""
     chips = []
     if f.origin_city:
         chips.append(f"From {f.origin_city}")
@@ -78,16 +61,10 @@ def describe(f: SearchFilters) -> list[str]:
     return chips
 
 
-# --- rule-based fallback parser ---------------------------------------------------
-# Not meant to understand everything: it covers the typical sentence ("from X to
-# Y for <genre> in <month>, max N zł, 2 seats, non-smoking") when Gemini is down.
-# Deliberately frozen (decision Q16): it's a safety net, not a second AI - fix
-# real bugs here, but don't keep adding heuristics.
-
 _FROM = {"z", "ze", "from"}
+
 _TO = {"do", "w", "we", "to", "in"}
 
-# Genre stems -> canonical genre (matches Ticketmaster names via LIKE).
 _GENRE_STEMS = [
     ("hip hop", "hip-hop"), ("hiphop", "hip-hop"), ("rap", "rap"), ("techno", "techno"),
     ("house", "house"), ("elektron", "electronic"), ("electro", "electronic"), ("rock", "rock"),
@@ -96,9 +73,6 @@ _GENRE_STEMS = [
     ("disco", "disco"), ("reggae", "reggae"), ("folk", "folk"), ("pop", "pop"),
 ]
 
-# (month, Polish stems covering its case forms, exact English names/abbreviations).
-# Stems are long enough not to catch names like "Marek", "Janusz", "Lutosławski"
-# or words like "czerwony"; English only matches whole words.
 _MONTHS = [
     (1, ("stycz",), ("january", "jan")), (2, ("luty", "lutego", "lutym"), ("february", "feb")),
     (3, ("marzec", "marca", "marcu"), ("march", "mar")), (4, ("kwiecie", "kwietni"), ("april", "apr")),
@@ -107,14 +81,13 @@ _MONTHS = [
     (9, ("wrzes",), ("september", "sep", "sept")), (10, ("pazdziern",), ("october", "oct")),
     (11, ("listopad",), ("november", "nov")), (12, ("grudz", "grudni"), ("december", "dec")),
 ]
+
 _EXACT_PL = {"maj", "maja", "maju", "luty", "lutego", "lutym", "marzec", "marca", "marcu"}
 
 _NUMBER_WORDS = {"jedno": 1, "jeden": 1, "one": 1, "dwa": 2, "dwie": 2, "two": 2, "trzy": 3, "three": 3,
                  "cztery": 4, "four": 4}
 
 def _stem(city: str) -> str:
-    # Crude Polish declension: Kraków -> krakowa/krakowie, Warszawa -> warszawy,
-    # Katowice -> katowic, Łódź -> lodzi. Dropping a final vowel covers most.
     key = fold(city)
     return key[:-1] if key[-1] in "aeiouy" and len(key) > 4 else key
 
@@ -135,14 +108,12 @@ def _next_occurrence(month: int, day: Optional[int], today: date) -> tuple[date,
     return date(year, month, 1), date(year, month, last)
 
 
-# Weekday stems (PL any case form, EN) -> Monday=0 ... Sunday=6.
 _WEEKDAYS = [("poniedz", 0), ("monday", 0), ("wtor", 1), ("tuesday", 1), ("srod", 2), ("sroda", 2),
              ("wednesday", 2), ("czwart", 3), ("thursday", 3), ("piat", 4), ("friday", 4),
              ("sobot", 5), ("saturday", 5), ("niedziel", 6), ("sunday", 6)]
 
 
 def _relative_dates(folded: str, today: date) -> Optional[tuple[date, date]]:
-    """jutro / dziś / (ten) weekend / w piątek / za tydzień -> (from, to)."""
     if re.search(r"\b(jutro|tomorrow)\b", folded):
         d = today + timedelta(days=1)
         return d, d
@@ -162,16 +133,10 @@ def _relative_dates(folded: str, today: date) -> Optional[tuple[date, date]]:
 
 
 def _event_q(folded_text: str, event_names: list[str]) -> Optional[str]:
-    """Name of a known event that the sentence mentions, e.g. "...na koncert chopinowski" -> "Koncert Chopinowski".
-
-    Only names that really exist in the database are matched (whole words, at least 6 letters
-    or two words), so nothing is guessed from free text. The longest match wins; a name's main
-    part before " - ", ":" or " | " (and without a trailing year) also counts, so
-    "Open'er Festival 2027" matches "open'er festival"."""
     best: Optional[str] = None
     for name in event_names:
         main = re.split(r"\s[|–-]\s|:\s|\s\|", name)[0].strip() or name
-        for cand in {name.strip(), main, re.sub(r"\s+(19|20)\d\d$", "", main)}:  # also without a trailing year
+        for cand in {name.strip(), main, re.sub(r"\s+(19|20)\d\d$", "", main)}:
             f = fold(cand).strip()
             if (len(f) >= 6 or " " in f) and re.search(rf"(?<![a-z0-9]){re.escape(f)}(?![a-z0-9])", folded_text):
                 if best is None or len(cand) > len(best):
@@ -180,14 +145,10 @@ def _event_q(folded_text: str, event_names: list[str]) -> Optional[str]:
 
 
 def parse_rules(text: str, today: date, cities: list[str], event_names: Optional[list[str]] = None) -> SearchFilters:
-    """Best-effort parse without AI. `cities` = known canonical city names; `event_names` = known
-    event names, used to recognise an event mentioned by name (nothing is guessed beyond those)."""
     folded = fold(text)
     tokens = re.findall(r"[a-z0-9']+", folded)
     found: dict = {}
-
-    # Cities, with the preceding word deciding the direction.
-    pairs = [(_stem(c), c) for c in cities] + alias_pairs()  # aliases: "warsaw" -> Warszawa
+    pairs = [(_stem(c), c) for c in cities] + alias_pairs()
     stems = sorted(pairs, key=lambda sc: -len(sc[0]))
     bare: list[str] = []
     for i, tok in enumerate(tokens):
@@ -201,8 +162,7 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
             found.setdefault("event_city", city)
         elif city not in bare:
             bare.append(city)
-    # Cities without a preposition ("Kraków -> Katowice"): two = from, to;
-    # a single one is taken as the destination.
+
     for slot, city in zip(["origin_city", "event_city"] if len(bare) > 1 else ["event_city"], bare):
         if slot not in found and city not in found.values():
             found[slot] = city
@@ -212,7 +172,6 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
             found["genre"] = genre
             break
 
-    # "do 50 zł" is a price only with the currency ("do 30 listopada" is a date).
     price = re.search(r"\b(?:max|maks|maksymalnie|under|below|ponizej|up to)\s*(\d{1,4})", folded)
     price = price or re.search(r"(\d{1,4})\s*(?:zl|pln|zlotych)\b", folded)
     if price:
@@ -228,7 +187,6 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
     if re.search(r"niepal|bez palenia|non.?smok|no smok|nie pal", folded):
         found["no_smoking"] = True
 
-    # Dates: "21 listopada", "w grudniu", "jutro", "dzisiaj".
     for i, tok in enumerate(tokens):
         month = _month_of(tok) if len(tok) >= 3 and not tok.isdigit() else None
         if month:
@@ -240,8 +198,6 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
         if relative:
             found["date_from"], found["date_to"] = relative
 
-    # Event name only when the sentence contains a name that exists in the database:
-    # guessing names from free text was the most fragile heuristic, so we don't.
     if event_names:
         q = _event_q(folded, event_names)
         if q:

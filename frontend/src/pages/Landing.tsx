@@ -6,11 +6,10 @@ import { useAsync, useFittingPlaceholder } from "../hooks";
 import { useI18n, parseLocal } from "../i18n";
 import { AiBadge } from "../components/ui";
 import "./landing.css";
-import RecordCar, { CAR_START_ANGLE, stepCar } from "./RecordCar"; // EXPERIMENT: car on the record
+import RecordCar, { CAR_START_ANGLE, stepCar } from "./RecordCar";
 
-const SHOW_RECORD_CAR = true; // EXPERIMENT: set to false (or delete RecordCar) to remove
+const SHOW_RECORD_CAR = true;
 
-/* Copy of the v3 Landing board, in both languages. */
 const COPY = {
   en: {
     nav: ["Events", "Rides", "Drive"], start: "Home", menu: "Menu", login: "Log in", langLabel: "Language",
@@ -22,7 +21,7 @@ const COPY = {
     howTitle: ["Sofa to barrier,", "in three moves."],
     how: [
       ["Say it like a text", "“Gdańsk to Wiatr on Friday, two of us.” We turn the sentence into city, date, genre and budget."],
-      ["Pick by match", "Every car shows a percentage: the music you both play, how loud the ride is, smoking or not."],
+      ["Pick by match", "Every car shows a match percentage: whether you like the same music, quiet or party on the road, and whether anyone smokes."],
       ["Split the fuel", "Ask a few cars at once. The first driver who says yes gets you, the other requests close."],
     ],
     matchTitle: "Four hours is long with the wrong DJ.",
@@ -46,7 +45,7 @@ const COPY = {
     howTitle: ["Z kanapy pod barierki", "w trzech ruchach."],
     how: [
       ["Napisz jak SMS-a", "„Z Gdańska na Wiatr w piątek, jedziemy we dwójkę.” Zamienimy to zdanie na miasto, datę, gatunek i budżet."],
-      ["Wybierz po dopasowaniu", "Każde auto ma procent: wspólna muzyka, jak głośno jest w trasie, palenie albo nie."],
+      ["Wybierz po dopasowaniu", "Każde auto ma procent dopasowania: wspólna muzyka, cisza albo impreza w trasie i to, czy ktoś pali."],
       ["Podzielcie się paliwem", "Poproś kilka aut naraz. Pierwszy kierowca, który się zgodzi, zabiera cię, a reszta próśb się zamyka."],
     ],
     matchTitle: "Cztery godziny to długo ze złym DJ-em.",
@@ -64,7 +63,6 @@ const COPY = {
 
 interface Act { id: number; name: string; city: string; venue: string | null; cars: number; date: string | null; }
 
-/** This weekend's Friday..Sunday (the coming one on Mon-Thu). */
 function weekend(now = new Date()): [Date, Date, Date] {
   const d = new Date(now.getFullYear(), now.getMonth(), now.getDate());
   const day = d.getDay(); // 0 = Sunday
@@ -76,7 +74,6 @@ function weekend(now = new Date()): [Date, Date, Date] {
 const isoDay = (d: Date) => `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
 
 
-/** Rides grouped by event, most cars first: the line-up billing order. */
 function acts(rides: Ride[]): Act[] {
   const by = new Map<number, Act>();
   for (const r of rides) {
@@ -87,10 +84,9 @@ function acts(rides: Ride[]): Act[] {
   return [...by.values()].sort((a, b) => b.cars - a.cars || (a.date ?? "").localeCompare(b.date ?? ""));
 }
 
-/** The record spins slowly, follows the pointer's angle and nudges with scroll. */
 function useRecordSpin() {
   const rec = useRef<SVGSVGElement>(null);
-  const car = useRef<SVGGElement>(null); // EXPERIMENT: car rides the record
+  const car = useRef<SVGGElement>(null);
   const carAngle = useRef(CAR_START_ANGLE);
   const st = useRef({ cur: 0, target: 0, grab: null as null | { a: number; r: number }, lastY: null as null | number });
   useEffect(() => {
@@ -111,7 +107,7 @@ function useRecordSpin() {
       const before = s.cur;
       s.cur += (s.target - s.cur) * 0.14;
       if (rec.current) rec.current.style.transform = `rotate(${s.cur.toFixed(2)}deg)`;
-      if (car.current) { // EXPERIMENT: the car follows the record's spin (faster, or backwards)
+      if (car.current) {
         carAngle.current = stepCar(carAngle.current, dt, s.cur - before, calm);
         car.current.style.transform = `rotate(${carAngle.current.toFixed(2)}deg)`;
       }
@@ -138,7 +134,6 @@ function useRecordSpin() {
   return { rec, car, onMove, onLeave };
 }
 
-/** Groove rings for the record: radius and a shade that drifts a little, like real vinyl. */
 const GROOVES: [number, string][] = Array.from({ length: 41 }, (_, i) => {
   const r = 43 + i * 1.32;
   const shades = ["#2B2723", "#25211D", "#2F2B26", "#221F1B"];
@@ -152,9 +147,6 @@ const TILES = [
   { background: "#D7FF4A", color: "#1E1B18", minHeight: 540 },
 ];
 
-/** Sections below the hero slide in as they scroll into view (motion.css).
-    Layout effect: the classes go on before the first paint, so nothing flashes.
-    Sections keep static classNames, so React never wipes rv/seen. */
 function useScrollReveal() {
   const root = useRef<HTMLDivElement>(null);
   useLayoutEffect(() => {
@@ -164,9 +156,6 @@ function useScrollReveal() {
       for (const e of entries) if (e.isIntersecting) { e.target.classList.add("seen"); io.unobserve(e.target); }
     }, { threshold: 0, rootMargin: "0px 0px -8% 0px" });
     el.querySelectorAll(":scope > section:not(.hero)").forEach((s) => { s.classList.add("rv"); io.observe(s); });
-    // the "three moves" tiles play every time they come on screen:
-    // scrolling down they fall in from above (1 → 2 → 3), scrolling up they float up from below (3 → 2 → 1).
-    // Once fully off screen they reset, ready for the next pass.
     const steps = new IntersectionObserver((entries) => {
       for (const e of entries) {
         const t = e.target;
@@ -182,7 +171,6 @@ function useScrollReveal() {
   return root;
 }
 
-/** Small side-on car silhouette (same shape as the record car), drawn in a viewBox of "-17 -18 31 19". */
 function CarShape({ body, light }: { body: string; light: string }) {
   return <>
     <path d="M-7.6 -6.4 L-5.2 -11.2 Q-4.6 -12.2 -3.4 -12.2 L3.6 -12.2 Q4.8 -12.2 5.4 -11.2 L8.2 -6.4 Z" fill={body} />
@@ -193,7 +181,6 @@ function CarShape({ body, light }: { body: string; light: string }) {
   </>;
 }
 
-/** The vinyl record in the hero. */
 function Vinyl({ svgRef, className, pathId, label, text }: { svgRef?: Ref<SVGSVGElement>; className?: string; pathId: string; label?: string; text: string }) {
   return (
     <svg ref={svgRef} className={className} viewBox="0 0 200 200" role={label ? "img" : undefined} aria-label={label} aria-hidden={label ? undefined : true}>
@@ -220,8 +207,6 @@ function Vinyl({ svgRef, className, pathId, label, text }: { svgRef?: Ref<SVGSVG
   );
 }
 
-/** Top bar state: whether the page has scrolled (frosted background on), and which item is highlighted: follows the section you are looking at
-    (Events = line-up, Rides = the match/wristband section, Driver = the photos and fuel section), Start at the top. */
 function useNavSpy() {
   const [on, setOn] = useState<"start" | "events" | "rides" | "drive">("start");
   const [scrolled, setScrolled] = useState(false);
@@ -263,7 +248,6 @@ export default function Landing() {
     const days = new Set([fri, sat, sun].map(isoDay));
     const thisWeekend = all.filter((a) => a.date && days.has(a.date));
     const base = thisWeekend.length >= 2 ? thisWeekend : all;
-    // Fill the lower tiers with the next shows, so the poster always has a full bill.
     const fill: Act[] = (soon.data ?? []).filter((e) => !base.some((a) => a.id === e.id))
       .map((e) => ({ id: e.id, name: e.name, city: e.city, venue: e.venue, cars: 0, date: e.event_date }));
     const seen = new Set<string>();
@@ -309,14 +293,13 @@ export default function Landing() {
     return () => { io.disconnect(); clearTimeout(t); };
   }, []);
 
-  // the example sentence gets shorter (whole phrases, not "…") when the field is narrow
   const [askRef, askPh] = useFittingPlaceholder([c.ask, ...c.askShort]);
   const footTargets: [string, string][] = [["/events", c.nav[0]], ["/search", c.foot[0]], ["/drive/new", c.foot[1]], ["/signup", c.foot[2]]];
   const footLinks = footTargets.map(([to, label]) => <Link key={to} to={to}>{label}</Link>);
 
   const submit = (e: FormEvent) => {
     e.preventDefault();
-    nav(`/search?text=${encodeURIComponent(text.trim() || askPh)}`); // empty: search exactly the example shown in the field
+    nav(`/search?text=${encodeURIComponent(text.trim() || askPh)}`);
   };
 
   return (

@@ -1,9 +1,5 @@
-"""Rule-based sentence parser (the no-AI fallback for search) and the chips preview."""
-
 from datetime import date
-
 import pytest
-
 from app.search import SearchFilters, describe, parse_rules
 
 TODAY = date(2026, 11, 10)

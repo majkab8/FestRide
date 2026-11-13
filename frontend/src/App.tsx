@@ -2,13 +2,13 @@ import { lazy, Suspense, useEffect } from "react";
 import { BrowserRouter, Navigate, Route, Routes, useLocation } from "react-router-dom";
 import { AuthProvider, RequireAuth, useAuth } from "./auth";
 import { Credit, Footer, Header } from "./components/Layout";
+import { ToastProvider } from "./components/Toast";
 import { I18nProvider } from "./i18n";
 import Landing from "./pages/Landing";
 
-// Every page except the landing is its own chunk, loaded when first visited:
-// the landing no longer downloads the map library and the app screens up front.
 const Login = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Login })));
 const Signup = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Signup })));
+const Profile = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Profile })));
 const Drive = lazy(() => import("./pages/Drive"));
 const Events = lazy(() => import("./pages/Events"));
 const Home = lazy(() => import("./pages/Home"));
@@ -23,7 +23,6 @@ function ScrollToTop() {
   return null;
 }
 
-/** The v3 landing brings its own nav and footer; every other page gets the app's. */
 function Chrome({ children }: { children: React.ReactNode }) {
   const { pathname } = useLocation();
   const { user, ready } = useAuth();
@@ -31,7 +30,6 @@ function Chrome({ children }: { children: React.ReactNode }) {
   return <>{!landing && <Header />}{children}{!landing && !user && <Footer />}<Credit /></>;
 }
 
-/** "/" is the landing page for visitors; logged-in users go to their home. */
 function Root() {
   const { user, ready } = useAuth();
   if (!ready) return null;
@@ -42,6 +40,7 @@ export default function App() {
   return (
     <I18nProvider>
       <AuthProvider>
+        <ToastProvider>
         <BrowserRouter>
           <ScrollToTop />
           <Chrome>
@@ -57,11 +56,13 @@ export default function App() {
             <Route path="/my-rides" element={<RequireAuth><MyRides /></RequireAuth>} />
             <Route path="/drive" element={<RequireAuth><Drive /></RequireAuth>} />
             <Route path="/drive/new" element={<RequireAuth><OfferRide /></RequireAuth>} />
+            <Route path="/profile" element={<RequireAuth><Profile /></RequireAuth>} />
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
           </Suspense>
           </Chrome>
         </BrowserRouter>
+        </ToastProvider>
       </AuthProvider>
     </I18nProvider>
   );

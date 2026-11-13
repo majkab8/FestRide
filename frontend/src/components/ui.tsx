@@ -3,7 +3,7 @@ import type { Match, Ride } from "../api";
 import { familyOf, initials } from "../geo";
 import { useI18n } from "../i18n";
 
-/* ---------- icons (inline stroke SVG) ---------- */
+
 const PATHS = {
   spark: "M12 3l1.8 5.2L19 10l-5.2 1.8L12 17l-1.8-5.2L5 10l5.2-1.8z",
   cal: "M4 5h16v15H4zM4 10h16M9 3v4M15 3v4",
@@ -31,17 +31,14 @@ export function Icon({ name, className = "ic" }: { name: IconName; className?: s
   );
 }
 
-/* ---------- match ---------- */
 export type MatchKey = "great" | "good" | "some" | "diff";
 export function matchKey(m: Pick<Match, "percent"> | number): MatchKey {
   const p = typeof m === "number" ? m : m.percent;
   return p >= 85 ? "great" : p >= 60 ? "good" : p >= 30 ? "some" : "diff";
 }
 
-/** Score blob shape by match tier: star = great, circle = good, rounded square = something in common, hexagon = different vibes. */
 export const shapeFor = (k: MatchKey) => ({ great: "starry", good: "round", some: "squircle", diff: "hexa" })[k];
 
-/** The match % inside a coloured blob; `shape` varies the blob down a list. */
 export function Score({ match, shape = 0, size }: { match: Match; shape?: number; size?: number }) {
   const { t } = useI18n();
   const k = matchKey(match);
@@ -54,7 +51,6 @@ export function Score({ match, shape = 0, size }: { match: Match; shape?: number
   );
 }
 
-/** Initials blob for people without a score (own rides, anonymous view). */
 export function Avatar({ name, shape = 2, size = 60 }: { name: string; shape?: number; size?: number }) {
   const ini = initials(name);
   return (
@@ -64,14 +60,11 @@ export function Avatar({ name, shape = 2, size = 60 }: { name: string; shape?: n
   );
 }
 
-/* ---------- genre thumb ---------- */
-/** "✶ AI" marker next to everything the AI wrote or read, so it is clear where AI is used. */
 export function AiBadge({ title }: { title?: string }) {
   return <span className="ai-badge" title={title}>✶ AI</span>;
 }
 
 export function Thumb({ genre, shape = 0, big = false, image }: { genre: string | null; shape?: number; big?: boolean; image?: string | null }) {
-  // with a poster image: one uniform rounded-square shape; without: the genre tile as before
   if (image) return <img className={`thumb photo${big ? " big" : ""}`} src={image} alt="" loading="lazy" referrerPolicy="no-referrer" aria-hidden="true" />;
   return (
     <span className={`thumb poster ${shape === 3 ? "sh3" : `sh${shape % 3}`} g-${familyOf(genre)}${big ? " big" : ""}`} aria-hidden="true">
@@ -80,7 +73,6 @@ export function Thumb({ genre, shape = 0, big = false, image }: { genre: string 
   );
 }
 
-/* ---------- festival wristband ---------- */
 export function Wristband({ ride, small = false }: { ride: Ride; small?: boolean }) {
   const { t } = useI18n();
   if (!ride.match) return null;
@@ -93,8 +85,6 @@ export function Wristband({ ride, small = false }: { ride: Ride; small?: boolean
   );
 }
 
-/* ---------- status ---------- */
-/** A number that counts up from 0 when it first shows (static with reduced motion). */
 export function CountUp({ to, suffix = "", ms = 900 }: { to: number; suffix?: string; ms?: number }) {
   const [still] = useState(() => typeof matchMedia !== "function" || matchMedia("(prefers-reduced-motion: reduce)").matches);
   const [n, setN] = useState(still ? to : 0);
@@ -123,7 +113,7 @@ export function Loading() {
 
 export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => void }) {
   const { t } = useI18n();
-  const offline = error instanceof TypeError; // fetch failed: server down
+  const offline = error instanceof TypeError;
   return (
     <div className="card empty" role="alert">
       <h3 className="disp">{offline ? t("common.offline") : t("common.error")}</h3>

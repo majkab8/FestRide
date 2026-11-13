@@ -4,10 +4,11 @@ import { api, getToken, setToken, setUnauthorizedHandler, type User } from "./ap
 
 interface Auth {
   user: User | null;
-  ready: boolean; // false while the stored token is being checked
+  ready: boolean;
   login: (email: string, password: string) => Promise<void>;
   register: (data: Parameters<typeof api.register>[0]) => Promise<void>;
   logout: () => void;
+  updateProfile: (data: Parameters<typeof api.updateMe>[0]) => Promise<void>;
 }
 
 const Ctx = createContext<Auth | null>(null);
@@ -19,7 +20,6 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     setUnauthorizedHandler(() => setUser(null));
     if (!getToken()) return;
-    // request() already forgets the token on a 401; a network error keeps it.
     api.me().then(setUser).catch(() => {}).finally(() => setReady(true));
   }, []);
 
@@ -37,7 +37,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const logout = useCallback(() => { setToken(null); setUser(null); }, []);
 
-  const value = useMemo(() => ({ user, ready, login, register, logout }), [user, ready, login, register, logout]);
+  const updateProfile = useCallback(async (data: Parameters<typeof api.updateMe>[0]) => {
+    setUser(await api.updateMe(data));
+  }, []);
+
+  const value = useMemo(() => ({ user, ready, login, register, logout, updateProfile }), [user, ready, login, register, logout, updateProfile]);
   return <Ctx.Provider value={value}>{children}</Ctx.Provider>;
 }
 
@@ -47,7 +51,6 @@ export function useAuth(): Auth {
   return ctx;
 }
 
-/** Wrap a page that needs a logged-in user; sends others to /login and back. */
 export function RequireAuth({ children }: { children: ReactNode }) {
   const { user, ready } = useAuth();
   const loc = useLocation();

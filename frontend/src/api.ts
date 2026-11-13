@@ -1,5 +1,3 @@
-/* Thin client for the FestRide FastAPI backend. */
-
 export const API_URL: string = import.meta.env.VITE_API_URL ?? "http://127.0.0.1:8000";
 
 export type DrivingStyle = "quiet" | "chatty" | "party";
@@ -37,7 +35,6 @@ export interface SearchFilters {
 export interface SearchResult { filters: SearchFilters; chips: string[]; source: "ai" | "rules"; understood: boolean; }
 export interface Explanations { rides: Record<string, string>; requests: Record<string, string>; ai_available: boolean; }
 export interface CityCount { city: string; events: number; }
-/** "offer a ride" form values read from one sentence (every field optional) */
 export interface OfferDraft {
   event: Event | null; event_hint: string | null; event_options: Event[]; origin_city: string | null; departure: string | null;
   seats: number | null; price: number | null; smoking_allowed: boolean | null; note: string | null;
@@ -54,7 +51,6 @@ export class ApiError extends Error {
   }
 }
 
-/** Known backend error details -> i18n keys (the backend speaks English). */
 const DETAIL_KEYS: [RegExp, string][] = [
   [/full|no seats left/i, "err.full"],
   [/already requested/i, "err.duplicate"],
@@ -108,8 +104,7 @@ async function request<T>(method: string, path: string, opts: { params?: Params;
   const res = await fetch(`${API_URL}${path}${qs(params)}`, { method, headers, body: body === undefined ? undefined : JSON.stringify(body) });
 
   if (res.status === 401 && token) {
-    // Stale or invalid token: forget it. Public endpoints retry anonymously.
-    if (getToken() === token) { setToken(null); onUnauthorized(); } // not a newer login's token
+    if (getToken() === token) { setToken(null); onUnauthorized(); }
     if (auth === "optional") return request<T>(method, path, { ...opts, auth: "none" });
   }
   if (!res.ok) {
@@ -126,6 +121,8 @@ export const api = {
   login: (email: string, password: string) =>
     request<{ access_token: string; user: User }>("POST", "/auth/login", { body: { email, password }, auth: "none" }),
   me: () => request<User>("GET", "/auth/me", { auth: "required" }),
+  updateMe: (data: Partial<Pick<User, "display_name" | "music_genres" | "driving_style" | "smoker" | "gender">>) =>
+    request<User>("PATCH", "/auth/me", { body: data, auth: "required" }),
 
   events: (params: Params) => request<Event[]>("GET", "/events", { params, auth: "none" }),
   event: (id: number) => request<Event>("GET", `/events/${id}`, { auth: "none" }),
@@ -143,13 +140,10 @@ export const api = {
   myRequests: () => request<MyRequest[]>("GET", "/requests/mine", { auth: "required" }),
   decide: (requestId: number, status: "accepted" | "declined") =>
     request<JoinRequest>("PATCH", `/requests/${requestId}`, { body: { status }, auth: "required" }),
-  /** passenger: withdraw a request or give up an accepted seat */
   cancelRequest: (requestId: number) => request<JoinRequest>("POST", `/requests/${requestId}/cancel`, { auth: "required" }),
   notifications: () => request<NotificationList>("GET", "/notifications", { auth: "required" }),
   readNotifications: () => request<void>("POST", "/notifications/read", { auth: "required" }),
-  /** driver: call off a ride (deleted if nobody asked yet) */
   cancelRide: (rideId: number) => request<void>("DELETE", `/rides/${rideId}`, { auth: "required" }),
-  /** driver: take an accepted passenger off the ride */
   removePassenger: (requestId: number) => request<JoinRequest>("POST", `/requests/${requestId}/remove`, { auth: "required" }),
 
   search: (text: string) => request<SearchResult>("POST", "/ai/search", { body: { text }, auth: "none" }),

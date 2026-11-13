@@ -1,9 +1,5 @@
-"""Unit tests for the deterministic match score (app/matching.py)."""
-
 from types import SimpleNamespace
-
 import pytest
-
 from app.matching import genre_similarity, label_for, match, music_similarity, style_similarity
 from app.models import DrivingStyle
 

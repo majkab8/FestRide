@@ -1,13 +1,9 @@
-"""The bell: what other people did about your rides and requests."""
-
 from datetime import datetime
-
 from fastapi import APIRouter, Depends, status
 from pydantic import BaseModel
 from sqlalchemy import update
 from sqlalchemy.orm import aliased
 from sqlmodel import Session, col, select
-
 from ..database import get_session
 from ..deps import get_current_user
 from ..models import Event, Notification, NotificationKind, Ride, User
@@ -18,7 +14,6 @@ _LIMIT = 30
 
 
 def notify(session: Session, user_id: int, actor_id: int, ride_id: int, kind: NotificationKind) -> None:
-    """Queue a notification in the caller's transaction (committed with the change it describes)."""
     session.add(Notification(user_id=user_id, actor_id=actor_id, ride_id=ride_id, kind=kind))
 
 
@@ -42,7 +37,6 @@ def my_notifications(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> NotificationList:
-    """My latest notifications, newest first, with the unread count."""
     actor = aliased(User)
     rows = session.exec(
         select(Notification, Event.name, actor.display_name)
@@ -54,7 +48,7 @@ def my_notifications(
         .limit(_LIMIT)
     ).all()
     unread = len(session.exec(
-        select(Notification.id).where(Notification.user_id == current_user.id, Notification.read == False)  # noqa: E712
+        select(Notification.id).where(Notification.user_id == current_user.id, Notification.read == False)
     ).all())
     return NotificationList(
         unread=unread,
@@ -75,7 +69,7 @@ def mark_all_read(
 ) -> None:
     session.exec(
         update(Notification)
-        .where(Notification.user_id == current_user.id, Notification.read == False)  # noqa: E712
+        .where(Notification.user_id == current_user.id, Notification.read == False)
         .values(read=True)
     )
     session.commit()

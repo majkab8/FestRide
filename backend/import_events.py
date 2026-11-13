@@ -1,22 +1,9 @@
-"""One-off import of Polish music events into the local SQLite database.
-
-Usage (from the backend/ directory):
-    python import_events.py          # Ticketmaster + big festivals if TICKETMASTER_API_KEY is set, else festivals only
-    python import_events.py --seed   # only the built-in festival list
-
-The import is idempotent: events are upserted by `external_id`, so re-running
-refreshes existing rows instead of creating duplicates. The app itself only
-reads from the database, never from the live API (decision Q3).
-"""
-
 import argparse
 import sys
 from datetime import date
 from typing import Optional
-
 import httpx
 from sqlmodel import Session, select
-
 from app.cities import normalize_city
 from app.config import settings
 from app.database import engine, init_db
@@ -24,12 +11,11 @@ from app.models import Event
 
 TM_URL = "https://app.ticketmaster.com/discovery/v2/events.json"
 PAGE_SIZE = 200
-MAX_PAGES = 5  # Ticketmaster refuses deep paging beyond 1000 results (size * page)
+MAX_PAGES = 5
 SKIP_STATUSES = {"cancelled"}
 
 
 def _pick_image(images: list[dict]) -> Optional[str]:
-    """Prefer a 16:9 image close to 1024px wide (good for cards and headers)."""
     if not images:
         return None
     wide = [i for i in images if i.get("ratio") == "16_9"] or images
@@ -37,7 +23,6 @@ def _pick_image(images: list[dict]) -> Optional[str]:
 
 
 def _parse_tm_event(raw: dict) -> Optional[dict]:
-    """Map one Ticketmaster event to Event fields, or None if unusable."""
     if raw.get("dates", {}).get("status", {}).get("code") in SKIP_STATUSES:
         return None
     venues = raw.get("_embedded", {}).get("venues") or []
@@ -74,8 +59,6 @@ def _parse_tm_event(raw: dict) -> Optional[dict]:
 
 
 def fetch_ticketmaster(api_key: str) -> list[dict]:
-    # Keyed by external_id: paging can return the same event on two pages,
-    # and a duplicate would break the unique constraint on insert.
     events: dict[str, dict] = {}
     skipped = 0
     with httpx.Client(timeout=20) as client:
@@ -111,11 +94,6 @@ def fetch_ticketmaster(api_key: str) -> list[dict]:
     return list(events.values())
 
 
-# Big festivals Ticketmaster doesn't sell (their tickets go through other
-# shops), added on every import. Dates are the first festival day, checked
-# against the organisers' announcements in Nov 2026; venues/coordinates are
-# approximate. Only editions with confirmed dates belong here. Also the
-# fallback data when there is no Ticketmaster key.
 FESTIVALS = [
     ("fest:mystic-2027", "Mystic Festival 2027", "Gdańsk", "Polsat Plus Arena Gdańsk (Letnica)", "Metal", "2027-06-10", 54.3897, 18.6401, "https://www.mysticfestival.pl"),
     ("fest:opener-2027", "Open'er Festival 2027", "Gdynia", "Lotnisko Gdynia-Kosakowo", "Alternative", "2027-06-30", 54.5302, 18.4952, "https://opener.pl"),
@@ -161,7 +139,7 @@ def upsert(events: list[dict]) -> tuple[int, int]:
 
 
 def main() -> int:
-    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser = argparse.ArgumentParser(description="Import Polish music events into the local database.")
     parser.add_argument("--seed", action="store_true", help="load the built-in seed instead of Ticketmaster")
     args = parser.parse_args()
 
@@ -174,7 +152,6 @@ def main() -> int:
         try:
             events = fetch_ticketmaster(settings.ticketmaster_api_key)
         except httpx.HTTPError as exc:
-            # Don't echo the request URL: it contains the API key.
             detail = exc.response.status_code if isinstance(exc, httpx.HTTPStatusError) else type(exc).__name__
             print(f"Ticketmaster request failed ({detail}). Re-run with --seed to use sample data.")
             return 1

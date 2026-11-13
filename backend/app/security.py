@@ -1,10 +1,6 @@
-"""Password hashing and JWT access tokens."""
-
 from datetime import datetime, timedelta, timezone
-
 import bcrypt
 import jwt
-
 from .config import settings
 
 ALGORITHM = "HS256"
@@ -27,7 +23,6 @@ def create_access_token(user_id: int) -> str:
 
 
 def decode_access_token(token: str) -> int | None:
-    """Return the user id from a valid token, or None if invalid/expired."""
     try:
         payload = jwt.decode(token, settings.secret_key, algorithms=[ALGORITHM])
         return int(payload["sub"])

@@ -1,22 +1,12 @@
-"""AI endpoints (decisions Q7, Q8, Q16): sentence search, match explanations, and for drivers:
-a ride offer from one sentence and a "write it for me" note.
-
-Both degrade gracefully: search falls back to the rule parser (source="rules"),
-explanations come back empty when AI is unavailable - the UI then shows just
-the match % and label.
-"""
-
 import json
 import re
 import threading
 from datetime import date as date_cls
 from collections import OrderedDict
 from typing import Annotated, Literal, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, Field, StringConstraints
 from sqlmodel import Session, col, select
-
 from .. import ai
 from ..clock import today_pl
 from ..config import settings
@@ -31,9 +21,6 @@ router = APIRouter(prefix="/ai", tags=["ai"])
 
 
 class _LRU(OrderedDict):
-    """Tiny in-memory cache to save free-tier quota on repeats. Locked, since
-    sync endpoints run concurrently in FastAPI's threadpool."""
-
     def __init__(self, size: int):
         super().__init__()
         self.size = size
@@ -62,18 +49,15 @@ _search_cache = _LRU(128)
 _explain_cache = _LRU(512)
 
 
-# --- search --------------------------------------------------------------------------
-
-
 class SearchRequest(BaseModel):
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=300)]
 
 
 class SearchResponse(BaseModel):
-    filters: SearchFilters  # pass these as query params to GET /rides
-    chips: list[str]  # "what I understood" preview
-    source: Literal["ai", "rules"]  # rules = AI unavailable, simplified parsing
-    understood: bool  # False -> nothing recognised; show the filter form
+    filters: SearchFilters
+    chips: list[str]
+    source: Literal["ai", "rules"]
+    understood: bool
 
 
 def _known_event_names(session: Session, today) -> list[str]:
@@ -89,7 +73,6 @@ def _known_cities(session: Session) -> list[str]:
 
 @router.post("/search", response_model=SearchResponse)
 def search(data: SearchRequest, session: Session = Depends(get_session)) -> SearchResponse:
-    """Interpret a free-text search like "z Łodzi na techno do Krakowa w grudniu, max 50 zł"."""
     today = today_pl()
     key = (data.text.casefold(), today)
     cached = _search_cache.get_or_none(key)
@@ -110,15 +93,13 @@ def search(data: SearchRequest, session: Session = Depends(get_session)) -> Sear
     return result
 
 
-# --- explanations ----------------------------------------------------------------------
-
 _MAX_ITEMS = 5
 
 
 class ExplainRequest(BaseModel):
-    ride_ids: list[int] = Field(default_factory=list, max_length=_MAX_ITEMS)  # as passenger
-    request_ids: list[int] = Field(default_factory=list, max_length=_MAX_ITEMS)  # as driver
-    lang: Literal["en", "pl"] = "en"  # language of the sentences (UI language)
+    ride_ids: list[int] = Field(default_factory=list, max_length=_MAX_ITEMS)
+    request_ids: list[int] = Field(default_factory=list, max_length=_MAX_ITEMS)
+    lang: Literal["en", "pl"] = "en"
 
 
 class ExplainResponse(BaseModel):
@@ -136,16 +117,12 @@ def _music_relation(score: float) -> str:
 
 
 def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> dict:
-    """Relations are computed here, in words, because the model misreads raw
-    scores (it called "party" vs "chatty" a shared style)."""
     m = match(you, them)
     style = {1.0: "same style", 0.5: "close but not the same"}.get(m.style, "opposite styles")
     return {
         "other": other,
         "music": _music_relation(m.music),
         "shared_genres": m.shared_genres,
-        # Genre lists stay so the model can name related ones ("techno vs house");
-        # style and smoking are only given as the relations below/above.
         "your_genres": you.music_genres,
         "their_genres": them.music_genres,
         "driving_style": f"you: {you.driving_style.value}, them: {them.driving_style.value} ({style})",
@@ -160,7 +137,6 @@ def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> d
 
 
 def _cache_key(you: User, them: User, facts: dict, lang: str) -> tuple:
-    # Profiles are part of the key, so editing a profile refreshes the text.
     return (you.id, them.id, lang, json.dumps(facts, sort_keys=True, ensure_ascii=False))
 
 
@@ -170,8 +146,6 @@ def explain(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> ExplainResponse:
-    """One-sentence "why you'd (not) get along" for a few top rides or requests.
-    Call it after rendering the list; the list itself never waits for AI."""
     jobs: list[tuple[str, int, User, dict]] = []  # (kind, id, other user, facts)
 
     if data.ride_ids:
@@ -208,7 +182,6 @@ def explain(
     available = settings.ai_enabled
     if todo:
         try:
-            # Temporary ids 0..n-1, so ride and request ids can't collide.
             texts = ai.explain_matches([{"id": i, **facts} for i, (_, _, _, facts) in enumerate(todo)], data.lang)
         except ai.AIUnavailable:
             texts, available = {}, False
@@ -220,19 +193,14 @@ def explain(
     return ExplainResponse(rides=result["rides"], requests=result["requests"], ai_available=available)
 
 
-# --- offer a ride from one sentence (AI #3) ------------------------------------------------
-
-
 class OfferParseRequest(BaseModel):
     text: Annotated[str, StringConstraints(strip_whitespace=True, min_length=1, max_length=400)]
 
 
 class OfferDraft(BaseModel):
-    """Values for the "offer a ride" form; every field may be missing. The form stays editable."""
-
-    event: Optional[Event] = None  # resolved to a real upcoming event, or None
-    event_hint: Optional[str] = None  # what the sentence called it, when no event matched
-    event_options: list[Event] = []  # close matches to pick from, when no single event matched
+    event: Optional[Event] = None
+    event_hint: Optional[str] = None
+    event_options: list[Event] = []
     origin_city: Optional[str] = None
     departure: Optional[str] = None  # "YYYY-MM-DDTHH:MM", local time (for a datetime-local field)
     seats: Optional[int] = None
@@ -248,7 +216,6 @@ def _upcoming_events(session: Session, today) -> list[Event]:
     return list(session.exec(stmt).all())
 
 
-# Words that say nothing about which event it is ("festival", years, "tour", Polish prepositions).
 _EVENT_STOPWORDS = {
     "festival", "festiwal", "festiwalu", "fest", "tour", "live", "koncert", "koncertu", "concert",
     "the", "and", "of", "na", "do", "w", "we", "z", "i", "edition", "edycja",
@@ -260,8 +227,6 @@ def _event_words(text: str) -> list[str]:
 
 
 def _word_match(hint_word: str, name_word: str) -> int:
-    """2 = same word; 1 = the name word in a Polish case form: an ending added ("openera" ~ "opener")
-    or a final vowel changed ("łydkę" ~ "łydka", "warszawie" ~ "warszawa"); 0 = no match."""
     if hint_word == name_word:
         return 2
     if len(name_word) >= 4 and hint_word.startswith(name_word) and len(hint_word) - len(name_word) <= 2:
@@ -273,9 +238,6 @@ def _word_match(hint_word: str, name_word: str) -> int:
 
 
 def _hint_score(words: list[str], ev: Event) -> Optional[tuple[bool, float, float]]:
-    """(every hint word found, share found in the name itself, match quality) for one event, or None
-    when no word is in its name. Each hint word must be in the name or the city/venue; words in the
-    name beat words only in the venue, and exact words beat inflected ones."""
     name_words = _event_words(ev.name)
     place_words = _event_words(f"{ev.city} {ev.venue or ''}")
     in_name = [max((_word_match(w, n) for n in name_words), default=0) for w in words]
@@ -286,10 +248,6 @@ def _hint_score(words: list[str], ev: Event) -> Optional[tuple[bool, float, floa
 
 
 def _event_candidates(events: list[Event], hint: Optional[str], day) -> tuple[Optional[Event], list[Event]]:
-    """The upcoming event the driver means, or close candidates to choose from.
-    Word by word, so word order, "festival", years and Polish case endings don't matter; the hint
-    is also tried glued together ("pol and rock" -> "polandrock"). The best complete match wins
-    when it is the only one that good, or the only one on the given day."""
     words = _event_words(hint or "")
     glued = re.sub(r"\W", "", fold(hint or ""))
     if not words:
@@ -300,7 +258,6 @@ def _event_candidates(events: list[Event], hint: Optional[str], day) -> tuple[Op
         if tries:
             complete, in_name, quality = max(tries)
             scored.append(((complete, day is not None and ev.event_date == day, in_name, quality), ev))
-    # best first; sort is stable, so equal ones stay soonest-first
     scored.sort(key=lambda t: t[0], reverse=True)
     if scored and scored[0][0][0]:
         top = scored[0][0]
@@ -310,8 +267,6 @@ def _event_candidates(events: list[Event], hint: Optional[str], day) -> tuple[Op
 
 
 def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dict:
-    """No-AI fallback: reuse the search parser (cities, price, seats, dates, known event names)
-    and add the departure hour and "smoking allowed"."""
     f = parse_rules(text, today, _known_cities(session), sorted({e.name for e in events}))
     folded = fold(text)
     out: dict = {
@@ -332,7 +287,6 @@ def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dic
 
 
 def _pick(raw: dict, key: str, cast, ok=lambda v: True):
-    """One validated value from the model (or rule) output; a bad value is dropped, not fatal."""
     value = raw.get(key)
     if value in (None, ""):
         return None
@@ -349,8 +303,6 @@ def parse_offer(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> OfferDraft:
-    """Fill the "offer a ride" form from a sentence like "jadę z Łodzi na Föllakzoid 4 grudnia o 10,
-    3 miejsca po 35 zł". Falls back to rule-based parsing when AI is unavailable."""
     today = today_pl()
     events = _upcoming_events(session, today)
     try:
@@ -385,15 +337,12 @@ def parse_offer(
     return draft
 
 
-# --- "write it for me": a ride note for passengers (AI #4) -----------------------------------
-
-
 class NoteRequest(BaseModel):
     event_id: Optional[int] = None
     origin_city: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=60)]] = None
     departure: Optional[str] = Field(default=None, max_length=20)  # "YYYY-MM-DDTHH:MM"
     smoking_allowed: bool = False
-    hint: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]] = None  # the driver's own words
+    hint: Optional[Annotated[str, StringConstraints(strip_whitespace=True, max_length=300)]] = None
     lang: Literal["en", "pl"] = "pl"
 
 
@@ -409,7 +358,6 @@ _STYLE_WORDS = {
 
 
 def _note_template(facts: dict, lang: str) -> str:
-    """No-AI fallback: a plain note from the same facts."""
     genres = ", ".join(facts["driver_genres"][:2])
     style = _STYLE_WORDS[lang][facts["driver_style"]]
     if lang == "pl":
@@ -439,7 +387,6 @@ def ride_note(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> NoteResponse:
-    """Write the note for a ride being offered, in the driver's voice. Template when AI is down."""
     event = session.get(Event, data.event_id) if data.event_id else None
     leaves = data.departure[11:16] if data.departure and len(data.departure) >= 16 else None
     facts = {
