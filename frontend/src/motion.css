@@ -1,9 +1,34 @@
-:root { --ease-out: cubic-bezier(0.2, 0.75, 0.2, 1); }
+:root {
+  --ease-out: cubic-bezier(0.2, 0.75, 0.2, 1);
+}
 
-@keyframes rise { from { opacity: 0; translate: 0 18px; } }
-@keyframes band { from { opacity: 0; translate: -48px 0; } }
-@keyframes fill { from { scale: 0 1; } }
-@keyframes pop { 0% { scale: 0.92; opacity: 0; } 60% { scale: 1.03; opacity: 1; } }
+@keyframes rise {
+  from {
+    opacity: 0;
+    translate: 0 18px;
+  }
+}
+@keyframes band {
+  from {
+    opacity: 0;
+    translate: -48px 0;
+  }
+}
+@keyframes fill {
+  from {
+    scale: 0 1;
+  }
+}
+@keyframes pop {
+  0% {
+    scale: 0.92;
+    opacity: 0;
+  }
+  60% {
+    scale: 1.03;
+    opacity: 1;
+  }
+}
 
 :is(
   .home-page > * > *,
@@ -20,56 +45,276 @@
   animation: rise 0.55s var(--ease-out) backwards;
   animation-delay: calc(var(--d, 0) * 60ms);
 }
-:is(.home-page > * > *, .search-page .ride-list > *, .ride-page > div > *, .driver-page .my-rides-nav > *, .driver-page > section > *, .driver-page .request-tickets > *, .my-rides-page > *, .my-rides-page .ride-list > *):nth-child(2) { --d: 1; }
-:is(.home-page > * > *, .search-page .ride-list > *, .ride-page > div > *, .driver-page .my-rides-nav > *, .driver-page > section > *, .driver-page .request-tickets > *, .my-rides-page > *, .my-rides-page .ride-list > *):nth-child(3) { --d: 2; }
-:is(.home-page > * > *, .search-page .ride-list > *, .ride-page > div > *, .driver-page .my-rides-nav > *, .driver-page > section > *, .driver-page .request-tickets > *, .my-rides-page > *, .my-rides-page .ride-list > *):nth-child(4) { --d: 3; }
-:is(.home-page > * > *, .search-page .ride-list > *, .ride-page > div > *, .driver-page .my-rides-nav > *, .driver-page > section > *, .driver-page .request-tickets > *, .my-rides-page > *, .my-rides-page .ride-list > *):nth-child(5) { --d: 4; }
-:is(.home-page > * > *, .search-page .ride-list > *, .ride-page > div > *, .driver-page .my-rides-nav > *, .driver-page > section > *, .driver-page .request-tickets > *, .my-rides-page > *, .my-rides-page .ride-list > *):nth-child(6) { --d: 5; }
-:is(.home-page > * > *, .search-page .ride-list > *, .ride-page > div > *, .driver-page .my-rides-nav > *, .driver-page > section > *, .driver-page .request-tickets > *, .my-rides-page > *, .my-rides-page .ride-list > *):nth-child(n + 7) { --d: 6; }
-.home-page > .suggestions > :nth-child(1) { --d: 2; }
-.home-page > .suggestions > :nth-child(2) { --d: 3; }
-.ride-page > aside { --d: 3; }
-
-.app-screen .wristband { animation: band 0.8s 0.2s var(--ease-out) backwards; }
-
-.ride-page .score-bars .track i { transform-origin: left center; animation: fill 0.9s var(--ease-out) backwards; }
-.ride-page .score-bars > :nth-child(1) .track i { animation-delay: 0.35s; }
-.ride-page .score-bars > :nth-child(2) .track i { animation-delay: 0.5s; }
-.ride-page .score-bars .smoking-chip { animation: pop 0.45s 0.65s var(--ease-out) backwards; }
-
-.driver-page .seat-bar .seat-taken, .ride-page aside .state { animation: pop 0.45s var(--ease-out) backwards; }
-
-@keyframes reveal { from { opacity: 0; translate: 0 28px; } }
-.landing section.reveal:not(.seen) .inner > * { opacity: 0; }
-.landing section.reveal.seen .inner > * { animation: reveal 0.8s var(--ease-out) backwards; }
-.landing section.reveal.seen .inner > :nth-child(2) { animation-delay: 0.08s; }
-.landing section.reveal.seen .inner > :nth-child(3) { animation-delay: 0.16s; }
-.landing section.reveal.seen .inner > :nth-child(4) { animation-delay: 0.24s; }
-.landing section.reveal.seen .inner > :nth-child(5) { animation-delay: 0.32s; }
-.landing section.reveal.seen .inner > :nth-child(6) { animation-delay: 0.4s; }
-.landing section.reveal.seen .inner > :nth-child(7) { animation-delay: 0.48s; }
-.landing section.reveal.seen .inner > :nth-child(n + 8) { animation-delay: 0.56s; }
-
-@keyframes step-up { 0% { opacity: 0; translate: 0 -220px; rotate: -3deg; } 55% { opacity: 1; translate: 0 14px; rotate: 1deg; } 75% { translate: 0 -6px; rotate: -0.4deg; } 100% { translate: 0 0; rotate: 0deg; } }
-@keyframes num-in { 0% { opacity: 0; scale: 0.4; rotate: -18deg; } 70% { opacity: 1; scale: 1.08; rotate: 4deg; } 100% { scale: 1; rotate: 0deg; } }
-@keyframes copy-in { from { opacity: 0; translate: 0 12px; } }
-.landing section.reveal.seen .inner > .tiles { animation: none; }
-.landing .tiles.steps:not(.in-view) .tile { opacity: 0; }
-.landing .tiles.in-view .tile { animation: step-up 0.85s cubic-bezier(0.33, 0, 0.3, 1) backwards; animation-delay: calc(0.15s + var(--s, 0) * 0.35s); }
-.landing .tiles.in-view .tile .step-number { animation: num-in 0.6s var(--ease-out) backwards; animation-delay: calc(0.55s + var(--s, 0) * 0.35s); }
-.landing .tiles.in-view .tile :is(h3, p) { animation: copy-in 0.5s var(--ease-out) backwards; animation-delay: calc(0.7s + var(--s, 0) * 0.35s); }
-.landing .tile:nth-child(2) { --s: 1; }
-.landing .tile:nth-child(3) { --s: 2; }
-@keyframes float-up { 0% { opacity: 0; translate: 0 200px; rotate: 3deg; } 60% { opacity: 1; translate: 0 -12px; rotate: -0.8deg; } 100% { translate: 0 0; rotate: 0deg; } }
-.landing .tiles.in-view.from-above .tile { animation-name: float-up; }
-.landing .tiles.from-above .tile:nth-child(1) { --s: 2; }
-.landing .tiles.from-above .tile:nth-child(3) { --s: 0; }
-
-@keyframes great-breathe { 0%, 100% { scale: 1; rotate: 0deg; } 40% { scale: 1.08; rotate: -6deg; } 60% { scale: 1.06; rotate: 4deg; } }
-@keyframes great-glint { 0%, 55% { background-position: 130% 0; } 85%, 100% { background-position: -30% 0; } }
-.app-screen .score-badge.score-fill-great {
-  background: linear-gradient(115deg, var(--m-best) 38%, color-mix(in srgb, var(--m-best) 35%, white) 50%, var(--m-best) 62%) var(--m-best);
-  background-size: 260% 100%;
-  animation: great-breathe 3.2s ease-in-out infinite, great-glint 3.2s ease-in-out infinite;
+:is(
+  .home-page > * > *,
+  .search-page .ride-list > *,
+  .ride-page > div > *,
+  .driver-page .my-rides-nav > *,
+  .driver-page > section > *,
+  .driver-page .request-tickets > *,
+  .my-rides-page > *,
+  .my-rides-page .ride-list > *
+):nth-child(2) {
+  --d: 1;
 }
-.app-screen .ride-row:hover .score-badge.score-fill-great, .app-screen .pick:hover .score-badge.score-fill-great { animation-duration: 1.6s; }
+:is(
+  .home-page > * > *,
+  .search-page .ride-list > *,
+  .ride-page > div > *,
+  .driver-page .my-rides-nav > *,
+  .driver-page > section > *,
+  .driver-page .request-tickets > *,
+  .my-rides-page > *,
+  .my-rides-page .ride-list > *
+):nth-child(3) {
+  --d: 2;
+}
+:is(
+  .home-page > * > *,
+  .search-page .ride-list > *,
+  .ride-page > div > *,
+  .driver-page .my-rides-nav > *,
+  .driver-page > section > *,
+  .driver-page .request-tickets > *,
+  .my-rides-page > *,
+  .my-rides-page .ride-list > *
+):nth-child(4) {
+  --d: 3;
+}
+:is(
+  .home-page > * > *,
+  .search-page .ride-list > *,
+  .ride-page > div > *,
+  .driver-page .my-rides-nav > *,
+  .driver-page > section > *,
+  .driver-page .request-tickets > *,
+  .my-rides-page > *,
+  .my-rides-page .ride-list > *
+):nth-child(5) {
+  --d: 4;
+}
+:is(
+  .home-page > * > *,
+  .search-page .ride-list > *,
+  .ride-page > div > *,
+  .driver-page .my-rides-nav > *,
+  .driver-page > section > *,
+  .driver-page .request-tickets > *,
+  .my-rides-page > *,
+  .my-rides-page .ride-list > *
+):nth-child(6) {
+  --d: 5;
+}
+:is(
+  .home-page > * > *,
+  .search-page .ride-list > *,
+  .ride-page > div > *,
+  .driver-page .my-rides-nav > *,
+  .driver-page > section > *,
+  .driver-page .request-tickets > *,
+  .my-rides-page > *,
+  .my-rides-page .ride-list > *
+):nth-child(n + 7) {
+  --d: 6;
+}
+.home-page > .suggestions > :nth-child(1) {
+  --d: 2;
+}
+.home-page > .suggestions > :nth-child(2) {
+  --d: 3;
+}
+.ride-page > aside {
+  --d: 3;
+}
+
+.app-screen .wristband {
+  animation: band 0.8s 0.2s var(--ease-out) backwards;
+}
+
+.ride-page .score-bars .track i {
+  transform-origin: left center;
+  animation: fill 0.9s var(--ease-out) backwards;
+}
+.ride-page .score-bars > :nth-child(1) .track i {
+  animation-delay: 0.35s;
+}
+.ride-page .score-bars > :nth-child(2) .track i {
+  animation-delay: 0.5s;
+}
+.ride-page .score-bars .smoking-chip {
+  animation: pop 0.45s 0.65s var(--ease-out) backwards;
+}
+
+.driver-page .seat-bar .seat-taken,
+.ride-page aside .state {
+  animation: pop 0.45s var(--ease-out) backwards;
+}
+
+@keyframes reveal {
+  from {
+    opacity: 0;
+    translate: 0 28px;
+  }
+}
+.landing section.reveal:not(.seen) .inner > * {
+  opacity: 0;
+}
+.landing section.reveal.seen .inner > * {
+  animation: reveal 0.8s var(--ease-out) backwards;
+}
+.landing section.reveal.seen .inner > :nth-child(2) {
+  animation-delay: 0.08s;
+}
+.landing section.reveal.seen .inner > :nth-child(3) {
+  animation-delay: 0.16s;
+}
+.landing section.reveal.seen .inner > :nth-child(4) {
+  animation-delay: 0.24s;
+}
+.landing section.reveal.seen .inner > :nth-child(5) {
+  animation-delay: 0.32s;
+}
+.landing section.reveal.seen .inner > :nth-child(6) {
+  animation-delay: 0.4s;
+}
+.landing section.reveal.seen .inner > :nth-child(7) {
+  animation-delay: 0.48s;
+}
+.landing section.reveal.seen .inner > :nth-child(n + 8) {
+  animation-delay: 0.56s;
+}
+
+@keyframes step-up {
+  0% {
+    opacity: 0;
+    translate: 0 -220px;
+    rotate: -3deg;
+  }
+  55% {
+    opacity: 1;
+    translate: 0 14px;
+    rotate: 1deg;
+  }
+  75% {
+    translate: 0 -6px;
+    rotate: -0.4deg;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+@keyframes num-in {
+  0% {
+    opacity: 0;
+    scale: 0.4;
+    rotate: -18deg;
+  }
+  70% {
+    opacity: 1;
+    scale: 1.08;
+    rotate: 4deg;
+  }
+  100% {
+    scale: 1;
+    rotate: 0deg;
+  }
+}
+@keyframes copy-in {
+  from {
+    opacity: 0;
+    translate: 0 12px;
+  }
+}
+.landing section.reveal.seen .inner > .tiles {
+  animation: none;
+}
+.landing .tiles.steps:not(.in-view) .tile {
+  opacity: 0;
+}
+.landing .tiles.in-view .tile {
+  animation: step-up 0.85s cubic-bezier(0.33, 0, 0.3, 1) backwards;
+  animation-delay: calc(0.15s + var(--s, 0) * 0.35s);
+}
+.landing .tiles.in-view .tile .step-number {
+  animation: num-in 0.6s var(--ease-out) backwards;
+  animation-delay: calc(0.55s + var(--s, 0) * 0.35s);
+}
+.landing .tiles.in-view .tile :is(h3, p) {
+  animation: copy-in 0.5s var(--ease-out) backwards;
+  animation-delay: calc(0.7s + var(--s, 0) * 0.35s);
+}
+.landing .tile:nth-child(2) {
+  --s: 1;
+}
+.landing .tile:nth-child(3) {
+  --s: 2;
+}
+@keyframes float-up {
+  0% {
+    opacity: 0;
+    translate: 0 200px;
+    rotate: 3deg;
+  }
+  60% {
+    opacity: 1;
+    translate: 0 -12px;
+    rotate: -0.8deg;
+  }
+  100% {
+    translate: 0 0;
+    rotate: 0deg;
+  }
+}
+.landing .tiles.in-view.from-above .tile {
+  animation-name: float-up;
+}
+.landing .tiles.from-above .tile:nth-child(1) {
+  --s: 2;
+}
+.landing .tiles.from-above .tile:nth-child(3) {
+  --s: 0;
+}
+
+@keyframes great-breathe {
+  0%,
+  100% {
+    scale: 1;
+    rotate: 0deg;
+  }
+  40% {
+    scale: 1.08;
+    rotate: -6deg;
+  }
+  60% {
+    scale: 1.06;
+    rotate: 4deg;
+  }
+}
+@keyframes great-glint {
+  0%,
+  55% {
+    background-position: 130% 0;
+  }
+  85%,
+  100% {
+    background-position: -30% 0;
+  }
+}
+.app-screen .score-badge.score-fill-great {
+  background: linear-gradient(
+      115deg,
+      var(--m-best) 38%,
+      color-mix(in srgb, var(--m-best) 35%, white) 50%,
+      var(--m-best) 62%
+    )
+    var(--m-best);
+  background-size: 260% 100%;
+  animation:
+    great-breathe 3.2s ease-in-out infinite,
+    great-glint 3.2s ease-in-out infinite;
+}
+.app-screen .ride-row:hover .score-badge.score-fill-great,
+.app-screen .pick:hover .score-badge.score-fill-great {
+  animation-duration: 1.6s;
+}

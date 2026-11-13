@@ -11,12 +11,20 @@ export function useAsync<T>(load: () => Promise<T>, deps: unknown[]) {
     setLoading(true);
     setError(null);
     load()
-      .then((result) => { if (id === latestRequest.current) setData(result); })
-      .catch((e) => { if (id === latestRequest.current) setError(e); })
-      .finally(() => { if (id === latestRequest.current) setLoading(false); });
+      .then((result) => {
+        if (id === latestRequest.current) setData(result);
+      })
+      .catch((e) => {
+        if (id === latestRequest.current) setError(e);
+      })
+      .finally(() => {
+        if (id === latestRequest.current) setLoading(false);
+      });
   }, deps);
 
-  useEffect(() => { reload(); }, [reload]);
+  useEffect(() => {
+    reload();
+  }, [reload]);
   return { data, error, loading, reload, setData };
 }
 
@@ -29,15 +37,22 @@ export function useFittingPlaceholder(options: string[]) {
     const ctx = document.createElement("canvas").getContext("2d");
     const fitPlaceholder = () => {
       const style = getComputedStyle(el);
-      const room = el.clientWidth - parseFloat(style.paddingLeft) - parseFloat(style.paddingRight) - 4;
+      const room =
+        el.clientWidth -
+        parseFloat(style.paddingLeft) -
+        parseFloat(style.paddingRight) -
+        4;
       if (!ctx || room <= 0) return;
       ctx.font = `${style.fontStyle} ${style.fontWeight} ${style.fontSize} ${style.fontFamily}`;
-      setText(options.find((option) => ctx.measureText(option).width <= room) ?? options[options.length - 1]);
+      setText(
+        options.find((option) => ctx.measureText(option).width <= room) ??
+          options[options.length - 1],
+      );
     };
     fitPlaceholder();
     const resizeObserver = new ResizeObserver(fitPlaceholder);
     resizeObserver.observe(el);
-    document.fonts?.ready.then(fitPlaceholder); 
+    document.fonts?.ready.then(fitPlaceholder);
     return () => resizeObserver.disconnect();
   }, [el, key]);
   return [setEl, text] as const;

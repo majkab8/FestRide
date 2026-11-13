@@ -6,8 +6,11 @@ import "./motion.css";
 
 try {
   const saved = localStorage.getItem("festride-theme");
-  if (saved === "dark" || saved === "light") document.documentElement.dataset.theme = saved;
-} catch { /* storage blocked */ }
+  if (saved === "dark" || saved === "light")
+    document.documentElement.dataset.theme = saved;
+} catch {
+  /* storage blocked */
+}
 
 createRoot(document.getElementById("root")!).render(
   <StrictMode>
