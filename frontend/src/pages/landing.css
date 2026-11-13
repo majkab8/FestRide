@@ -902,12 +902,6 @@
   font-size: 17px;
   flex-wrap: wrap;
 }
-.landing footer .credit {
-  position: relative;
-  margin: 40px 0 0;
-  font-size: 12px;
-  color: #a39d90;
-}
 
 @media (max-width: 1100px) {
   .landing .signpost {
@@ -1049,9 +1043,6 @@
     grid-column: 1 / -1;
     margin-top: 6px;
     color: #cfc5b6;
-  }
-  .landing footer .credit {
-    margin-top: 28px;
   }
   .landing .hero-search {
     flex-direction: column;
