@@ -556,7 +556,7 @@
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: var(--lime);
+  color: var(--inv-accent);
   text-transform: uppercase;
 }
 .home-page .sound .tier a {

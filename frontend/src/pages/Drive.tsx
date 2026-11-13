@@ -9,6 +9,7 @@ import {
   Icon,
   Loading,
   matchKey,
+  Percent,
 } from "../components/ui";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n, type Key } from "../i18n";
@@ -269,7 +270,7 @@ export default function Drive() {
                     {seated.passenger.display_name}{" "}
                     <span>
                       {t("drive.seatN", { n: i + 1 })}
-                      {seated.match ? ` · ${seated.match.percent}` : ""}
+                      {seated.match ? ` · ${seated.match.percent}%` : ""}
                     </span>
                     {!departed && (
                       <button
@@ -320,7 +321,7 @@ export default function Drive() {
                       <div className="ticket-body">
                         <div className="passenger">
                           <span className={`num score-text-${level}`}>
-                            {request.match?.percent ?? "·"}
+                            <Percent value={request.match?.percent} />
                           </span>
                           <div style={{ minWidth: 0 }}>
                             <b>{request.passenger.display_name}</b>

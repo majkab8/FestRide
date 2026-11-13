@@ -15,6 +15,12 @@ backend/*.db
 # Frontend
 frontend/node_modules/
 frontend/dist/
+frontend/dist-ssr/
+*.local
+
+# Logs
+logs/
+*.log
 
 # Editors / OS
 .idea/
