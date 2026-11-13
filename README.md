@@ -10,6 +10,12 @@
   <br><br>
 </p>
 
+<p align="center">
+  <a href="https://festride-production.up.railway.app/"><img src="https://img.shields.io/badge/Wypr%C3%B3buj_FestRide_online-FF4F8B?style=for-the-badge" alt="Wypróbuj FestRide online"></a>
+  <br>
+  <sub>Konto demo: <code>demo@example.com</code> / <code>festride-demo</code></sub>
+</p>
+
 
 > **✨ Kreatywny twist: vibe check przed jazdą**
 >
