@@ -1,7 +1,13 @@
 import { Link } from "react-router-dom";
 import { api, type MyRequest } from "../api";
 import { Screen } from "../components/Layout";
-import { ErrorBox, Loading, matchKey, shapeFor } from "../components/ui";
+import {
+  ErrorBox,
+  Loading,
+  matchKey,
+  Percent,
+  shapeFor,
+} from "../components/ui";
 import { useAsync } from "../hooks";
 import { parseLocal, useI18n } from "../i18n";
 
@@ -82,7 +88,7 @@ export default function MyRides() {
                     <span
                       className={`score-badge ${shapeFor(level)} ${dim ? "score-fill-none" : `score-fill-${level}`}${request.ride.match?.percent === 100 ? " perfect-score" : ""}`}
                     >
-                      {request.ride.match?.percent ?? "·"}
+                      <Percent value={request.ride.match?.percent} />
                     </span>
                     <span className="who">
                       <b>{request.ride.event.name}</b>

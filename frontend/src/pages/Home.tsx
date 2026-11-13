@@ -9,6 +9,7 @@ import {
   Icon,
   Loading,
   matchKey,
+  Percent,
   shapeFor,
 } from "../components/ui";
 import { billName } from "../geo";
@@ -214,7 +215,7 @@ export default function Home() {
                         <span
                           className={`score-badge ${shapeFor(level)} ${off ? "score-fill-none" : `score-fill-${level}`}${request.ride.match?.percent === 100 ? " perfect-score" : ""}`}
                         >
-                          {request.ride.match?.percent ?? "·"}
+                          <Percent value={request.ride.match?.percent} />
                         </span>
                         <span style={{ flex: 1, minWidth: 0 }}>
                           <b>{request.ride.driver.display_name}</b>
@@ -343,7 +344,7 @@ export default function Home() {
                     <span
                       className={`score-badge ${shapeFor(matchKey(ride.match!))} score-fill-${matchKey(ride.match!)}${ride.match!.percent === 100 ? " perfect-score" : ""}`}
                     >
-                      {ride.match!.percent}
+                      <Percent value={ride.match!.percent} />
                     </span>
                     <span className="pick-text">
                       <b title={ride.event.name}>{ride.event.name}</b>

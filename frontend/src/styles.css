@@ -204,6 +204,10 @@ img {
   font-weight: 700;
   font-variant-numeric: tabular-nums;
 }
+.percent-sign {
+  font-size: 0.55em;
+  margin-left: 0.05em;
+}
 .muted {
   color: var(--muted);
 }

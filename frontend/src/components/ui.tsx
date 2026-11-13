@@ -68,10 +68,20 @@ export function Score({
   return (
     <div className={`score score-blob-${level}`}>
       <span className={`blob num shape-${shape % 3}`} style={style}>
-        {match.percent}
+        <Percent value={match.percent} />
       </span>
       <span>{t(`match.${level}`)}</span>
     </div>
+  );
+}
+
+export function Percent({ value }: { value: number | null | undefined }) {
+  if (value == null) return <>·</>;
+  return (
+    <>
+      {value}
+      <span className="percent-sign">%</span>
+    </>
   );
 }
 

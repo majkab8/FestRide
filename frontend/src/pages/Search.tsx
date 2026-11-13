@@ -16,6 +16,7 @@ import {
   Icon,
   Loading,
   matchKey,
+  Percent,
   shapeFor,
 } from "../components/ui";
 import { billName, cityCoords, fold } from "../geo";
@@ -562,7 +563,7 @@ export default function Search() {
                 <span
                   className={`score-badge ${shapeFor(level)} ${ride.match ? `score-fill-${level}` : "score-fill-none"}${ride.match?.percent === 100 ? " perfect-score" : ""}`}
                 >
-                  {ride.match?.percent ?? "·"}
+                  <Percent value={ride.match?.percent} />
                 </span>
                 <span className="who">
                   <b>{ride.driver.display_name}</b>
@@ -601,7 +602,9 @@ export default function Search() {
             <Link className="floating-card" to={`/rides/${selectedRide.id}`}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                 {selectedRide.match && (
-                  <span className="num">{selectedRide.match.percent}</span>
+                  <span className="num">
+                    <Percent value={selectedRide.match.percent} />
+                  </span>
                 )}
                 <b style={{ fontWeight: 600, fontSize: 16 }}>
                   {selectedRide.driver.display_name}
