@@ -378,6 +378,10 @@
   margin-left: 26px;
   font-size: 46px;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, #000 calc(100% - 140px), transparent);
 }
 
 .home-page {
@@ -1255,8 +1259,8 @@
   color: var(--on-bright);
 }
 .ride-page aside .state.accepted {
-  background: var(--blue);
-  color: var(--on-blue);
+  background: var(--m-best);
+  color: var(--on-bright);
 }
 .ride-page aside .state.called_off {
   background: var(--inv-soft);
@@ -1642,8 +1646,8 @@
   color: var(--on-bright);
 }
 .my-rides-page .status-tag.accepted {
-  background: var(--blue);
-  color: var(--on-blue);
+  background: var(--m-best);
+  color: var(--on-bright);
 }
 .my-rides-page .status-tag.cancelled,
 .my-rides-page .status-tag.removed,
