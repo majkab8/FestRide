@@ -193,27 +193,27 @@ Dzięki AI praca poszła dużo szybciej, zbudowanie takiej strony ręcznie zaję
 <img src="docs/divider.svg" width="200" alt="">
 
 #### Przejazdy
-- Przejazd powrotny dodawany od razu przy tworzeniu przejazdu
-- Edycja przejazdu (zmiana godziny czy liczby miejsc)
-- Lista oczekujących, gdy przejazd jest pełny
-- Automatyczne wyliczanie kosztów paliwa na osobę
-- Płatności przez aplikację
+- [ ] Przejazd powrotny dodawany od razu przy tworzeniu przejazdu
+- [ ] Edycja przejazdu (zmiana godziny czy liczby miejsc)
+- [ ] Lista oczekujących, gdy przejazd jest pełny
+- [ ] Automatyczne wyliczanie kosztów paliwa na osobę
+- [ ] Płatności przez aplikację
 
 #### Ludzie i zaufanie
-- Czat między kierowcą a pasażerem
-- Wzajemne oceny kierowcy i pasażerów po przejeździe
-- Zdjęcie profilowe i weryfikacja kierowcy
-- Media społecznościowe w profilu, żeby lepiej się poznać
-- Zgłaszanie i blokowanie użytkowników
+- [ ] Czat między kierowcą a pasażerem
+- [ ] Wzajemne oceny kierowcy i pasażerów po przejeździe
+- [ ] Zdjęcie profilowe i weryfikacja kierowcy
+- [ ] Media społecznościowe w profilu, żeby lepiej się poznać
+- [ ] Zgłaszanie i blokowanie użytkowników
 
 #### Festiwalowy klimat
-- Playlista na Spotify dopasowana do gustu muzycznego pasażerów i artystów z festiwalu, na który się jedzie
-- Integracja z organizatorami festiwali
+- [ ] Playlista na Spotify dopasowana do gustu muzycznego pasażerów i artystów z festiwalu, na który się jedzie
+- [ ] Integracja z organizatorami festiwali
 
 #### Konto i powiadomienia
-- Reset hasła, weryfikacja i zmiana maila
-- Powiadomienia push i mailowe
-- Aplikacja mobilna do zainstalowania na telefonie
+- [ ] Reset hasła, weryfikacja i zmiana maila
+- [ ] Powiadomienia push i mailowe
+- [ ] Aplikacja mobilna do zainstalowania na telefonie
 
 
 ### 🙏 Podziękowania
