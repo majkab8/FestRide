@@ -84,14 +84,14 @@ type Params = Record<string, string | number | boolean | null | undefined | (str
 
 function qs(params?: Params): string {
   if (!params) return "";
-  const u = new URLSearchParams();
-  for (const [k, v] of Object.entries(params)) {
-    if (v === null || v === undefined || v === "" || v === false) continue;
-    if (Array.isArray(v)) v.forEach((x) => u.append(k, String(x)));
-    else u.set(k, String(v));
+  const query = new URLSearchParams();
+  for (const [name, value] of Object.entries(params)) {
+    if (value === null || value === undefined || value === "" || value === false) continue;
+    if (Array.isArray(value)) value.forEach((item) => query.append(name, String(item)));
+    else query.set(name, String(value));
   }
-  const s = u.toString();
-  return s ? `?${s}` : "";
+  const text = query.toString();
+  return text ? `?${text}` : "";
 }
 
 async function request<T>(method: string, path: string, opts: { params?: Params; body?: unknown; auth?: "required" | "optional" | "none" } = {}): Promise<T> {

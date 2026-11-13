@@ -32,8 +32,8 @@ class SearchFilters(BaseModel):
         return self
 
 
-def _fmt_day(d: date) -> str:
-    return f"{d.day} {calendar.month_abbr[d.month]} {d.year}"
+def _fmt_day(day: date) -> str:
+    return f"{day.day} {calendar.month_abbr[day.month]} {day.year}"
 
 
 def describe(f: SearchFilters) -> list[str]:
@@ -94,7 +94,7 @@ def _stem(city: str) -> str:
 
 def _month_of(token: str) -> Optional[int]:
     for month, pl, en in _MONTHS:
-        if token in en or any(token == s if s in _EXACT_PL else token.startswith(s) for s in pl):
+        if token in en or any(token == stem if stem in _EXACT_PL else token.startswith(stem) for stem in pl):
             return month
     return None
 
@@ -102,8 +102,8 @@ def _month_of(token: str) -> Optional[int]:
 def _next_occurrence(month: int, day: Optional[int], today: date) -> tuple[date, date]:
     year = today.year if (month, day or 31) >= (today.month, today.day) else today.year + 1
     if day:
-        d = date(year, month, min(day, calendar.monthrange(year, month)[1]))
-        return d, d
+        exact_day = date(year, month, min(day, calendar.monthrange(year, month)[1]))
+        return exact_day, exact_day
     last = calendar.monthrange(year, month)[1]
     return date(year, month, 1), date(year, month, last)
 
@@ -115,20 +115,20 @@ _WEEKDAYS = [("poniedz", 0), ("monday", 0), ("wtor", 1), ("tuesday", 1), ("srod"
 
 def _relative_dates(folded: str, today: date) -> Optional[tuple[date, date]]:
     if re.search(r"\b(jutro|tomorrow)\b", folded):
-        d = today + timedelta(days=1)
-        return d, d
+        target = today + timedelta(days=1)
+        return target, target
     if re.search(r"\b(dzis|dzisiaj|today|tonight)\b", folded):
         return today, today
     if re.search(r"\bweekend", folded):
         sat = today + timedelta(days=(5 - today.weekday()) % 7)
         return sat, sat + timedelta(days=1)
     if re.search(r"\bza tydzien\b|\bin a week\b", folded):
-        d = today + timedelta(days=7)
-        return d, d
+        target = today + timedelta(days=7)
+        return target, target
     for stem, weekday in _WEEKDAYS:
         if re.search(rf"\b{stem}", folded):
-            d = today + timedelta(days=(weekday - today.weekday()) % 7 or 7)  # next one, not today
-            return d, d
+            target = today + timedelta(days=(weekday - today.weekday()) % 7 or 7)  # next one, not today
+            return target, target
     return None
 
 
@@ -136,11 +136,11 @@ def _event_q(folded_text: str, event_names: list[str]) -> Optional[str]:
     best: Optional[str] = None
     for name in event_names:
         main = re.split(r"\s[|–-]\s|:\s|\s\|", name)[0].strip() or name
-        for cand in {name.strip(), main, re.sub(r"\s+(19|20)\d\d$", "", main)}:
-            f = fold(cand).strip()
+        for candidate in {name.strip(), main, re.sub(r"\s+(19|20)\d\d$", "", main)}:
+            f = fold(candidate).strip()
             if (len(f) >= 6 or " " in f) and re.search(rf"(?<![a-z0-9]){re.escape(f)}(?![a-z0-9])", folded_text):
-                if best is None or len(cand) > len(best):
-                    best = cand
+                if best is None or len(candidate) > len(best):
+                    best = candidate
     return best
 
 
@@ -148,11 +148,11 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
     folded = fold(text)
     tokens = re.findall(r"[a-z0-9']+", folded)
     found: dict = {}
-    pairs = [(_stem(c), c) for c in cities] + alias_pairs()
-    stems = sorted(pairs, key=lambda sc: -len(sc[0]))
+    pairs = [(_stem(city), city) for city in cities] + alias_pairs()
+    stems = sorted(pairs, key=lambda pair: -len(pair[0]))
     bare: list[str] = []
-    for i, tok in enumerate(tokens):
-        city = next((c for s, c in stems if len(s) >= 4 and tok.startswith(s)), None)
+    for i, token in enumerate(tokens):
+        city = next((city for stem, city in stems if len(stem) >= 4 and token.startswith(stem)), None)
         if not city:
             continue
         prev = tokens[i - 1] if i else ""
@@ -181,14 +181,14 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
 
     seats = re.search(r"(\d|" + "|".join(_NUMBER_WORDS) + r")\s*(?:wolne\s*)?(?:miejsc|osob|seat|people|person)", folded)
     if seats:
-        n = seats.group(1)
-        found["min_seats"] = min(int(n) if n.isdigit() else _NUMBER_WORDS[n], 8) or None
+        number = seats.group(1)
+        found["min_seats"] = min(int(number) if number.isdigit() else _NUMBER_WORDS[number], 8) or None
 
     if re.search(r"niepal|bez palenia|non.?smok|no smok|nie pal", folded):
         found["no_smoking"] = True
 
-    for i, tok in enumerate(tokens):
-        month = _month_of(tok) if len(tok) >= 3 and not tok.isdigit() else None
+    for i, token in enumerate(tokens):
+        month = _month_of(token) if len(token) >= 3 and not token.isdigit() else None
         if month:
             day = int(tokens[i - 1]) if i and tokens[i - 1].isdigit() and 1 <= int(tokens[i - 1]) <= 31 else None
             found["date_from"], found["date_to"] = _next_occurrence(month, day, today)
@@ -199,7 +199,7 @@ def parse_rules(text: str, today: date, cities: list[str], event_names: Optional
             found["date_from"], found["date_to"] = relative
 
     if event_names:
-        q = _event_q(folded, event_names)
-        if q:
-            found["q"] = q
+        event_name = _event_q(folded, event_names)
+        if event_name:
+            found["q"] = event_name
     return SearchFilters(**found)

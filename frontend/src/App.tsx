@@ -6,9 +6,9 @@ import { ToastProvider } from "./components/Toast";
 import { I18nProvider } from "./i18n";
 import Landing from "./pages/Landing";
 
-const Login = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Login })));
-const Signup = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Signup })));
-const Profile = lazy(() => import("./pages/Auth").then((m) => ({ default: m.Profile })));
+const Login = lazy(() => import("./pages/Auth").then((authPages) => ({ default: authPages.Login })));
+const Signup = lazy(() => import("./pages/Auth").then((authPages) => ({ default: authPages.Signup })));
+const Profile = lazy(() => import("./pages/Auth").then((authPages) => ({ default: authPages.Profile })));
 const Drive = lazy(() => import("./pages/Drive"));
 const Events = lazy(() => import("./pages/Events"));
 const Home = lazy(() => import("./pages/Home"));

@@ -238,9 +238,9 @@ export type Noun = keyof typeof NOUNS;
 
 interface I18n {
   lang: Lang;
-  setLang: (l: Lang) => void;
+  setLang: (language: Lang) => void;
   t: (key: Key, vars?: Record<string, string | number>) => string;
-  plural: (n: number, noun: Noun) => string;
+  plural: (count: number, noun: Noun) => string;
   day: (iso: string) => string;
   dayLong: (iso: string) => string;
   dayTime: (iso: string) => string;
@@ -267,42 +267,42 @@ export function I18nProvider({ children }: { children: ReactNode }) {
   const [lang, setLangState] = useState<Lang>(initialLang);
   useEffect(() => { document.documentElement.lang = lang; }, [lang]);
 
-  const setLang = useCallback((l: Lang) => {
-    setLangState(l);
-    try { localStorage.setItem("festride-lang", l); } catch { /* storage blocked */ }
+  const setLang = useCallback((language: Lang) => {
+    setLangState(language);
+    try { localStorage.setItem("festride-lang", language); } catch { /* storage blocked */ }
   }, []);
 
   const value = useMemo<I18n>(() => {
     const loc = lang === "pl" ? "pl-PL" : "en-GB";
     const dict = DICTS[lang];
-    const fmt = (o: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(loc, o);
-    const fDay = fmt({ weekday: "short", day: "numeric", month: "short" });
-    const fDayLong = fmt({ weekday: "long", day: "numeric", month: "long" });
-    const fTime = fmt({ hour: "2-digit", minute: "2-digit" });
-    const fMonth = fmt({ month: "long", year: "numeric" });
-    const rel = new Intl.RelativeTimeFormat(loc, { numeric: "auto" });
+    const dateFormat = (options: Intl.DateTimeFormatOptions) => new Intl.DateTimeFormat(loc, options);
+    const fDay = dateFormat({ weekday: "short", day: "numeric", month: "short" });
+    const fDayLong = dateFormat({ weekday: "long", day: "numeric", month: "long" });
+    const fTime = dateFormat({ hour: "2-digit", minute: "2-digit" });
+    const fMonth = dateFormat({ month: "long", year: "numeric" });
+    const relativeFormat = new Intl.RelativeTimeFormat(loc, { numeric: "auto" });
     const rules = new Intl.PluralRules(lang);
     return {
       lang,
       setLang,
       t: (key, vars) => {
-        let s: string = dict[key] ?? en[key] ?? key;
-        if (vars) for (const [k, v] of Object.entries(vars)) s = s.replace(`{${k}}`, () => String(v));
-        return s;
+        let text: string = dict[key] ?? en[key] ?? key;
+        if (vars) for (const [name, replacement] of Object.entries(vars)) text = text.replace(`{${name}}`, () => String(replacement));
+        return text;
       },
-      plural: (n, noun) => {
+      plural: (count, noun) => {
         const forms = NOUNS[noun][lang] as Record<string, string>;
-        return `${n} ${forms[rules.select(n)] ?? forms.other}`;
+        return `${count} ${forms[rules.select(count)] ?? forms.other}`;
       },
       day: (iso) => fDay.format(parseLocal(iso)),
       dayLong: (iso) => fDayLong.format(parseLocal(iso)),
       time: (iso) => fTime.format(parseLocal(iso)),
       dayTime: (iso) => `${fDay.format(parseLocal(iso))} · ${fTime.format(parseLocal(iso))}`,
-      month: (iso) => { const m = fMonth.format(parseLocal(iso)); return m.charAt(0).toUpperCase() + m.slice(1); },
+      month: (iso) => { const monthName = fMonth.format(parseLocal(iso)); return monthName.charAt(0).toUpperCase() + monthName.slice(1); },
       relDay: (iso) => {
-        const d = parseLocal(iso); const today = new Date();
-        const days = Math.round((new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86_400_000);
-        return rel.format(days, "day");
+        const date = parseLocal(iso); const today = new Date();
+        const days = Math.round((new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime() - new Date(today.getFullYear(), today.getMonth(), today.getDate()).getTime()) / 86_400_000);
+        return relativeFormat.format(days, "day");
       },
     };
   }, [lang, setLang]);

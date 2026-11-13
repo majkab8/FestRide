@@ -13,7 +13,7 @@ engine = create_engine(
 
 @event.listens_for(engine, "connect")
 def _register_sql_functions(dbapi_conn, _record) -> None:
-    dbapi_conn.create_function("fold", 1, lambda s: fold(s) if s is not None else None, deterministic=True)
+    dbapi_conn.create_function("fold", 1, lambda text: fold(text) if text is not None else None, deterministic=True)
 
 
 def init_db() -> None:

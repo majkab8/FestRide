@@ -33,15 +33,15 @@ const FAMILIES: Record<string, string[]> = {
 
 export function familyOf(genre: string | null | undefined): string {
   if (!genre) return "other";
-  const g = fold(genre).replace(/&/g, " and ").replace(/[-/]/g, " ").replace(/\s+/g, " ");
-  for (const [fam, list] of Object.entries(FAMILIES)) {
-    if (list.some((x) => g === x || g.startsWith(x + " ") || g.includes(" " + x) || g.startsWith(x))) return fam;
+  const normalized = fold(genre).replace(/&/g, " and ").replace(/[-/]/g, " ").replace(/\s+/g, " ");
+  for (const [family, list] of Object.entries(FAMILIES)) {
+    if (list.some((known) => normalized === known || normalized.startsWith(known + " ") || normalized.includes(" " + known) || normalized.startsWith(known))) return family;
   }
   return "other";
 }
 
 export function initials(name: string): string {
-  return name.split(/\s+/).map((w) => w.replace(/[^\p{L}]/gu, "")[0]).filter(Boolean).join("").slice(0, 2).toUpperCase() || "?";
+  return name.split(/\s+/).map((word) => word.replace(/[^\p{L}]/gu, "")[0]).filter(Boolean).join("").slice(0, 2).toUpperCase() || "?";
 }
 
 export function billName(name: string): string {

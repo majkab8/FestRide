@@ -20,7 +20,7 @@ def fold(text: str) -> str:
     for apostrophe in "'’`":
         text = text.replace(apostrophe, "")
     decomposed = unicodedata.normalize("NFKD", text)
-    return "".join(c for c in decomposed if not unicodedata.combining(c)).lower()
+    return "".join(char for char in decomposed if not unicodedata.combining(char)).lower()
 
 
 def normalize_city(name: str) -> str:
@@ -37,7 +37,7 @@ def genre_clause(session, column, genre: str):
     from sqlmodel import select
     from .matching import same_family # local import: matching imports this module)
 
-    stored = [g for g in session.exec(select(column).distinct()).all() if g]
+    stored = [genre for genre in session.exec(select(column).distinct()).all() if genre]
     return or_(
         func.fold(column).like(contains_pattern(genre), escape="\\"),
         column.in_(same_family(genre, stored)),
