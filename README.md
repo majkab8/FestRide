@@ -114,7 +114,7 @@ python -m venv .venv
 pip install -r requirements.txt
 cp .env.example .env              # Windows (cmd): copy .env.example .env
 
-python import_events.py           # wydarzenia (z Ticketmastera, jeśli masz klucz, inaczej 8 przykładowych)
+python import_events.py           # wydarzenia (z Ticketmastera, jeśli masz klucz, inaczej 4 duże festiwale)
 python seed_demo.py               # demo: użytkownicy, przejazdy i prośby
 uvicorn app.main:app --reload --port 8000
 ```
@@ -136,7 +136,7 @@ Wydarzenia demo są aktualne przez około tydzień; odświeżysz je poleceniem `
 **Opcjonalne klucze** w `backend/.env`: `TICKETMASTER_API_KEY` ([do pobrania tutaj](https://developer.ticketmaster.com)) dla prawdziwych wydarzeń,
 `GEMINI_API_KEY` ([za darmo](https://aistudio.google.com)) dla AI. Po dodaniu klucza Ticketmastera uruchom jeszcze raz `import_events.py` i `seed_demo.py --reset`.
 
-**Testy** (backend, 107 testów):
+**Testy** (backend, 113 testów):
 
 ```bash
 cd backend
