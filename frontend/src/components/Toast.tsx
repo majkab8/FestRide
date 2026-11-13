@@ -1,4 +1,12 @@
-import { createContext, useCallback, useContext, useEffect, useRef, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useCallback,
+  useContext,
+  useEffect,
+  useRef,
+  useState,
+  type ReactNode,
+} from "react";
 import { Icon } from "./ui";
 
 const Ctx = createContext<(text: string) => void>(() => {});
@@ -19,7 +27,14 @@ export function ToastProvider({ children }: { children: ReactNode }) {
       {children}
       {/* the live region stays mounted so screen readers announce each new message */}
       <div className="toast-wrap" role="status" aria-live="polite">
-        {toast && <div key={toast.id} className="toast"><span className="toast-dot" aria-hidden="true"><Icon name="check" /></span>{toast.text}</div>}
+        {toast && (
+          <div key={toast.id} className="toast">
+            <span className="toast-dot" aria-hidden="true">
+              <Icon name="check" />
+            </span>
+            {toast.text}
+          </div>
+        )}
       </div>
     </Ctx.Provider>
   );
