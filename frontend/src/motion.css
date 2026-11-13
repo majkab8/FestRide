@@ -1,9 +1,3 @@
-/* Motion polish for the v3 screens.
-   Everything here is decoration: content is fully visible without it, and the
-   global prefers-reduced-motion rule in styles.css switches all of it off.
-   Uses the individual `translate` / `scale` properties so it never fights the
-   `transform` rotations and hover lifts already in app3.css / landing.css. */
-
 :root { --ease-out: cubic-bezier(0.2, 0.75, 0.2, 1); }
 
 @keyframes rise { from { opacity: 0; translate: 0 18px; } }

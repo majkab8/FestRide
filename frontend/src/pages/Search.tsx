@@ -9,8 +9,6 @@ import { billName, cityCoords, fold } from "../geo";
 import { useFittingPlaceholder, useAsync } from "../hooks";
 import { useI18n, type Key } from "../i18n";
 
-/* Filters live in the URL, so a search can be shared and survives a reload.
-   Keys are exactly GET /rides query parameters. */
 const FILTER_KEYS = ["event_id", "q", "origin_city", "event_city", "genre", "date_from", "date_to", "max_price", "min_seats", "no_smoking"] as const;
 type FilterKey = (typeof FILTER_KEYS)[number];
 type Filters = Partial<Record<FilterKey, string>>;
@@ -21,12 +19,11 @@ function toParams(f: SearchFilters): Record<string, string> {
   return out;
 }
 
-/* ---------- colour the parts of the sentence that became filters ---------- */
 type Span = [start: number, end: number, cls: string];
 const DATE_WORDS = /\b(stycz\w*|lut\w*|mar[cz]\w*|kwie\w*|maj\w*|czerw\w*|lip\w*|sierp\w*|wrze\w*|pazdz\w*|listop\w*|grud\w*|january|february|march|april|may|june|july|august|september|october|november|december|weekend\w*|jutro|tomorrow|dzis\w*|today|tonight|piat\w*|sobot\w*|niedziel\w*|friday|saturday|sunday|tydzien|week)\b/g;
 
 function highlight(text: string, f: Filters): Span[] {
-  const low = fold(text); // same length as `text` (trimmed by the caller) for Polish/Latin letters
+  const low = fold(text);
   const spans: Span[] = [];
   const word = (stem: string, cls: string) => {
     if (stem.length < 3) return;
@@ -63,7 +60,6 @@ function Highlighted({ text, filters }: { text: string; filters: Filters }) {
   return <>{out}</>;
 }
 
-/** Find a ride (v3 AppSearch3 board). */
 export default function Search() {
   const { t, day, time, plural } = useI18n();
   const { user } = useAuth();
@@ -86,9 +82,6 @@ export default function Search() {
   const hasFilters = Object.keys(filters).length > 0;
   const awaitingParse = !!text && !hasFilters && (parsing || source === null) && understood;
 
-  // Read each submitted sentence once. A URL that already carries filters
-  // (shared link, reload) counts as read, so removing its last chip won't
-  // silently re-apply the sentence.
   const parsedKey = useRef<string | null>(hasFilters ? `0|${text}` : null);
   const latestKey = useRef("");
   useEffect(() => {
@@ -107,7 +100,6 @@ export default function Search() {
       })
       .catch(() => { if (latestKey.current === key) { setSource(null); setUnderstood(false); setFormOpen(true); } })
       .finally(() => { if (latestKey.current === key) setParsing(false); });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [text, nonce, hasFilters]);
 
   const rides = useAsync(() => (awaitingParse ? Promise.resolve(null) : api.rides({ ...filters, min_seats: filters.min_seats ?? 1, limit: 100 })), [JSON.stringify(filters), user?.id, awaitingParse]);
@@ -121,7 +113,7 @@ export default function Search() {
   const submit = (e: FormEvent) => { e.preventDefault(); send(input); };
   const removeFilter = (k: FilterKey) => { const p = new URLSearchParams(params); p.delete(k); setParams(p); };
   useEffect(() => { if (editingText) inputRef.current?.focus(); }, [editingText]);
-  useEffect(() => { setInput(text); }, [text]); // back/forward to another sentence
+  useEffect(() => { setInput(text); }, [text]);
 
   const list: Ride[] = rides.data ?? [];
   const sel = list.find((r) => r.id === selected) ?? list[0];
@@ -134,8 +126,6 @@ export default function Search() {
     return () => mq.removeEventListener("change", on);
   }, []);
 
-  // One column (phones, tablets): there's no hover, so the map stays pinned at the top and the ride
-  // in the middle of the visible list is the focused one: its route shows on the map as you scroll.
   useEffect(() => {
     const mq = matchMedia("(max-width: 1100px)");
     let raf = 0;
@@ -144,11 +134,9 @@ export default function Search() {
       if (!mq.matches || !rowsRef.current) return;
       const head = document.querySelector<HTMLElement>(".app-head");
       document.documentElement.style.setProperty("--head-h", `${head?.offsetHeight ?? 0}px`);
-      // where the map's bottom edge sits once pinned (same line the CSS scroll snap uses), even before it has stuck
       const top = (head?.offsetHeight ?? 0) + 8 + (mapRef.current?.offsetHeight ?? 0);
       const mid = top + (innerHeight - top) / 2;
       const rows = [...rowsRef.current.querySelectorAll<HTMLElement>(".row3[data-id]")];
-      // at the top of the page (first ride still at or below the focus spot), the first ride is the focused one
       const firstR = rows[0]?.getBoundingClientRect();
       if (firstR && (firstR.top + firstR.bottom) / 2 >= mid) { setSelected(Number(rows[0].dataset.id)); return; }
       let best: HTMLElement | null = null, dist = Infinity;
@@ -161,11 +149,9 @@ export default function Search() {
     };
     const onScroll = () => { if (!raf) raf = requestAnimationFrame(pick); };
 
-    // Mouse wheel / touchpad: browsers' snapping is inconsistent with big wheel deltas, so one wheel
-    // gesture moves exactly one stop (page top, then each ride in the focus spot). Touch keeps native snap.
     let lockUntil = 0, lastWheel = 0;
     const onWheel = (e: WheelEvent) => {
-      const now = performance.now(), fresh = now - lastWheel > 220; // a new gesture after a short pause
+      const now = performance.now(), fresh = now - lastWheel > 220;
       lastWheel = now;
       if (!mq.matches || !rowsRef.current || e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
       const head = document.querySelector<HTMLElement>(".app-head");
@@ -177,9 +163,9 @@ export default function Search() {
       })].filter((y) => y >= 0);
       const y = scrollY;
       const next = e.deltaY > 0 ? stops.find((s) => s > y + 4) : [...stops].reverse().find((s) => s < y - 4);
-      if (next === undefined) return; // past the last ride / above the top: let the page scroll normally
+      if (next === undefined) return;
       e.preventDefault();
-      if (!fresh || now < lockUntil) return; // one stop per gesture (touchpads and free-spinning wheels fire many events)
+      if (!fresh || now < lockUntil) return;
       lockUntil = now + 380;
       scrollTo({ top: next, behavior: "smooth" });
     };
@@ -205,7 +191,6 @@ export default function Search() {
     }
   };
 
-  // map: event pins, ride origins, routes; the hovered/selected ride is highlighted
   const pins: MapPin[] = []; const origins: MapOrigin[] = []; const routes: MapRoute[] = [];
   const seenEv = new Set<number>(); const seenOr = new Set<string>();
   for (const r of list) {
@@ -302,7 +287,6 @@ function FilterForm({ filters, onApply }: { filters: Filters; onApply: (f: Recor
   const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target.checked ? "true" : "") : e.target.value });
   const fields: [FilterKey, Key, string][] = [["origin_city", "f.from", "text"], ["event_city", "f.to", "text"], ["q", "f.q", "text"], ["genre", "f.genre", "text"], ["date_from", "f.dateFrom", "date"], ["date_to", "f.dateTo", "date"], ["max_price", "f.price", "number"], ["min_seats", "f.seats", "number"]];
 
-  // suggestions while typing: event names matching the "Event" field, and the cities that have events
   const cities = useAsync(() => api.cities(), []);
   const [eventHints, setEventHints] = useState<string[]>([]);
   const q = (f.q ?? "").trim();

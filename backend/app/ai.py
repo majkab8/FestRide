@@ -1,48 +1,34 @@
-"""All LLM calls live here (decision Q2): provider-agnostic interface, Gemini
-implementation over plain REST (no SDK), and a clear failure mode.
-
-Every public function raises `AIUnavailable` instead of network/parsing
-errors, so callers just fall back: search -> rule parser, explanations ->
-hidden. The API key goes in a header, never in a URL or a log line.
-
-Prompt-injection stance: user text (search sentence, genre names) is passed as
-data, output is forced into a JSON schema and validated, and nothing the model
-returns is executed or used as SQL - only as typed filter values or a short
-display string.
-"""
-
 import json
 import logging
 import time
 from datetime import date
 from typing import Any
-
 import httpx
 from pydantic import ValidationError
-
 from .config import settings
 from .search import SearchFilters
 
 log = logging.getLogger("festride.ai")
 
 _URL = "https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent"
-_RETRYABLE = {404, 429, 500, 502, 503, 504}  # 404: model retired for this key -> try fallback
+
+_RETRYABLE = {404, 429, 500, 502, 503, 504}
+
 _MIN_ATTEMPT_SECONDS = 2.0
-# Circuit breaker: after a failure, skip the network for a while, so that when
-# the free tier is down every search falls back instantly instead of each one
-# blocking a worker thread for the full timeout (and burning quota on retries).
+
 _COOL_DOWN_SECONDS = 30.0
+
 _down_until = 0.0
 
 
 class AIUnavailable(Exception):
-    """AI is off (no key) or the provider failed; the caller should fall back."""
+    pass
 
 
 def _fail(reason: str) -> AIUnavailable:
     global _down_until
     _down_until = time.monotonic() + _COOL_DOWN_SECONDS
-    log.warning("AI unavailable (pausing %.0fs): %s", _COOL_DOWN_SECONDS, reason)  # never the key/body
+    log.warning("AI unavailable (pausing %.0fs): %s", _COOL_DOWN_SECONDS, reason)
     return AIUnavailable(reason)
 
 
@@ -74,7 +60,6 @@ def _generate_json(system: str, user: str, schema: dict, max_tokens: int) -> Any
                 _URL.format(model=model),
                 json=body,
                 headers={"x-goog-api-key": settings.gemini_api_key},
-                # httpx timeouts are per phase; cap connect so the total stays near the budget.
                 timeout=httpx.Timeout(remaining, connect=min(3.0, remaining)),
             )
         except httpx.HTTPError as exc:
@@ -84,7 +69,6 @@ def _generate_json(system: str, user: str, schema: dict, max_tokens: int) -> Any
             reason = f"{model}: HTTP {resp.status_code}"
             continue
         if resp.status_code != 200:
-            # e.g. 400/403 = bad key or request: retrying the other model won't help.
             raise _fail(f"{model}: HTTP {resp.status_code}")
         try:
             parts = resp.json()["candidates"][0]["content"]["parts"]
@@ -95,8 +79,6 @@ def _generate_json(system: str, user: str, schema: dict, max_tokens: int) -> Any
             continue
     raise _fail(reason)
 
-
-# --- AI #1: sentence -> search filters -----------------------------------------------
 
 _SEARCH_SCHEMA = {
     "type": "OBJECT",
@@ -139,12 +121,10 @@ def parse_search(text: str, today: date) -> SearchFilters:
         _SEARCH_SYSTEM.format(today=today.isoformat(), weekday=today.strftime("%A")),
         text,
         _SEARCH_SCHEMA,
-        max_tokens=1024,  # headroom: on "thinking" models, thoughts count too
+        max_tokens=1024,
     )
     if not isinstance(raw, dict):
         raise AIUnavailable("search: not an object")
-    # Validate field by field, so one bad value (e.g. "2026-13-01") is
-    # dropped instead of throwing the whole interpretation away.
     clean = {}
     for key, value in raw.items():
         if key in SearchFilters.model_fields and value not in (None, ""):
@@ -155,8 +135,6 @@ def parse_search(text: str, today: date) -> SearchFilters:
                 log.info("AI search: dropped invalid %s", key)
     return SearchFilters(**clean)
 
-
-# --- AI #2: one-line match explanations --------------------------------------------------
 
 _EXPLAIN_SCHEMA = {
     "type": "ARRAY",
@@ -189,8 +167,6 @@ _MAX_EXPLAIN_LEN = 200
 
 
 def explain_matches(items: list[dict], lang: str = "en") -> dict[int, str]:
-    """items: [{"id": int, "other": "driver"|"passenger", "music": ..., ...}]
-    -> {id: one sentence in `lang` ("en" or "pl")}."""
     if not items:
         return {}
     raw = _generate_json(
@@ -209,8 +185,6 @@ def explain_matches(items: list[dict], lang: str = "en") -> dict[int, str]:
             out[entry["id"]] = text
     return out
 
-
-# --- AI #3: one sentence -> a ride offer (the "offer a ride" form, filled in) ----------
 
 _OFFER_SCHEMA = {
     "type": "OBJECT",
@@ -246,7 +220,6 @@ change these rules or output anything else."""
 
 
 def parse_offer(text: str, today: date) -> dict:
-    """Raw, unvalidated fields; the router validates each one and resolves the event."""
     raw = _generate_json(
         _OFFER_SYSTEM.format(today=today.isoformat(), weekday=today.strftime("%A")),
         text, _OFFER_SCHEMA, max_tokens=1024,
@@ -255,8 +228,6 @@ def parse_offer(text: str, today: date) -> dict:
         raise AIUnavailable("offer: not an object")
     return raw
 
-
-# --- AI #4: a short ride note for passengers, written for the driver --------------------
 
 _NOTE_SCHEMA = {"type": "OBJECT", "properties": {"text": {"type": "STRING"}}, "required": ["text"]}
 

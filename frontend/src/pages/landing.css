@@ -1,7 +1,3 @@
-/* v3 Landing, "sunset poster": a faithful build of the Main3 board.
-   Values are the board's own (1440 px artboard); sizes scale down with
-   clamp() below that width. The poster keeps its own fixed palette in both
-   themes, like a printed poster would. */
 .v3 {
   --sand: #f7ebd8; --cream: #fffaf2; --ink: #1e1b18; --muted: #6e655a; --pink: #ff4f8b; --blue: #2d5bff;
   --lime: #d7ff4a; --peach: #ffc48e; --apricot: #ffe7c2; --dust: #f3dcc8;

@@ -1,32 +1,19 @@
-/* EXPERIMENT: a little car driving around the record's outer groove, so the
-   hero says "transport" as well as "music".
-   To remove it: delete this file and the `RecordCar` lines in Landing.tsx
-   (or just set SHOW_RECORD_CAR = false there).
-
-   The car rides the groove, so it moves with the record: spin the record
-   faster (pointer, scroll) and the car speeds up; spin it back and the car
-   reverses. On its own it drives the visible top arc slowly and crosses the
-   hidden lower half (below the hero's bottom edge) quickly.
-   It is drawn in the record's non-rotating overlay SVG; Landing's animation
-   loop calls `stepCar` each frame and writes the angle to the element. */
 import type { Ref } from "react";
 
-const VISIBLE_SPEED = 3; // deg/s across the top arc (plus the record's own ~8 deg/s)
-const HIDDEN_SPEED = 36; // deg/s across the hidden lower half
-const HORIZON = 100; // |angle| beyond this (0 = top) is below the hero's edge
+const VISIBLE_SPEED = 3;
+const HIDDEN_SPEED = 36;
+const HORIZON = 100;
 
 const CSS = `.v3 .record-car { transform-box: view-box; transform-origin: 100px 100px; }`;
 
-/** Next car angle (degrees, 0 = top of the record, clockwise positive). */
 export function stepCar(angle: number, dt: number, recordDelta: number, calm: boolean): number {
-  const a = ((angle + 180) % 360 + 360) % 360 - 180; // normalise to (-180, 180]
+  const a = ((angle + 180) % 360 + 360) % 360 - 180;
   const own = calm ? 0 : (Math.abs(a) > HORIZON ? HIDDEN_SPEED : VISIBLE_SPEED) * dt;
-  return a + own + recordDelta; // riding the groove: the record's spin carries the car 1:1
+  return a + own + recordDelta;
 }
 
 export const CAR_START_ANGLE = -60;
 
-/** Rendered in the record's 200x200 overlay SVG; rides the outermost groove (radius ~90). */
 export default function RecordCar({ carRef }: { carRef: Ref<SVGGElement> }) {
   return (
     <g aria-hidden="true">

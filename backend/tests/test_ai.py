@@ -1,10 +1,6 @@
-"""AI features with a faked model: validation of model output, fallbacks, endpoints."""
-
 from datetime import date
-
 import httpx
 import pytest
-
 from app import ai
 from app.config import settings
 
@@ -206,7 +202,6 @@ def test_explain_language_reaches_prompt_and_cache(client, register, make_ride, 
 
 def test_offer_from_sentence_with_ai(client, register, fake_model):
     from datetime import timedelta
-
     from app.clock import today_pl
 
     day = (today_pl() + timedelta(days=10)).isoformat()

@@ -6,7 +6,6 @@ import { useAsync } from "../hooks";
 import { parseLocal, useI18n } from "../i18n";
 
 
-/** My rides as a passenger: confirmed, waiting, and past/declined requests. */
 export default function MyRides() {
   const { t, day, time } = useI18n();
   const mine = useAsync(() => api.myRequests(), []);

@@ -1,13 +1,9 @@
-"""Event browsing endpoints (public: no login needed to look around)."""
-
 from datetime import date
 from typing import Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel
 from sqlalchemy import func, or_, true
 from sqlmodel import Session, col, select
-
 from ..cities import contains_pattern as _contains
 from ..cities import fold, genre_clause, normalize_city
 from ..clock import today_pl
@@ -23,7 +19,6 @@ class CityCount(BaseModel):
 
 
 def _upcoming(include_past: bool):
-    """Filter clause: events today or later (undated events are kept)."""
     if include_past:
         return true()
     return or_(col(Event.event_date).is_(None), col(Event.event_date) >= today_pl())
@@ -51,9 +46,6 @@ def list_events(
             )
         )
     if city and city.strip():
-        # Exact (case/diacritic-insensitive) match, so "Gdańsk" from the cities
-        # dropdown doesn't also return "Gdańsk/Sopot". normalize_city maps
-        # English names ("Warsaw") to the stored Polish ones.
         stmt = stmt.where(func.fold(Event.city) == fold(normalize_city(city)))
     if genre and genre.strip():
         stmt = stmt.where(genre_clause(session, Event.genre, genre))
@@ -66,10 +58,8 @@ def list_events(
     return list(session.exec(stmt.offset(offset).limit(limit)).all())
 
 
-# Declared before /{event_id} so "cities" isn't parsed as an id.
 @router.get("/cities", response_model=list[CityCount])
 def list_cities(session: Session = Depends(get_session)) -> list[CityCount]:
-    """Cities with upcoming events, most events first (for filter dropdowns)."""
     count = func.count(Event.id)
     stmt = (
         select(Event.city, count)

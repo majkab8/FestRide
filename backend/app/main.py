@@ -1,10 +1,6 @@
-"""FestRide API entry point."""
-
 from contextlib import asynccontextmanager
-
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-
 from .config import settings
 from .database import init_db
 from .routers import ai, auth, events, notifications, rides
@@ -20,9 +16,8 @@ app = FastAPI(title="FestRide API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    # FRONTEND_ORIGIN may list several origins, comma-separated (e.g. localhost plus the LAN address for phone testing)
     allow_origins=[o.strip() for o in settings.frontend_origin.split(",") if o.strip()],
-    allow_credentials=False,  # auth is a bearer token in the Authorization header, not cookies
+    allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],
 )

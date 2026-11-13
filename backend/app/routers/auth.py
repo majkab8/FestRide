@@ -1,9 +1,6 @@
-"""Authentication and profile endpoints."""
-
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, select
-
 from ..deps import get_current_user
 from ..database import get_session
 from ..models import User
@@ -36,7 +33,6 @@ def register(data: UserCreate, session: Session = Depends(get_session)) -> Token
     try:
         session.commit()
     except IntegrityError:
-        # Lost the race against a concurrent registration with the same email.
         session.rollback()
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,

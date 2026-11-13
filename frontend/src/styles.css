@@ -435,3 +435,11 @@ footer.site p { font-size: 13px; color: #cfc5b6; position: relative; }
 .note-head { display: flex; justify-content: space-between; align-items: center; gap: 10px; }
 .ai-write { min-height: 36px; padding: 0 14px; font-size: 14px; }
 @media (max-width: 600px) { .ai-fill .ai-row { flex-direction: column; align-items: stretch; } }
+
+/* toast: short confirmation pill, bottom centre, hides itself (components/Toast.tsx) */
+.toast-wrap { position: fixed; left: 0; right: 0; bottom: 72px; display: flex; justify-content: center; pointer-events: none; z-index: 2000; padding: 0 16px; }
+.toast { display: inline-flex; align-items: center; gap: 10px; background: var(--inv-bg); color: var(--inv-fg); border-radius: 999px; padding: 8px 20px 8px 8px; font: 600 15px var(--font-body); box-shadow: var(--shadow); max-width: 100%; animation: toast-in 0.28s cubic-bezier(0.2, 0.9, 0.3, 1.2), toast-out 0.3s ease-in 3.2s forwards; }
+.toast-dot { width: 30px; height: 30px; flex: none; border-radius: 50%; background: var(--lime); color: var(--on-bright); display: grid; place-items: center; }
+.toast-dot svg { width: 16px; height: 16px; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(14px) scale(0.96); } }
+@keyframes toast-out { to { opacity: 0; transform: translateY(8px); } }

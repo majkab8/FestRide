@@ -6,15 +6,14 @@
 
 <p align="center">
   <br>
-  Wybierz koncert, znajdź auto, które tam jedzie, i sprawdź, czy dogadasz się<br>
-  z kierowcą, <b>zanim poprosisz o miejsce</b>.
+  Wybierz koncert i znajdź <b>ekipę</b>, z którą dobrze się jedzie.
   <br><br>
 </p>
 
 
 > **✨ Kreatywny twist: vibe check przed jazdą**
 >
-> Inne aplikacje do wspólnych przejazdów pokazują trasę, cenę i godzinę. FestRide mówi też, **czy dogadacie się w aucie**. Każdy kierowca i pasażer dostaje **wynik dopasowania** liczony z gustu muzycznego, stylu jazdy (cicho, pogadać albo impreza) i palenia, do tego jedno zdanie od AI o tym, dlaczego złapiecie kontakt. Kilka godzin drogi na festiwal to dużo lepsza zabawa z kimś, kto słucha tej samej muzyki.
+> Inne aplikacje do wspólnych przejazdów pokazują trasę, cenę i godzinę. FestRide mówi też, **czy dogadacie się w aucie**. Każdy kierowca i pasażer dostaje **wynik dopasowania**, który bierze pod uwagę gust muzyczny, styl jazdy (w ciszy, z rozmową albo z imprezą) i to, czy ktoś pali. Do tego AI w jednym zdaniu podpowiada, dlaczego złapiecie kontakt. Kilka godzin drogi na festiwal to dużo lepsza zabawa z kimś, kto słucha tej samej muzyki.
 
 ### 📸 Zrzuty ekranu
 <img src="docs/divider.svg" width="200" alt="">
@@ -39,13 +38,13 @@
 <img src="docs/divider.svg" width="200" alt="">
 
 #### 🎧 Poznaj kierowcę, zanim wsiądziesz
-**Wynik dopasowania** z gustu muzycznego, stylu jazdy i palenia, żeby wiedzieć, z kim jedziesz.
+Każdy kierowca i pasażer dostaje **wynik dopasowania**, który bierze pod uwagę gust muzyczny, styl jazdy (w ciszy, z rozmową albo z imprezą) i to, czy ktoś pali.
 
 #### 💬 Po prostu powiedz, dokąd jedziesz
 Wpisz *„z Łodzi na techno do Krakowa, max 50 zł”*, a zamieni się to w filtry. Kierowcy też mogą dodać przejazd **jednym zdaniem**.
 
 #### ✨ AI, które pomaga, a nie przejmuje stery
-Gemini pisze notkę kierowcy i **jedno zdanie o tym, dlaczego się dogadacie**. Nie masz klucza? Aplikacja i tak działa.
+Gemini pisze notkę kierowcy i **jedno zdanie o tym, dlaczego się dogadacie**.
 
 #### 🎟️ Jedno miejsce, jedno „tak”
 **Pierwsze „tak” zajmuje miejsce** i zamyka twoje pozostałe prośby na to samo wydarzenie.
@@ -57,7 +56,7 @@ Strona **dopasowuje się do każdego ekranu**, od telefonu po laptopa, a mapa tr
 <summary><b>📋 <ins>Pełna lista funkcji</ins></b></summary>
 
 **Konto**
-- Rejestracja z profilem: gust muzyczny, styl jazdy, palenie
+- Rejestracja z profilem: gust muzyczny, styl jazdy i to, czy palisz
 - Logowanie i wylogowanie
 - Edycja profilu
 
@@ -177,11 +176,39 @@ Subagenci naprawdę się opłacili, zwłaszcza **code-reviewer**. Po każdym kro
 
 #### <ins>Podsumowanie</ins>
 
-AI używałam prawie na każdym etapie projektu, ale kod i tak sprawdzałam sama, a stronę i jej funkcje testowałam ręcznie. Wybrałam technologie, które znam, żeby rozumieć, co dzieje się w kodzie.
+AI używałam prawie na każdym etapie projektu, ale kod i tak sprawdzałam sama, a stronę i jej funkcje testowałam ręcznie. Wybrałam znany mi stack, żeby móc świadomie oceniać każdą zmianę w kodzie.
 
 Najbardziej pomogło mi planowanie z grill-me, zanim powstała pierwsza linijka kodu, code review po każdym kroku oraz Mobbin z taste-skill przy projekcie, który nie wygląda na zrobiony przez AI.
 
 Dzięki AI praca poszła dużo szybciej, zbudowanie takiej strony ręcznie zajęłoby mi o wiele więcej czasu.
+
+
+### 💡 Pomysły na rozwój
+<img src="docs/divider.svg" width="200" alt="">
+
+#### Przejazdy
+- Przejazd powrotny dodawany od razu przy tworzeniu przejazdu
+- Edycja przejazdu (zmiana godziny czy liczby miejsc)
+- Lista oczekujących, gdy przejazd jest pełny
+- Automatyczne wyliczanie kosztów paliwa na osobę
+- Płatności przez aplikację
+
+#### Ludzie i zaufanie
+- Czat między kierowcą a pasażerem
+- Wzajemne oceny kierowcy i pasażerów po przejeździe
+- Zdjęcie profilowe i weryfikacja kierowcy
+- Media społecznościowe w profilu, żeby lepiej się poznać
+- Zgłaszanie i blokowanie użytkowników
+
+#### Festiwalowy klimat
+- Playlista na Spotify dopasowana do gustu muzycznego pasażerów i artystów z festiwalu, na który się jedzie
+- Integracja z organizatorami festiwali
+
+#### Konto i powiadomienia
+- Reset hasła, weryfikacja i zmiana maila
+- Powiadomienia push i mailowe
+- Aplikacja mobilna do zainstalowania na telefonie
+
 
 ### 🙏 Podziękowania
 <img src="docs/divider.svg" width="200" alt="">

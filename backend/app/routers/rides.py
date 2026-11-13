@@ -1,18 +1,10 @@
-"""Rides and join requests (decision Q6).
-
-A driver offers a ride to an event; passengers send a join request, which the
-driver accepts or declines. Seats left = seats_total - accepted requests.
-"""
-
 from collections.abc import Iterable
 from datetime import date
 from typing import Literal, Optional
-
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy import func, or_
 from sqlalchemy.exc import IntegrityError
 from sqlmodel import Session, col, select
-
 from ..cities import contains_pattern, fold, genre_clause, normalize_city
 from ..clock import now_pl
 from ..database import get_session
@@ -36,9 +28,6 @@ router = APIRouter(prefix="/rides", tags=["rides"])
 requests_router = APIRouter(prefix="/requests", tags=["requests"])
 
 
-# --- helpers ---------------------------------------------------------------
-
-
 def _accepted_counts(session: Session, ride_ids: Iterable[int]) -> dict[int, int]:
     ids = list(ride_ids)
     if not ids:
@@ -60,8 +49,6 @@ def _match(a: User, b: User) -> MatchRead:
 
 
 def _to_reads(session: Session, rides: list[Ride], viewer: Optional[User] = None) -> list[RideRead]:
-    """Build RideRead objects with batched lookups (no query per ride).
-    With a viewer, each ride carries the viewer-driver match (not on own rides)."""
     if not rides:
         return []
     events = {
@@ -95,7 +82,6 @@ def _get_ride_or_404(session: Session, ride_id: int) -> Ride:
 
 
 def _same_event_requests(session: Session, passenger_id: int, event_id: int, status_: RequestStatus):
-    """A passenger's requests with the given status on any ride to this event."""
     stmt = (
         select(RideRequest)
         .join(Ride, Ride.id == RideRequest.ride_id)
@@ -109,7 +95,6 @@ def _same_event_requests(session: Session, passenger_id: int, event_id: int, sta
 
 
 def _request_read(req: RideRequest, passenger: User, driver: Optional[User] = None) -> RequestRead:
-    """With the driver given, include driver-passenger match (for the driver's view)."""
     return RequestRead(
         id=req.id,
         ride_id=req.ride_id,
@@ -119,9 +104,6 @@ def _request_read(req: RideRequest, passenger: User, driver: Optional[User] = No
         created_at=req.created_at,
         match=_match(driver, passenger) if driver is not None else None,
     )
-
-
-# --- rides -----------------------------------------------------------------
 
 
 @router.post("", response_model=RideRead, status_code=status.HTTP_201_CREATED)
@@ -139,11 +121,10 @@ def create_ride(
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Departure must be on or before the event date"
         )
-    # One car per driver per event: a second ride a couple of hours later only splits the passengers.
     already = session.exec(
         select(Ride.id).where(
             Ride.driver_id == current_user.id, Ride.event_id == event.id,
-            Ride.departure_time > now_pl(), Ride.cancelled == False,  # noqa: E712 (SQL expression)
+            Ride.departure_time > now_pl(), Ride.cancelled == False,
         )
     ).first()
     if already is not None:
@@ -182,8 +163,7 @@ def list_rides(
     viewer: Optional[User] = Depends(get_optional_user),
     session: Session = Depends(get_session),
 ) -> list[RideRead]:
-    """Upcoming rides. Public; logged-in users also get a match % per ride
-    and, by default, a ranking by match (decision Q6)."""
+
     accepted = (
         select(RideRequest.ride_id, func.count().label("n"))
         .where(RideRequest.status == RequestStatus.accepted)
@@ -223,9 +203,8 @@ def list_rides(
     if max_price is not None:
         stmt = stmt.where(Ride.price <= max_price)
     if no_smoking:
-        stmt = stmt.where(Ride.smoking_allowed == False)  # noqa: E712 (SQL expression)
+        stmt = stmt.where(Ride.smoking_allowed == False)
     if viewer is not None:
-        # A search is for rides to join; your own are under GET /rides/mine.
         stmt = stmt.where(Ride.driver_id != viewer.id)
 
     stmt = stmt.order_by(Ride.departure_time, Ride.id)
@@ -233,24 +212,20 @@ def list_rides(
     if not rank_by_match:
         return _to_reads(session, list(session.exec(stmt.offset(offset).limit(limit)).all()), viewer)
 
-    # Match is computed in Python, so rank all filtered rides, then paginate.
-    # Fine at MVP scale (rides to upcoming events number in the hundreds).
     reads = _to_reads(session, list(session.exec(stmt).all()), viewer)
-    # Stable sort: ties keep the soonest-departure order.
     reads.sort(key=lambda r: r.match.percent, reverse=True)
     return reads[offset : offset + limit]
 
 
-# Declared before /{ride_id} so "mine" isn't parsed as an id.
 @router.get("/mine", response_model=list[RideRead])
 def my_rides(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[RideRead]:
-    """Rides I drive (past ones included), soonest first."""
+
     stmt = (
         select(Ride)
-        .where(Ride.driver_id == current_user.id, Ride.cancelled == False)  # noqa: E712 (SQL expression)
+        .where(Ride.driver_id == current_user.id, Ride.cancelled == False)
         .order_by(Ride.departure_time)
     )
     return _to_reads(session, list(session.exec(stmt).all()))
@@ -265,8 +240,6 @@ def get_ride(
     return _to_reads(session, [_get_ride_or_404(session, ride_id)], viewer)[0]
 
 
-# --- join requests -----------------------------------------------------------
-
 
 @router.delete("/{ride_id}", status_code=status.HTTP_204_NO_CONTENT)
 def cancel_ride(
@@ -274,9 +247,6 @@ def cancel_ride(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> None:
-    """Driver calls off a ride before departure. Nobody asked yet: the ride is deleted.
-    Otherwise it is kept as called off, hidden from search, and every open or accepted
-    request is closed, so those passengers can ask other cars to the event."""
     ride = _get_ride_or_404(session, ride_id)
     if ride.driver_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the driver can call off a ride")
@@ -314,8 +284,7 @@ def request_to_join(
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This ride has already left")
     if _accepted_counts(session, [ride.id]).get(ride.id, 0) >= ride.seats_total:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="This ride is full")
-    # Passengers may ask several drivers at once, but once one accepts they're
-    # set for this event (see decide_request).
+
     if _same_event_requests(session, current_user.id, ride.event_id, RequestStatus.accepted):
         raise HTTPException(
             status_code=status.HTTP_409_CONFLICT,
@@ -327,7 +296,6 @@ def request_to_join(
         select(RideRequest).where(RideRequest.ride_id == ride.id, RideRequest.passenger_id == current_user.id)
     ).first()
     if earlier is not None and earlier.status == RequestStatus.cancelled:
-        # They withdrew and changed their mind: same row, asking again.
         req = earlier
         req.status, req.message, req.created_at = RequestStatus.pending, message, _utcnow()
     else:
@@ -352,7 +320,6 @@ def ride_requests(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[RequestRead]:
-    """Join requests for my ride (driver only), oldest first."""
     ride = _get_ride_or_404(session, ride_id)
     if ride.driver_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the driver can see requests")
@@ -373,7 +340,6 @@ def my_requests(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> list[MyRequestRead]:
-    """Rides I asked to join, with their status, newest first."""
     reqs = list(
         session.exec(
             select(RideRequest)
@@ -396,8 +362,6 @@ def decide_request(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    """Driver accepts or declines a pending request. Accepting also declines
-    the passenger's other pending requests for the same event."""
     req = session.get(RideRequest, request_id)
     if req is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
@@ -408,8 +372,6 @@ def decide_request(
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Request already {req.status.value}")
     if data.status == RequestStatus.accepted and ride.departure_time <= now_pl():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This ride has already left")
-    # Check-then-write: two simultaneous accepts could overbook by one. SQLite
-    # serialises writes, so the window is tiny; acceptable for the MVP.
     if (
         data.status == RequestStatus.accepted
         and _accepted_counts(session, [ride.id]).get(ride.id, 0) >= ride.seats_total
@@ -421,8 +383,6 @@ def decide_request(
     notify(session, req.passenger_id, current_user.id, ride.id,
            NotificationKind.accepted if data.status == RequestStatus.accepted else NotificationKind.declined)
     if data.status == RequestStatus.accepted:
-        # The passenger now has a seat to this event: decline their other
-        # pending requests for it, so no other driver holds a seat for them.
         for other in _same_event_requests(session, req.passenger_id, ride.event_id, RequestStatus.pending):
             if other.id != req.id:
                 other.status = RequestStatus.declined
@@ -445,8 +405,6 @@ def cancel_request(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    """Passenger withdraws a request, or gives up an accepted seat, before departure.
-    The seat frees up; requests to other cars that closed on the yes stay closed."""
     req, ride = _get_request_or_404(session, request_id)
     if req.passenger_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your request")
@@ -468,7 +426,6 @@ def remove_passenger(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    """Driver takes an accepted passenger off the ride before departure. Final for this ride."""
     req, ride = _get_request_or_404(session, request_id)
     if ride.driver_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the driver can remove passengers")

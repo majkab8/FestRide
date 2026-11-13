@@ -7,7 +7,6 @@ import { useI18n, type Key } from "../i18n";
 import { Icon } from "./ui";
 import "../app3.css";
 
-/* ---------- theme: system by default, toggle overrides ---------- */
 function useTheme() {
   const mq = typeof matchMedia === "function" ? matchMedia("(prefers-color-scheme: dark)") : null;
   const read = () => {
@@ -19,7 +18,6 @@ function useTheme() {
     const on = () => setDark(read());
     mq?.addEventListener("change", on);
     return () => mq?.removeEventListener("change", on);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
   const toggle = () => {
     const next = dark ? "light" : "dark";
@@ -30,11 +28,8 @@ function useTheme() {
   return { dark, toggle };
 }
 
-/** Fired after any action on a ride or request, so the bell updates right away. */
 export const REQUESTS_CHANGED = "festride:requests-changed";
 
-/** The bell: what others did about my rides and requests. Loaded on login, on every
-    page change, after my own actions, and once a minute while the tab is open. */
 function useNotifications() {
   const { user } = useAuth();
   const loc = useLocation();
@@ -55,7 +50,7 @@ function useNotifications() {
   }, [user, tick, loc.pathname]);
   const markRead = () => {
     if (!unread) return;
-    setUnread(0); // items keep their own "read" flag, so this list still shows what was new
+    setUnread(0);
     api.readNotifications().catch(() => {});
   };
   return { items, unread, markRead };
@@ -97,7 +92,6 @@ function Bell() {
   );
 }
 
-/** "5 min ago" for a UTC timestamp from the API. */
 function ago(iso: string, t: ReturnType<typeof useI18n>["t"]): string {
   const at = Date.parse(/[zZ]|[+-]\d\d:?\d\d$/.test(iso) ? iso : iso + "Z");
   const min = Math.max(0, Math.round((Date.now() - at) / 60_000));
@@ -144,6 +138,7 @@ function AccountMenu() {
               </div>
             </div>
           </div>
+          <Link to="/profile" onClick={() => setOpen(false)}>{t("nav.profile")}</Link>
           <button type="button" onClick={() => { logout(); setOpen(false); nav("/"); }}>{t("nav.logout")}</button>
         </div>
       )}
@@ -151,7 +146,6 @@ function AccountMenu() {
   );
 }
 
-/** The v3 app header: logo, tab pill, (language/theme), bell, avatar blob. */
 export function Header() {
   const { user } = useAuth();
   const { t, lang, setLang } = useI18n();
@@ -159,7 +153,6 @@ export function Header() {
   const [menuOpen, setMenuOpen] = useState(false);
   const loc = useLocation();
   useEffect(() => setMenuOpen(false), [loc.pathname]);
-  // [path, label, short label for phones]
   const tabs = user
     ? [["/home", t("nav.home"), t("nav.home")], ["/search", t("nav.find"), t("nav.findShort")], ["/my-rides", t("nav.myRides"), t("nav.myRidesShort")], ["/drive", t("nav.drive"), t("nav.drive")]]
     : [["/events", t("nav.events"), t("nav.events")], ["/search", t("nav.find"), t("nav.findShort")], ["/drive", t("nav.drive"), t("nav.drive")]];
@@ -175,7 +168,6 @@ export function Header() {
           ))}
         </nav>
         {!user && (
-          /* phones, logged out: language + theme sit at the bottom of the hamburger dropdown */
           <div className="guest-prefs">
             <div className="mini" role="group" aria-label={t("lang.label")}>
               <button type="button" aria-pressed={lang === "pl"} onClick={() => setLang("pl")}>PL</button>
@@ -247,12 +239,10 @@ export function Page({ children }: { children: ReactNode }) {
   return <main className="page wrap gut">{children}</main>;
 }
 
-/** Full-width v3 app screen (1440 px max, 40 px sides). */
 export function Screen({ children, className = "" }: { children: ReactNode; className?: string }) {
   return <main className={`app3 ${className}`}>{children}</main>;
 }
 
-/** The author credit: a slim strip on the very bottom of every page. */
 export function Credit() {
   return (
     <div className="credit">

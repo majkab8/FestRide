@@ -9,7 +9,6 @@ import { useAsync } from "../hooks";
 import { parseLocal, useI18n } from "../i18n";
 
 
-/** Home, logged in (v3 AppHome3 board). */
 export default function Home() {
   const { user } = useAuth();
   const { t, day, time, relDay, plural } = useI18n();
@@ -23,7 +22,6 @@ export default function Home() {
     return out.sort((a, b) => (a.event_date ?? "").localeCompare(b.event_date ?? "")).slice(0, 6);
   }, [genres.join(",")]);
   const rides = useAsync(() => api.rides({ limit: 200, sort: "departure" }), []);
-  // phones/tablets: the feed is a swipeable carousel; which card is in view drives the dots
   const slidesRef = useRef<HTMLDivElement>(null);
   const [slide, setSlide] = useState(0);
   const onSlides = () => {

@@ -1,14 +1,5 @@
-"""City-name normalisation.
-
-Ticketmaster returns a mix of English/ASCII names ("Warsaw", "Krakow") and
-Polish ones ("Łódź "). We store canonical Polish names so the UI, filters and
-AI search all see one spelling per city.
-"""
-
 import unicodedata
 
-# Keys are fold()ed names. Identity-looking entries ("warszawa") are intentional:
-# they restore the canonical casing/diacritics for input like "WARSZAWA".
 _ALIASES = {
     "warsaw": "Warszawa",
     "warszawa": "Warszawa",
@@ -25,9 +16,6 @@ _ALIASES = {
 }
 
 def fold(text: str) -> str:
-    """Lowercase and strip diacritics and apostrophes ("Łódź" -> "lodz",
-    "Open'er" -> "opener"), for case/diacritic-insensitive lookups and comparisons."""
-    # ł/Ł have no Unicode decomposition, so NFKD alone would keep them.
     text = text.strip().replace("ł", "l").replace("Ł", "L")
     for apostrophe in "'’`":
         text = text.replace(apostrophe, "")
@@ -36,23 +24,18 @@ def fold(text: str) -> str:
 
 
 def normalize_city(name: str) -> str:
-    """Return the canonical (Polish) spelling of a city name."""
     cleaned = " ".join(name.split())
     return _ALIASES.get(fold(cleaned), cleaned)
 
 
 def alias_pairs() -> list[tuple[str, str]]:
-    """(fold()ed alias, canonical name), e.g. ("warsaw", "Warszawa")."""
     return list(_ALIASES.items())
 
 
 def genre_clause(session, column, genre: str):
-    """WHERE clause for a genre filter on Event.genre: substring match, or any
-    stored genre of the same family ("techno" -> "Dance/Electronic")."""
     from sqlalchemy import func, or_
     from sqlmodel import select
-
-    from .matching import same_family  # local import: matching imports this module
+    from .matching import same_family # local import: matching imports this module)
 
     stored = [g for g in session.exec(select(column).distinct()).all() if g]
     return or_(
@@ -62,7 +45,5 @@ def genre_clause(session, column, genre: str):
 
 
 def contains_pattern(text: str) -> str:
-    """LIKE pattern for a case/diacritic-insensitive substring match against
-    fold(column), used with escape="\\". User-typed % and _ match literally."""
     escaped = fold(text).replace("\\", "\\\\").replace("%", "\\%").replace("_", "\\_")
     return f"%{escaped}%"

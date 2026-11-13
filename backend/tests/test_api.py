@@ -1,6 +1,3 @@
-"""API tests for the main flows: auth, events, rides, requests, match ranking."""
-
-
 def names(rides):
     return [r["driver"]["display_name"] for r in rides]
 

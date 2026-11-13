@@ -21,40 +21,28 @@ const pl = {
   "nav.login": "Zaloguj się", "nav.signup": "Załóż konto", "nav.logout": "Wyloguj się", "nav.signedIn": "Zalogowano jako",
   "lang.label": "Język", "theme.label": "Motyw", "theme.light": "Jasny motyw", "theme.dark": "Ciemny motyw", "theme.toLight": "Włącz jasny motyw", "theme.toDark": "Włącz ciemny motyw", "menu.open": "Menu konta",
 
-  "landing.eyebrow": "Wspólne dojazdy na koncerty i festiwale w Polsce",
-  "landing.title": "Każda droga kończy się pod sceną.",
-  "landing.ask": "Opisz swoją trasę", "landing.cta": "Znajdź auto",
+  "landing.ask": "Opisz swoją trasę",
   "landing.example": "z Łodzi na techno do Krakowa w grudniu, max 50 zł", "landing.exampleShort": "z Łodzi na techno do Krakowa w grudniu|z Łodzi na techno do Krakowa|z Łodzi na techno",
-  "landing.sticker1": "dopasowanie po muzyce ♫", "landing.sticker2": "wydarzeń w bazie",
-  "landing.lineupTitle": "Auta jadą na te koncerty", "landing.lineupEmpty": "Najbliższe koncerty",
+
   "landing.allEvents": "Wszystkie wydarzenia na mapie",
-  "landing.howTitle": "Z kanapy pod barierki w trzech ruchach.",
-  "landing.how1": "Napisz jak SMS-a", "landing.how1p": "„Z Gdańska na koncert w piątek, jedziemy we dwójkę.” Zamienimy to na miasto, datę, gatunek i budżet.",
-  "landing.how2": "Wybierz po dopasowaniu", "landing.how2p": "Każde auto ma procent: wspólna muzyka, styl jazdy i palenie.",
-  "landing.how3": "Podzielcie się paliwem", "landing.how3p": "Poproś kilka aut naraz. Pierwszy kierowca, który się zgodzi, zabiera cię, a reszta próśb zamyka się sama.",
-  "landing.matchTitle": "Cztery godziny to długo ze złym DJ-em.",
-  "landing.matchText": "Liczymy dopasowanie z gatunków, stylu jazdy i palenia, a AI tłumaczy je jednym zdaniem.",
+
   "landing.music": "muzyka", "landing.style": "styl jazdy", "landing.smoking": "palenie",
-  "landing.driveTitle": "Masz wolne miejsca? Podziel koszt paliwa.",
-  "landing.driveText": "Dodaj trasę i godzinę. Osoby o podobnym guście poproszą o miejsce, a ty wybierasz, kto jedzie.",
-  "landing.driveCta": "Zaproponuj przejazd",
+
   "footer.title": "Do zobaczenia pod bramą.", "footer.note": "FestRide · dane wydarzeń z Ticketmaster · mapa © OpenStreetMap",
 
   "events.title": "Nadchodzące koncerty", "events.all": "Wszystkie daty", "events.search": "Szukaj wydarzenia lub miejsca",
   "events.showRides": "Pokaż przejazdy", "events.empty": "Brak wydarzeń dla tych filtrów", "events.more": "Pokaż więcej",
 
-  "search.title": "Dokąd jedziesz?", "search.sub": "Opisz trasę jednym zdaniem. Zamienimy je na filtry, które możesz poprawić.",
-  "search.cta": "Szukaj", "search.read": "Jak to zrozumieliśmy", "search.ai": "odczytane przez AI", "search.aiHint": "AI zamienia twoje zdanie na filtry wyszukiwania", "search.rules": "uproszczona interpretacja",
+  "search.cta": "Szukaj", "search.ai": "odczytane przez AI", "search.aiHint": "AI zamienia twoje zdanie na filtry wyszukiwania", "search.rules": "uproszczona interpretacja",
   "search.rulesNote": "AI jest teraz niedostępne, więc zdanie odczytaliśmy prościej. Sprawdź filtry poniżej.",
   "search.notUnderstood": "Nie udało się odczytać zdania. Ustaw filtry ręcznie.",
   "search.edit": "Edytuj filtry", "search.hideEdit": "Ukryj filtry", "search.apply": "Zastosuj", "search.clear": "Wyczyść",
   "search.remove": "Usuń filtr", "search.sortedMatch": "Od najlepszego dopasowania", "search.sortedTime": "Od najbliższego wyjazdu",
   "search.loginForMatch": "Zaloguj się, żeby zobaczyć dopasowanie do kierowców.",
   "search.empty": "Brak przejazdów dla tych filtrów", "search.emptyHint": "Usuń któryś filtr albo zaproponuj własny przejazd.",
-  "search.examples1": "z Warszawy na house w ten weekend", "search.examples2": "do Gdańska na rap, 2 miejsca, bez palenia",
+
   "f.from": "Skąd", "f.to": "Dokąd", "f.q": "Wydarzenie", "f.genre": "Gatunek", "f.dateFrom": "Od dnia", "f.dateTo": "Do dnia",
   "f.price": "Max cena", "f.seats": "Miejsca", "f.smoke": "Bez palenia", "f.free": "Za darmo", "f.maxPrice": "do {n} zł",
-  "f.event": "Wydarzenie",
 
   "match.great": "świetne dopasowanie", "match.good": "dobre dopasowanie", "match.some": "coś was łączy", "match.diff": "różne klimaty",
   "style.quiet": "cicho", "style.chatty": "rozmownie", "style.party": "impreza",
@@ -64,8 +52,8 @@ const pl = {
   "ride.smokingOk": "można palić", "ride.noSmoking": "bez palenia", "ride.with": "{name} za kierownicą",
   "ride.why": "Skąd {n}%", "ride.route": "Trasa", "ride.perSeat": "za miejsce, dzielimy paliwo",
   "ride.seatsAria": "zajęte miejsca: {taken} z {total}", "ride.taken": "zajęte", "ride.you": "ty?", "ride.yourSeat": "zajęte (ty)", "ride.free": "wolne",
-  "ride.message": "Wiadomość dla kierowcy", "ride.messagePh": "Np. mam mały plecak, chętnie podzielę się playlistą.",
-  "ride.ask": "Poproś o miejsce", "ride.loginToAsk": "Zaloguj się, żeby poprosić o miejsce", "ride.own": "To twój przejazd",
+  "ride.messagePh": "Np. mam mały plecak, chętnie podzielę się playlistą.",
+  "ride.loginToAsk": "Zaloguj się, żeby poprosić o miejsce", "ride.own": "To twój przejazd",
   "ride.manage": "Zarządzaj przejazdem", "ride.status.pending": "prośba wysłana", "ride.status.accepted": "jedziesz!",
   "ride.status.declined": "odrzucono", "ride.status.cancelled": "wycofane", "ride.status.removed": "usunięto cię z auta", "ride.status.called_off": "przejazd odwołany",
   "ride.calledOffNote": "Kierowca odwołał ten przejazd. Poszukaj innego auta na ten koncert.", "err.calledOff": "Kierowca odwołał ten przejazd.",
@@ -74,11 +62,11 @@ const pl = {
   "ride.withdraw": "Wycofaj prośbę", "ride.giveUp": "Rezygnuję z miejsca", "ride.withdrawSure": "Wycofać prośbę?", "ride.giveUpSure": "Na pewno zwolnić miejsce?",
   "ride.sureYes": "Tak", "ride.sureNo": "Nie", "ride.removedNote": "Kierowca usunął cię z tego przejazdu. Poszukaj innego auta na ten koncert.",
   "ride.multi": "Możesz poprosić kilka aut na ten sam event. Pierwsze „tak” wygrywa, reszta próśb zamknie się sama.",
-  "ride.full": "Brak wolnych miejsc", "ride.left": "Ten przejazd już wyjechał", "ride.back": "Wróć do wyników", "ride.note": "Od kierowcy",
+  "ride.full": "Brak wolnych miejsc", "ride.left": "Ten przejazd już wyjechał", "ride.back": "Wróć do wyników",
   "ride.notFound": "Nie ma takiego przejazdu.", "ride.sent": "Prośba wysłana. Damy znać, gdy kierowca odpowie.",
 
   "home.morning": "Dzień dobry, {name}.", "home.afternoon": "Cześć, {name}.", "home.evening": "Dobry wieczór, {name}.",
-  "home.nextIn": "{event} już {when}.", "home.noRide": "Nie masz jeszcze zaplanowanego przejazdu.", "home.noRideCta": "Znajdź auto na koncert albo sam zaproponuj przejazd.",
+  "home.noRide": "Nie masz jeszcze zaplanowanego przejazdu.", "home.noRideCta": "Znajdź auto na koncert albo sam zaproponuj przejazd.",
   "home.next": "Twój najbliższy przejazd", "home.details": "Szczegóły przejazdu", "home.waiting": "Czekasz na „tak”: {event}",
   "home.askedN": "poproszono aut: {n}", "home.firstYes": "Pierwszy kierowca, który się zgodzi, zabiera cię. Pozostałe prośby zamkną się same.",
   "home.feed": "Propozycje dla ciebie", "home.feedRides": "Auta, które do ciebie pasują", "home.trySentenceGenre": "na {genre}, max 60 zł",
@@ -116,8 +104,12 @@ const pl = {
   "err.own": "To twój własny przejazd.", "err.twoRides": "Masz już przejazd na to wydarzenie.",
   "offer.haveOne": "Masz już przejazd na to wydarzenie. Jedno auto na wydarzenie wystarczy.", "offer.manageIt": "Zobacz swój przejazd",
   "err.decided": "Ta prośba ma już odpowiedź.",
-  "nav.main": "Główna nawigacja", "nav.footer": "Stopka", "home.offers": "Twoje przejazdy jako kierowca",
-  "drive.seats": "Miejsca w aucie", "su.stepsAria": "Postęp rejestracji",
+  "nav.main": "Główna nawigacja", "nav.footer": "Stopka",
+  "su.stepsAria": "Postęp rejestracji",
+  "nav.profile": "Edytuj profil", "pf.eyebrow": "Twój profil", "pf.title": "Edytuj profil",
+  "pf.sub": "Od tych odpowiedzi zależy, jak dopasujemy cię do kierowców i pasażerów.",
+  "pf.name": "Imię", "pf.emailNote": "E-mail: {email} (nie można go zmienić)",
+  "pf.save": "Zapisz zmiany", "pf.saved": "Profil zapisany", "pf.cancel": "Anuluj",
 };
 
 type Dict = typeof pl;
@@ -142,40 +134,28 @@ const en: Dict = {
   "nav.login": "Log in", "nav.signup": "Sign up", "nav.logout": "Log out", "nav.signedIn": "Signed in as",
   "lang.label": "Language", "theme.label": "Theme", "theme.light": "Light theme", "theme.dark": "Dark theme", "theme.toLight": "Switch to light theme", "theme.toDark": "Switch to dark theme", "menu.open": "Account menu",
 
-  "landing.eyebrow": "Carpools to Polish gigs & festivals",
-  "landing.title": "Every road ends at a stage.",
-  "landing.ask": "Describe your trip", "landing.cta": "Find a car",
+  "landing.ask": "Describe your trip",
   "landing.example": "from Łódź to techno in Kraków in December, max 50 zł", "landing.exampleShort": "from Łódź to techno in Kraków in December|from Łódź to techno in Kraków|techno in Kraków",
-  "landing.sticker1": "match by music ♫", "landing.sticker2": "gigs loaded",
-  "landing.lineupTitle": "Cars are leaving for these shows", "landing.lineupEmpty": "Coming up soon",
+
   "landing.allEvents": "All events on the map",
-  "landing.howTitle": "Sofa to barrier, in three moves.",
-  "landing.how1": "Say it like a text", "landing.how1p": "“Gdańsk to a gig on Friday, two of us.” We turn the sentence into city, date, genre and budget.",
-  "landing.how2": "Pick by match", "landing.how2p": "Every car shows a percentage: the music you share, the ride style, smoking or not.",
-  "landing.how3": "Split the fuel", "landing.how3p": "Ask a few cars at once. The first driver who says yes gets you, the other requests close.",
-  "landing.matchTitle": "Four hours is long with the wrong DJ.",
-  "landing.matchText": "We score the match from genres, ride style and smoking, and AI explains it in one sentence.",
+
   "landing.music": "music", "landing.style": "ride style", "landing.smoking": "smoking",
-  "landing.driveTitle": "Empty seats? Split the fuel.",
-  "landing.driveText": "Post your route and time. People who like your music ask for a seat, you pick who comes.",
-  "landing.driveCta": "Offer a ride",
+
   "footer.title": "See you at the gate.", "footer.note": "FestRide · event data from Ticketmaster · map © OpenStreetMap",
 
   "events.title": "Upcoming shows", "events.all": "All dates", "events.search": "Search an event or venue",
   "events.showRides": "Show rides", "events.empty": "No events for these filters", "events.more": "Show more",
 
-  "search.title": "Where are you headed?", "search.sub": "Describe your trip in one sentence. We turn it into filters you can adjust.",
-  "search.cta": "Search", "search.read": "How we read it", "search.ai": "read by AI", "search.aiHint": "AI turns your sentence into search filters", "search.rules": "simplified reading",
+  "search.cta": "Search", "search.ai": "read by AI", "search.aiHint": "AI turns your sentence into search filters", "search.rules": "simplified reading",
   "search.rulesNote": "AI is unavailable right now, so we used a simpler reading of your sentence. Check the filters below.",
   "search.notUnderstood": "We couldn't read that sentence. Set the filters by hand.",
   "search.edit": "Edit filters", "search.hideEdit": "Hide filters", "search.apply": "Apply", "search.clear": "Clear",
   "search.remove": "Remove filter", "search.sortedMatch": "Best match first", "search.sortedTime": "Soonest departure first",
   "search.loginForMatch": "Log in to see how well you match each driver.",
   "search.empty": "No rides for these filters", "search.emptyHint": "Remove a filter, or offer a ride yourself.",
-  "search.examples1": "from Warsaw to house this weekend", "search.examples2": "to Gdańsk for rap, 2 seats, no smoking",
+
   "f.from": "From", "f.to": "To", "f.q": "Event", "f.genre": "Genre", "f.dateFrom": "From day", "f.dateTo": "To day",
   "f.price": "Max price", "f.seats": "Seats", "f.smoke": "No smoking", "f.free": "Free", "f.maxPrice": "up to {n} zł",
-  "f.event": "Event",
 
   "match.great": "great match", "match.good": "good match", "match.some": "something in common", "match.diff": "different vibes",
   "style.quiet": "quiet", "style.chatty": "chatty", "style.party": "party",
@@ -185,8 +165,8 @@ const en: Dict = {
   "ride.smokingOk": "smoking allowed", "ride.noSmoking": "no smoking", "ride.with": "Ride with {name}",
   "ride.why": "Why {n}%", "ride.route": "The route", "ride.perSeat": "per seat, fuel split",
   "ride.seatsAria": "{taken} of {total} seats taken", "ride.taken": "taken", "ride.you": "you?", "ride.yourSeat": "taken (you)", "ride.free": "free",
-  "ride.message": "A line for the driver", "ride.messagePh": "E.g. one small backpack, happy to share the playlist.",
-  "ride.ask": "Ask for a seat", "ride.loginToAsk": "Log in to ask for a seat", "ride.own": "This is your ride",
+  "ride.messagePh": "E.g. one small backpack, happy to share the playlist.",
+  "ride.loginToAsk": "Log in to ask for a seat", "ride.own": "This is your ride",
   "ride.manage": "Manage this ride", "ride.status.pending": "request sent", "ride.status.accepted": "you're in!",
   "ride.status.declined": "declined", "ride.status.cancelled": "withdrawn", "ride.status.removed": "removed by the driver", "ride.status.called_off": "ride called off",
   "ride.calledOffNote": "The driver called off this ride. Look for another car to this show.", "err.calledOff": "The driver called off this ride.",
@@ -195,11 +175,11 @@ const en: Dict = {
   "ride.withdraw": "Withdraw request", "ride.giveUp": "Give up my seat", "ride.withdrawSure": "Withdraw the request?", "ride.giveUpSure": "Free up your seat?",
   "ride.sureYes": "Yes", "ride.sureNo": "No", "ride.removedNote": "The driver took you off this ride. Look for another car to this show.",
   "ride.multi": "You can ask a few cars for the same event. The first yes wins and the others close on their own.",
-  "ride.full": "No seats left", "ride.left": "This ride has already left", "ride.back": "Back to results", "ride.note": "From the driver",
+  "ride.full": "No seats left", "ride.left": "This ride has already left", "ride.back": "Back to results",
   "ride.notFound": "This ride doesn't exist.", "ride.sent": "Request sent. We'll let you know when the driver answers.",
 
   "home.morning": "Morning, {name}.", "home.afternoon": "Hi, {name}.", "home.evening": "Evening, {name}.",
-  "home.nextIn": "{event} is {when}.", "home.noRide": "No ride planned yet.", "home.noRideCta": "Find a car to a show, or offer a ride yourself.",
+  "home.noRide": "No ride planned yet.", "home.noRideCta": "Find a car to a show, or offer a ride yourself.",
   "home.next": "Your next ride", "home.details": "Ride details", "home.waiting": "Waiting for a yes: {event}",
   "home.askedN": "asked {n} cars", "home.firstYes": "The first driver who says yes gets you. The other requests close on their own.",
   "home.feed": "Picked for you", "home.feedRides": "Cars that match you", "home.trySentenceGenre": "{genre}, max 60 zł",
@@ -237,13 +217,15 @@ const en: Dict = {
   "err.own": "This is your own ride.", "err.twoRides": "You already offer a ride to this event.",
   "offer.haveOne": "You already offer a ride to this event. One car per event is enough.", "offer.manageIt": "See your ride",
   "err.decided": "This request has already been answered.",
-  "nav.main": "Main navigation", "nav.footer": "Footer", "home.offers": "Your rides as a driver",
-  "drive.seats": "Seats in the car", "su.stepsAria": "Sign-up progress",
+  "nav.main": "Main navigation", "nav.footer": "Footer",
+  "su.stepsAria": "Sign-up progress",
+  "nav.profile": "Edit profile", "pf.eyebrow": "Your profile", "pf.title": "Edit profile",
+  "pf.sub": "These answers decide how we match you with drivers and passengers.",
+  "pf.name": "Name", "pf.emailNote": "Email: {email} (can't be changed)",
+  "pf.save": "Save changes", "pf.saved": "Profile saved", "pf.cancel": "Cancel",
 };
-
 const DICTS: Record<Lang, Dict> = { pl, en };
 
-/* Plural nouns: Polish has one / few / many, English one / other. */
 const NOUNS = {
   ride: { pl: { one: "przejazd", few: "przejazdy", many: "przejazdów", other: "przejazdu" }, en: { one: "ride", other: "rides" } },
   car: { pl: { one: "auto", few: "auta", many: "aut", other: "auta" }, en: { one: "car", other: "cars" } },
@@ -260,7 +242,6 @@ interface I18n {
   t: (key: Key, vars?: Record<string, string | number>) => string;
   plural: (n: number, noun: Noun) => string;
   day: (iso: string) => string;
-  /** full weekday and month, e.g. "środa, 11 listopada" — where there is room for it */
   dayLong: (iso: string) => string;
   dayTime: (iso: string) => string;
   time: (iso: string) => string;
@@ -278,8 +259,6 @@ function initialLang(): Lang {
   return navigator.language?.toLowerCase().startsWith("pl") ? "pl" : "en";
 }
 
-/* Dates from the API are naive Polish local time ("2026-12-12T09:00:00")
-   or plain days ("2026-12-12"); parse them as local wall-clock values. */
 export function parseLocal(iso: string): Date {
   return new Date(iso.length === 10 ? `${iso}T12:00:00` : iso);
 }
