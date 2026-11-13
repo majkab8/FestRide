@@ -15,7 +15,7 @@ type Filters = Partial<Record<FilterKey, string>>;
 
 function toParams(f: SearchFilters): Record<string, string> {
   const out: Record<string, string> = {};
-  for (const [k, v] of Object.entries(f)) if (v !== null && v !== undefined && v !== "" && v !== false) out[k] = String(v);
+  for (const [name, value] of Object.entries(f)) if (value !== null && value !== undefined && value !== "" && value !== false) out[name] = String(value);
   return out;
 }
 
@@ -23,40 +23,40 @@ type Span = [start: number, end: number, cls: string];
 const DATE_WORDS = /\b(stycz\w*|lut\w*|mar[cz]\w*|kwie\w*|maj\w*|czerw\w*|lip\w*|sierp\w*|wrze\w*|pazdz\w*|listop\w*|grud\w*|january|february|march|april|may|june|july|august|september|october|november|december|weekend\w*|jutro|tomorrow|dzis\w*|today|tonight|piat\w*|sobot\w*|niedziel\w*|friday|saturday|sunday|tydzien|week)\b/g;
 
 function highlight(text: string, f: Filters): Span[] {
-  const low = fold(text);
+  const foldedText = fold(text);
   const spans: Span[] = [];
-  const word = (stem: string, cls: string) => {
+  const word = (stem: string, cssClass: string) => {
     if (stem.length < 3) return;
-    const m = new RegExp(`\\b${stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\w*`).exec(low);
-    if (m) spans.push([m.index, m.index + m[0].length, cls]);
+    const found = new RegExp(`\\b${stem.replace(/[.*+?^${}()|[\]\\]/g, "\\$&")}\\w*`).exec(foldedText);
+    if (found) spans.push([found.index, found.index + found[0].length, cssClass]);
   };
-  const stem = (s: string) => { const x = fold(s); return x.length > 5 ? x.slice(0, x.length - 2) : x.slice(0, 4); };
-  if (f.origin_city) word(stem(f.origin_city), "hl-from");
-  if (f.event_city) word(stem(f.event_city), "hl-to");
-  if (f.genre) word(fold(f.genre).slice(0, 4), "hl-genre");
-  if (f.q) { const i = low.indexOf(fold(f.q)); if (i >= 0) spans.push([i, i + f.q.length, "hl-q"]); }
+  const stem = (input: string) => { const folded = fold(input); return folded.length > 5 ? folded.slice(0, folded.length - 2) : folded.slice(0, 4); };
+  if (f.origin_city) word(stem(f.origin_city), "highlight-from");
+  if (f.event_city) word(stem(f.event_city), "highlight-to");
+  if (f.genre) word(fold(f.genre).slice(0, 4), "highlight-genre");
+  if (f.q) { const i = foldedText.indexOf(fold(f.q)); if (i >= 0) spans.push([i, i + f.q.length, "highlight-event"]); }
   if (f.date_from || f.date_to) {
-    for (const m of low.matchAll(DATE_WORDS)) {
-      const before = /(\d{1,2})\s+$/.exec(low.slice(0, m.index));
-      spans.push([before ? m.index! - before[0].length : m.index!, m.index! + m[0].length, "hl-date"]);
+    for (const dateWord of foldedText.matchAll(DATE_WORDS)) {
+      const before = /(\d{1,2})\s+$/.exec(foldedText.slice(0, dateWord.index));
+      spans.push([before ? dateWord.index! - before[0].length : dateWord.index!, dateWord.index! + dateWord[0].length, "highlight-date"]);
     }
   }
-  if (f.max_price) { const m = /(do|max|maks|under|up to)?\s?\d+\s?(zl|pln|zlotych)/.exec(low); if (m) spans.push([m.index + (m[1] ? m[1].length + 1 : 0), m.index + m[0].length, "hl-price"]); }
-  if (f.min_seats) { const m = /\d+\s?(miejsc\w*|osob\w*|seats?|people)/.exec(low); if (m) spans.push([m.index, m.index + m[0].length, "hl-seats"]); }
+  if (f.max_price) { const found = /(do|max|maks|under|up to)?\s?\d+\s?(zl|pln|zlotych)/.exec(foldedText); if (found) spans.push([found.index + (found[1] ? found[1].length + 1 : 0), found.index + found[0].length, "highlight-price"]); }
+  if (f.min_seats) { const found = /\d+\s?(miejsc\w*|osob\w*|seats?|people)/.exec(foldedText); if (found) spans.push([found.index, found.index + found[0].length, "highlight-seats"]); }
   spans.sort((a, b) => a[0] - b[0]);
-  return spans.filter((s, i) => i === 0 || s[0] >= spans[i - 1][1]);
+  return spans.filter((span, i) => i === 0 || span[0] >= spans[i - 1][1]);
 }
 
 function Highlighted({ text, filters }: { text: string; filters: Filters }) {
   const spans = highlight(text, filters);
   const out: (string | React.ReactElement)[] = [];
-  let at = 0;
-  spans.forEach(([s, e, cls], i) => {
-    if (s > at) out.push(text.slice(at, s));
-    out.push(<span key={i} className={`hl ${cls}`}>{text.slice(s, e)}</span>);
-    at = e;
+  let cursor = 0;
+  spans.forEach(([start, end, cssClass], i) => {
+    if (start > cursor) out.push(text.slice(cursor, start));
+    out.push(<span key={i} className={`highlight ${cssClass}`}>{text.slice(start, end)}</span>);
+    cursor = end;
   });
-  if (at < text.length) out.push(text.slice(at));
+  if (cursor < text.length) out.push(text.slice(cursor));
   return <>{out}</>;
 }
 
@@ -78,7 +78,7 @@ export default function Search() {
   const rowsRef = useRef<HTMLDivElement>(null);
   const mapRef = useRef<HTMLDivElement>(null);
 
-  const filters = useMemo(() => Object.fromEntries(FILTER_KEYS.filter((k) => params.get(k)).map((k) => [k, params.get(k)!])) as Filters, [params]);
+  const filters = useMemo(() => Object.fromEntries(FILTER_KEYS.filter((name) => params.get(name)).map((name) => [name, params.get(name)!])) as Filters, [params]);
   const hasFilters = Object.keys(filters).length > 0;
   const awaitingParse = !!text && !hasFilters && (parsing || source === null) && understood;
 
@@ -105,64 +105,64 @@ export default function Search() {
   const rides = useAsync(() => (awaitingParse ? Promise.resolve(null) : api.rides({ ...filters, min_seats: filters.min_seats ?? 1, limit: 100 })), [JSON.stringify(filters), user?.id, awaitingParse]);
   const event = useAsync(() => (filters.event_id ? api.event(Number(filters.event_id)) : Promise.resolve(null)), [filters.event_id]);
 
-  const send = (s: string) => {
-    if (!s.trim()) return;
-    setSource(null); setUnderstood(true); setNonce((n) => n + 1); setEditingText(false);
-    setParams({ text: s.trim() });
+  const send = (sentence: string) => {
+    if (!sentence.trim()) return;
+    setSource(null); setUnderstood(true); setNonce((count) => count + 1); setEditingText(false);
+    setParams({ text: sentence.trim() });
   };
   const submit = (e: FormEvent) => { e.preventDefault(); send(input); };
-  const removeFilter = (k: FilterKey) => { const p = new URLSearchParams(params); p.delete(k); setParams(p); };
+  const removeFilter = (name: FilterKey) => { const next = new URLSearchParams(params); next.delete(name); setParams(next); };
   useEffect(() => { if (editingText) inputRef.current?.focus(); }, [editingText]);
   useEffect(() => { setInput(text); }, [text]);
 
   const list: Ride[] = rides.data ?? [];
-  const sel = list.find((r) => r.id === selected) ?? list[0];
+  const selectedRide = list.find((ride) => ride.id === selected) ?? list[0];
 
   const [narrow, setNarrow] = useState(() => matchMedia("(max-width: 1100px)").matches);
   useEffect(() => {
-    const mq = matchMedia("(max-width: 1100px)");
-    const on = () => setNarrow(mq.matches);
-    mq.addEventListener("change", on);
-    return () => mq.removeEventListener("change", on);
+    const narrowQuery = matchMedia("(max-width: 1100px)");
+    const on = () => setNarrow(narrowQuery.matches);
+    narrowQuery.addEventListener("change", on);
+    return () => narrowQuery.removeEventListener("change", on);
   }, []);
 
   useEffect(() => {
-    const mq = matchMedia("(max-width: 1100px)");
-    let raf = 0;
+    const narrowQuery = matchMedia("(max-width: 1100px)");
+    let frame = 0;
     const pick = () => {
-      raf = 0;
-      if (!mq.matches || !rowsRef.current) return;
+      frame = 0;
+      if (!narrowQuery.matches || !rowsRef.current) return;
       const head = document.querySelector<HTMLElement>(".app-head");
       document.documentElement.style.setProperty("--head-h", `${head?.offsetHeight ?? 0}px`);
       const top = (head?.offsetHeight ?? 0) + 8 + (mapRef.current?.offsetHeight ?? 0);
-      const mid = top + (innerHeight - top) / 2;
-      const rows = [...rowsRef.current.querySelectorAll<HTMLElement>(".row3[data-id]")];
+      const middle = top + (innerHeight - top) / 2;
+      const rows = [...rowsRef.current.querySelectorAll<HTMLElement>(".ride-row[data-id]")];
       const firstR = rows[0]?.getBoundingClientRect();
-      if (firstR && (firstR.top + firstR.bottom) / 2 >= mid) { setSelected(Number(rows[0].dataset.id)); return; }
+      if (firstR && (firstR.top + firstR.bottom) / 2 >= middle) { setSelected(Number(rows[0].dataset.id)); return; }
       let best: HTMLElement | null = null, dist = Infinity;
-      for (const el of rows) {
-        const r = el.getBoundingClientRect();
-        const d = Math.abs((r.top + r.bottom) / 2 - mid);
-        if (d < dist) { dist = d; best = el; }
+      for (const row of rows) {
+        const box = row.getBoundingClientRect();
+        const distance = Math.abs((box.top + box.bottom) / 2 - middle);
+        if (distance < dist) { dist = distance; best = row; }
       }
       if (best) setSelected(Number(best.dataset.id));
     };
-    const onScroll = () => { if (!raf) raf = requestAnimationFrame(pick); };
+    const onScroll = () => { if (!frame) frame = requestAnimationFrame(pick); };
 
     let lockUntil = 0, lastWheel = 0;
     const onWheel = (e: WheelEvent) => {
       const now = performance.now(), fresh = now - lastWheel > 220;
       lastWheel = now;
-      if (!mq.matches || !rowsRef.current || e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
+      if (!narrowQuery.matches || !rowsRef.current || e.ctrlKey || Math.abs(e.deltaY) < Math.abs(e.deltaX)) return;
       const head = document.querySelector<HTMLElement>(".app-head");
       const line = (head?.offsetHeight ?? 0) + 8 + (mapRef.current?.offsetHeight ?? 0);
-      const mid = line + (innerHeight - line) / 2;
-      const stops = [0, ...[...rowsRef.current.querySelectorAll<HTMLElement>(".row3[data-id]")].map((el) => {
-        const r = el.getBoundingClientRect();
-        return Math.round(scrollY + (r.top + r.bottom) / 2 - mid);
-      })].filter((y) => y >= 0);
-      const y = scrollY;
-      const next = e.deltaY > 0 ? stops.find((s) => s > y + 4) : [...stops].reverse().find((s) => s < y - 4);
+      const middle = line + (innerHeight - line) / 2;
+      const stops = [0, ...[...rowsRef.current.querySelectorAll<HTMLElement>(".ride-row[data-id]")].map((row) => {
+        const box = row.getBoundingClientRect();
+        return Math.round(scrollY + (box.top + box.bottom) / 2 - middle);
+      })].filter((offset) => offset >= 0);
+      const scrolled = scrollY;
+      const next = e.deltaY > 0 ? stops.find((stop) => stop > scrolled + 4) : [...stops].reverse().find((s) => s < scrolled - 4);
       if (next === undefined) return;
       e.preventDefault();
       if (!fresh || now < lockUntil) return;
@@ -174,7 +174,7 @@ export default function Search() {
     addEventListener("scroll", onScroll, { passive: true });
     addEventListener("resize", onScroll);
     addEventListener("wheel", onWheel, { passive: false });
-    return () => { removeEventListener("scroll", onScroll); removeEventListener("resize", onScroll); removeEventListener("wheel", onWheel); cancelAnimationFrame(raf); };
+    return () => { removeEventListener("scroll", onScroll); removeEventListener("resize", onScroll); removeEventListener("wheel", onWheel); cancelAnimationFrame(frame); };
   }, [list.length]);
 
   const chipText = (k: FilterKey, v: string): string => {
@@ -193,86 +193,86 @@ export default function Search() {
 
   const pins: MapPin[] = []; const origins: MapOrigin[] = []; const routes: MapRoute[] = [];
   const seenEv = new Set<number>(); const seenOr = new Set<string>();
-  for (const r of list) {
-    const on = r.id === sel?.id;
-    const to = event.data?.id === r.event.id && event.data.latitude != null ? [event.data.latitude, event.data.longitude!] as [number, number] : cityCoords(r.event.city);
-    const from = r.origin_lat != null && r.origin_lng != null ? [r.origin_lat, r.origin_lng] as [number, number] : cityCoords(r.origin_city);
-    if (to && !seenEv.has(r.event.id)) { seenEv.add(r.event.id); pins.push({ id: r.event.id, pos: to, label: "✶", title: r.event.name, on: r.event.id === sel?.event.id }); }
-    if (from && !seenOr.has(r.origin_city)) { seenOr.add(r.origin_city); origins.push({ id: r.origin_city, pos: from, title: r.origin_city, on: r.origin_city === sel?.origin_city }); }
-    if (from && to) routes.push({ id: r.id, from, to, on });
+  for (const ride of list) {
+    const on = ride.id === selectedRide?.id;
+    const to = event.data?.id === ride.event.id && event.data.latitude != null ? [event.data.latitude, event.data.longitude!] as [number, number] : cityCoords(ride.event.city);
+    const from = ride.origin_lat != null && ride.origin_lng != null ? [ride.origin_lat, ride.origin_lng] as [number, number] : cityCoords(ride.origin_city);
+    if (to && !seenEv.has(ride.event.id)) { seenEv.add(ride.event.id); pins.push({ id: ride.event.id, pos: to, label: "✶", title: ride.event.name, on: ride.event.id === selectedRide?.event.id }); }
+    if (from && !seenOr.has(ride.origin_city)) { seenOr.add(ride.origin_city); origins.push({ id: ride.origin_city, pos: from, title: ride.origin_city, on: ride.origin_city === selectedRide?.origin_city }); }
+    if (from && to) routes.push({ id: ride.id, from, to, on });
   }
-  const focusRoute = routes.find((r) => r.on);
+  const focusRoute = routes.find((route) => route.on);
 
   return (
-    <Screen className="search3">
+    <Screen className="search-page">
       {/* sentence search */}
-      <form className="sbar" role="search" onSubmit={submit}>
+      <form className="search-bar" role="search" onSubmit={submit}>
         <label htmlFor="s-q" className="sr-only">{t("landing.ask")}</label>
         {editingText || !text ? (
           <input id="s-q" ref={(node) => { inputRef.current = node; phRef(node); }} value={input} placeholder={ph} onChange={(e) => setInput(e.target.value)} />
         ) : (
-          <button type="button" id="s-q" className="said" onClick={() => setEditingText(true)} aria-label={`${t("search.edit")}: ${text}`}>
+          <button type="button" id="s-q" className="typed-sentence" onClick={() => setEditingText(true)} aria-label={`${t("search.edit")}: ${text}`}>
             <Highlighted text={text.trim()} filters={filters} />
           </button>
         )}
         {/* the sentence is read by AI: say so right where people type it */}
-        <span className="sbar-ai"><AiBadge title={t("search.aiHint")} /></span>
-        <button className="go btn3" type="submit" disabled={parsing} onClick={(e) => { if (!editingText && text) { e.preventDefault(); send(text); } }}>
+        <span className="search-bar-ai"><AiBadge title={t("search.aiHint")} /></span>
+        <button className="submit-btn pill-btn" type="submit" disabled={parsing} onClick={(e) => { if (!editingText && text) { e.preventDefault(); send(text); } }}>
           {text ? t("search.again") : t("search.cta")}
         </button>
       </form>
 
       {/* filter chips */}
-      <div className="chips3">
-        {source === "ai" && <span className="src ai">✶ {t("search.ai")}</span>}
-        {source === "rules" && <span className="src rules">{t("search.rules")}</span>}
+      <div className="filter-chips">
+        {source === "ai" && <span className="source-tag ai">✶ {t("search.ai")}</span>}
+        {source === "rules" && <span className="source-tag rules">{t("search.rules")}</span>}
         {filters.event_id && (
-          <button type="button" className="c dark" onClick={() => removeFilter("event_id")} aria-label={`${t("search.remove")}: ${event.data?.name ?? ""}`}>
+          <button type="button" className="filter-chip dark" onClick={() => removeFilter("event_id")} aria-label={`${t("search.remove")}: ${event.data?.name ?? ""}`}>
             {event.data ? `${event.data.name}${event.data.event_date ? ` · ${day(event.data.event_date)}` : ""}` : "…"} <Icon name="x" />
           </button>
         )}
-        {filters.no_smoking && <button type="button" className="c lime" onClick={() => removeFilter("no_smoking")}>{t("f.smoke").toLowerCase()} ✓</button>}
-        {FILTER_KEYS.filter((k) => k !== "event_id" && k !== "no_smoking" && filters[k]).map((k) => (
-          <button key={k} type="button" className="c" onClick={() => removeFilter(k)} aria-label={`${t("search.remove")}: ${chipText(k, filters[k]!)}`}>
+        {filters.no_smoking && <button type="button" className="filter-chip lime" onClick={() => removeFilter("no_smoking")}>{t("f.smoke").toLowerCase()} ✓</button>}
+        {FILTER_KEYS.filter((name) => name !== "event_id" && name !== "no_smoking" && filters[name]).map((k) => (
+          <button key={k} type="button" className="filter-chip" onClick={() => removeFilter(k)} aria-label={`${t("search.remove")}: ${chipText(k, filters[k]!)}`}>
             {chipText(k, filters[k]!)} <Icon name="x" />
           </button>
         ))}
-        <button type="button" className="c" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? t("search.hideEdit") : t("search.addFilter")}</button>
+        <button type="button" className="filter-chip" aria-expanded={formOpen} onClick={() => setFormOpen(!formOpen)}>{formOpen ? t("search.hideEdit") : t("search.addFilter")}</button>
         {rides.data && <span className="count">{plural(list.length, "car")} · {user ? t("search.sortedMatch").toLowerCase() : t("search.sortedTime").toLowerCase()}</span>}
       </div>
       {source === "rules" && understood && <p className="note" style={{ marginTop: 10 }}>{t("search.rulesNote")}</p>}
       {!understood && !parsing && <p className="note" style={{ marginTop: 10 }}>{t("search.notUnderstood")}</p>}
-      {formOpen && <div className="form3"><FilterForm key={params.toString()} filters={filters} onApply={(f) => setParams({ ...(text ? { text } : {}), ...f })} /></div>}
+      {formOpen && <div className="filter-panel"><FilterForm key={params.toString()} filters={filters} onApply={(applied) => setParams({ ...(text ? { text } : {}), ...applied })} /></div>}
 
       <div className="grid">
         {/* list */}
-        <div className="rows" ref={rowsRef}>
+        <div className="ride-list" ref={rowsRef}>
           {!user && <p className="note" style={{ padding: "0 8px 8px" }}>{t("search.loginForMatch")}</p>}
           {(rides.loading || awaitingParse) && <Loading />}
           {rides.error != null && <ErrorBox error={rides.error} onRetry={rides.reload} />}
           {rides.data && !list.length && <Empty title={t("search.empty")}><p className="muted">{t("search.emptyHint")}</p></Empty>}
-          {list.map((r) => {
-            const k = r.match ? matchKey(r.match) : "diff";
+          {list.map((ride) => {
+            const level = ride.match ? matchKey(ride.match) : "diff";
             return (
-              <Link key={r.id} data-id={r.id} to={`/rides/${r.id}`} className={`row3${r.id === sel?.id ? " on" : ""}`} onMouseEnter={() => setSelected(r.id)} onFocus={() => setSelected(r.id)}>
-                <span className={`sc ${shapeFor(k)} ${r.match ? `s-${k}` : "s-none"}${r.match?.percent === 100 ? " n3" : ""}`}>{r.match?.percent ?? "·"}</span>
-                <span className="who"><b>{r.driver.display_name}</b>
-                  <span>{[!filters.event_id && billName(r.event.name), `${r.origin_city.toLowerCase()} → ${r.event.city.toLowerCase()}`, time(r.departure_time), r.match && t(`match.${k}`), t(`style.${r.driver.driving_style}`)].filter(Boolean).join(" · ")}</span></span>
-                <span className="pr">{r.price} zł</span>
+              <Link key={ride.id} data-id={ride.id} to={`/rides/${ride.id}`} className={`ride-row${ride.id === selectedRide?.id ? " on" : ""}`} onMouseEnter={() => setSelected(ride.id)} onFocus={() => setSelected(ride.id)}>
+                <span className={`score-badge ${shapeFor(level)} ${ride.match ? `score-fill-${level}` : "score-fill-none"}${ride.match?.percent === 100 ? " perfect-score" : ""}`}>{ride.match?.percent ?? "·"}</span>
+                <span className="who"><b>{ride.driver.display_name}</b>
+                  <span>{[!filters.event_id && billName(ride.event.name), `${ride.origin_city.toLowerCase()} → ${ride.event.city.toLowerCase()}`, time(ride.departure_time), ride.match && t(`match.${level}`), t(`style.${ride.driver.driving_style}`)].filter(Boolean).join(" · ")}</span></span>
+                <span className="row-price">{ride.price} zł</span>
               </Link>
             );
           })}
         </div>
 
         {/* map */}
-        <div className="mapwrap" ref={mapRef}>
+        <div className="map-wrap" ref={mapRef}>
           <MapView label={t("nav.find")} pins={pins} origins={origins} routes={routes} focus={narrow && focusRoute ? [focusRoute.from, focusRoute.to] : undefined} />
-          {sel && (
-            <Link className="float" to={`/rides/${sel.id}`}>
+          {selectedRide && (
+            <Link className="floating-card" to={`/rides/${selectedRide.id}`}>
               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-                {sel.match && <span className="num">{sel.match.percent}</span>}<b style={{ fontWeight: 600, fontSize: 16 }}>{sel.driver.display_name}</b>
+                {selectedRide.match && <span className="num">{selectedRide.match.percent}</span>}<b style={{ fontWeight: 600, fontSize: 16 }}>{selectedRide.driver.display_name}</b>
               </div>
-              <div className="mono">{time(sel.departure_time)} → {(sel.event.venue || sel.event.city).toLowerCase()} · {plural(sel.seats_left, "seatLeft")}</div>
+              <div className="mono">{time(selectedRide.departure_time)} → {(selectedRide.event.venue || selectedRide.event.city).toLowerCase()} · {plural(selectedRide.seats_left, "seatLeft")}</div>
             </Link>
           )}
         </div>
@@ -281,42 +281,42 @@ export default function Search() {
   );
 }
 
-function FilterForm({ filters, onApply }: { filters: Filters; onApply: (f: Record<string, string>) => void }) {
+function FilterForm({ filters, onApply }: { filters: Filters; onApply: (applied: Record<string, string>) => void }) {
   const { t } = useI18n();
-  const [f, setF] = useState<Record<string, string>>(() => ({ ...filters }));
-  const set = (k: string) => (e: React.ChangeEvent<HTMLInputElement>) => setF({ ...f, [k]: e.target.type === "checkbox" ? (e.target.checked ? "true" : "") : e.target.value });
+  const [draft, setDraft] = useState<Record<string, string>>(() => ({ ...filters }));
+  const set = (name: string) => (e: React.ChangeEvent<HTMLInputElement>) => setDraft({ ...draft, [name]: e.target.type === "checkbox" ? (e.target.checked ? "true" : "") : e.target.value });
   const fields: [FilterKey, Key, string][] = [["origin_city", "f.from", "text"], ["event_city", "f.to", "text"], ["q", "f.q", "text"], ["genre", "f.genre", "text"], ["date_from", "f.dateFrom", "date"], ["date_to", "f.dateTo", "date"], ["max_price", "f.price", "number"], ["min_seats", "f.seats", "number"]];
 
   const cities = useAsync(() => api.cities(), []);
   const [eventHints, setEventHints] = useState<string[]>([]);
-  const q = (f.q ?? "").trim();
+  const needle = (draft.q ?? "").trim();
   useEffect(() => {
-    if (q.length < 2) { setEventHints([]); return; }
+    if (needle.length < 2) { setEventHints([]); return; }
     let live = true;
     const id = setTimeout(() => {
-      api.events({ q, limit: 8 }).then((evs) => { if (live) setEventHints([...new Set(evs.map((e) => e.name))]); }).catch(() => {});
+      api.events({ q: needle, limit: 8 }).then((events) => { if (live) setEventHints([...new Set(events.map((e) => e.name))]); }).catch(() => {});
     }, 250);
     return () => { live = false; clearTimeout(id); };
-  }, [q]);
+  }, [needle]);
   const lists: Partial<Record<FilterKey, string[]>> = {
     q: eventHints,
-    origin_city: (cities.data ?? []).map((c) => c.city),
-    event_city: (cities.data ?? []).map((c) => c.city),
+    origin_city: (cities.data ?? []).map((entry) => entry.city),
+    event_city: (cities.data ?? []).map((entry) => entry.city),
   };
   return (
-    <form className="filters-form" onSubmit={(e) => { e.preventDefault(); onApply(Object.fromEntries(Object.entries(f).filter(([, v]) => v))); }}>
-      {fields.map(([k, label, type]) => (
-        <div className="field" key={k}>
-          <label htmlFor={`ff-${k}`}>{t(label)}</label>
-          <input id={`ff-${k}`} type={type} min={type === "number" ? (k === "min_seats" ? 1 : 0) : undefined} max={k === "min_seats" ? 8 : undefined} value={f[k] ?? ""} onChange={set(k)}
-            list={lists[k] ? `ffl-${k}` : undefined} autoComplete={lists[k] ? "off" : undefined} />
-          {lists[k] && <datalist id={`ffl-${k}`}>{lists[k]!.map((o) => <option key={o} value={o} />)}</datalist>}
+    <form className="filters-form" onSubmit={(e) => { e.preventDefault(); onApply(Object.fromEntries(Object.entries(draft).filter(([, value]) => value))); }}>
+      {fields.map(([name, label, type]) => (
+        <div className="field" key={name}>
+          <label htmlFor={`ff-${name}`}>{t(label)}</label>
+          <input id={`ff-${name}`} type={type} min={type === "number" ? (name === "min_seats" ? 1 : 0) : undefined} max={name === "min_seats" ? 8 : undefined} value={draft[name] ?? ""} onChange={set(name)}
+            list={lists[name] ? `ffl-${name}` : undefined} autoComplete={lists[name] ? "off" : undefined} />
+          {lists[name] && <datalist id={`ffl-${name}`}>{lists[name]!.map((option) => <option key={option} value={option} />)}</datalist>}
         </div>
       ))}
-      <label className="switch"><input type="checkbox" checked={!!f.no_smoking} onChange={set("no_smoking")} />{t("f.smoke")}</label>
+      <label className="switch"><input type="checkbox" checked={!!draft.no_smoking} onChange={set("no_smoking")} />{t("f.smoke")}</label>
       <div className="row" style={{ justifyContent: "flex-start" }}>
         <button className="btn btn-sm" type="submit">{t("search.apply")}</button>
-        <button className="btn btn-ghost btn-sm" type="button" onClick={() => { setF({}); onApply({}); }}>{t("search.clear")}</button>
+        <button className="btn btn-ghost btn-sm" type="button" onClick={() => { setDraft({}); onApply({}); }}>{t("search.clear")}</button>
       </div>
     </form>
   );

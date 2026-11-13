@@ -67,7 +67,7 @@ def list_cities(session: Session = Depends(get_session)) -> list[CityCount]:
         .group_by(Event.city)
         .order_by(count.desc(), Event.city)
     )
-    return [CityCount(city=c, events=n) for c, n in session.exec(stmt).all()]
+    return [CityCount(city=city, events=count) for city, count in session.exec(stmt).all()]
 
 
 @router.get("/{event_id}", response_model=Event)

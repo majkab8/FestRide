@@ -4,7 +4,7 @@ const VISIBLE_SPEED = 3;
 const HIDDEN_SPEED = 36;
 const HORIZON = 100;
 
-const CSS = `.v3 .record-car { transform-box: view-box; transform-origin: 100px 100px; }`;
+const CSS = `.landing .record-car { transform-box: view-box; transform-origin: 100px 100px; }`;
 
 export function stepCar(angle: number, dt: number, recordDelta: number, calm: boolean): number {
   const a = ((angle + 180) % 360 + 360) % 360 - 180;

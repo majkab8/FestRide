@@ -13,13 +13,13 @@ export default function Drive() {
   const rides = useAsync(() => api.myRides(), []);
   const now = new Date();
   const list = [...(rides.data ?? [])].sort((a, b) => {
-    const pa = parseLocal(a.departure_time) < now, pb = parseLocal(b.departure_time) < now;
-    return pa === pb ? a.departure_time.localeCompare(b.departure_time) : pa ? 1 : -1;
+    const aIsPast = parseLocal(a.departure_time) < now, bIsPast = parseLocal(b.departure_time) < now;
+    return aIsPast === bIsPast ? a.departure_time.localeCompare(b.departure_time) : aIsPast ? 1 : -1;
   });
-  const ride = list.find((r) => r.id === Number(params.get("ride"))) ?? list[0];
+  const ride = list.find((candidate) => candidate.id === Number(params.get("ride"))) ?? list[0];
   const selectedId = ride?.id;
   const all = useAsync(async () => {
-    const entries = await Promise.all((rides.data ?? []).map(async (r) => [r.id, await api.rideRequests(r.id)] as const));
+    const entries = await Promise.all((rides.data ?? []).map(async (myRide) => [myRide.id, await api.rideRequests(myRide.id)] as const));
     return new Map<number, JoinRequest[]>(entries);
   }, [rides.data]);
   const reqs = (selectedId && all.data?.get(selectedId)) || [];
@@ -27,29 +27,29 @@ export default function Drive() {
   const [busy, setBusy] = useState<number | null>(null);
   const [error, setError] = useState("");
 
-  const pending = reqs.filter((q) => q.status === "pending");
-  const accepted = reqs.filter((q) => q.status === "accepted");
-  const declined = reqs.filter((q) => q.status === "declined");
-  const withdrew = reqs.filter((q) => q.status === "cancelled");
-  const removed = reqs.filter((q) => q.status === "removed");
+  const pending = reqs.filter((request) => request.status === "pending");
+  const accepted = reqs.filter((request) => request.status === "accepted");
+  const declined = reqs.filter((request) => request.status === "declined");
+  const withdrew = reqs.filter((request) => request.status === "cancelled");
+  const removed = reqs.filter((request) => request.status === "removed");
   const [removing, setRemoving] = useState<number | null>(null);
   const [callingOff, setCallingOff] = useState(false);
 
   useEffect(() => { setWhy({}); setRemoving(null); setCallingOff(false); }, [selectedId, lang]);
-  const pendingKey = pending.slice(0, 5).map((q) => q.id).join(",");
+  const pendingKey = pending.slice(0, 5).map((request) => request.id).join(",");
   useEffect(() => {
-    const ids = pendingKey ? pendingKey.split(",").map(Number) : [];
-    if (!ids.length) return;
+    const requestIds = pendingKey ? pendingKey.split(",").map(Number) : [];
+    if (!requestIds.length) return;
     let live = true;
-    api.explain({ request_ids: ids, lang }).then((r) => { if (live) setWhy((w) => ({ ...w, ...r.requests })); }).catch(() => {});
+    api.explain({ request_ids: requestIds, lang }).then((response) => { if (live) setWhy((previous) => ({ ...previous, ...response.requests })); }).catch(() => {});
     return () => { live = false; };
   }, [pendingKey, lang]);
 
-  const decide = async (q: JoinRequest, status: "accepted" | "declined") => {
-    setBusy(q.id);
+  const decide = async (request: JoinRequest, status: "accepted" | "declined") => {
+    setBusy(request.id);
     setError("");
     try {
-      await api.decide(q.id, status);
+      await api.decide(request.id, status);
       rides.reload();
       window.dispatchEvent(new Event(REQUESTS_CHANGED));
     } catch (err) {
@@ -59,11 +59,11 @@ export default function Drive() {
     }
   };
 
-  const remove = async (q: JoinRequest) => {
-    setBusy(q.id);
+  const remove = async (request: JoinRequest) => {
+    setBusy(request.id);
     setError("");
     try {
-      await api.removePassenger(q.id);
+      await api.removePassenger(request.id);
       setRemoving(null);
       rides.reload();
     } catch (err) {
@@ -96,77 +96,77 @@ export default function Drive() {
 
   const full = ride ? ride.seats_left <= 0 : false;
   const departed = ride ? parseLocal(ride.departure_time) <= now : false;
-  const verb = (n: number) => t(lang === "en" ? (n === 1 ? "drive.wantOne" : "drive.wantFew") : new Intl.PluralRules("pl").select(n) === "few" ? "drive.wantFew" : "drive.wantOne");
+  const verb = (count: number) => t(lang === "en" ? (count === 1 ? "drive.wantOne" : "drive.wantFew") : new Intl.PluralRules("pl").select(count) === "few" ? "drive.wantFew" : "drive.wantOne");
 
   return (
     <Screen>
-      <div className="driver3">
+      <div className="driver-page">
         {/* rides I offer */}
-        <aside className="side3" aria-label={t("drive.yours")}>
-          <div className="lbl">{t("drive.yours")}</div>
-          {list.map((r) => {
-            const past = parseLocal(r.departure_time) < now;
-            const fresh = (all.data?.get(r.id) ?? []).filter((q) => q.status === "pending").length;
+        <aside className="my-rides-nav" aria-label={t("drive.yours")}>
+          <div className="small-label">{t("drive.yours")}</div>
+          {list.map((myRide) => {
+            const past = parseLocal(myRide.departure_time) < now;
+            const fresh = (all.data?.get(myRide.id) ?? []).filter((request) => request.status === "pending").length;
             return (
-              <Link key={r.id} to={`?ride=${r.id}`} className={`item${r.id === selectedId ? " on" : ""}${past ? " past" : ""}`} aria-current={r.id === selectedId ? "true" : undefined}>
-                <span style={{ minWidth: 0 }}><b>{r.event.name}</b><br />
-                  <small>{day(r.departure_time)} · {past ? t("drive.done") : t("drive.seatsTaken", { taken: r.seats_total - r.seats_left, total: r.seats_total })}</small></span>
-                {!past && fresh > 0 && <span className="new">{t("drive.fresh", { n: fresh })}</span>}
+              <Link key={myRide.id} to={`?ride=${myRide.id}`} className={`item${myRide.id === selectedId ? " on" : ""}${past ? " past" : ""}`} aria-current={myRide.id === selectedId ? "true" : undefined}>
+                <span style={{ minWidth: 0 }}><b>{myRide.event.name}</b><br />
+                  <small>{day(myRide.departure_time)} · {past ? t("drive.done") : t("drive.seatsTaken", { taken: myRide.seats_total - myRide.seats_left, total: myRide.seats_total })}</small></span>
+                {!past && fresh > 0 && <span className="new-badge">{t("drive.fresh", { n: fresh })}</span>}
               </Link>
             );
           })}
-          <Link className="offer btn3" to="/drive/new">{t("drive.new")}</Link>
+          <Link className="offer pill-btn" to="/drive/new">{t("drive.new")}</Link>
         </aside>
 
         {ride && (
           <section style={{ minWidth: 0 }}>
-            <div className="head">
+            <div className="ride-head">
               <div style={{ minWidth: 0 }}>
                 <div className="mono">{day(ride.departure_time)} · {ride.origin_city.toLowerCase()} {time(ride.departure_time)} → {(ride.event.venue || ride.event.city).toLowerCase()} · {t("drive.perSeat", { n: ride.price })}</div>
                 <h1 className="h1">{t("drive.title", { from: ride.origin_city, event: ride.event.name })}</h1>
               </div>
-              <div className="fill">{t("drive.fill", { n: ride.price * ride.seats_total })}</div>
+              <div className="fuel-total">{t("drive.fill", { n: ride.price * ride.seats_total })}</div>
             </div>
-            {ride.note && <p className="note3">“{ride.note}”</p>}
+            {ride.note && <p className="driver-note">“{ride.note}”</p>}
 
-            <div className="seatbar" role="group" aria-label={t("ride.seatsAria", { taken: accepted.length, total: ride.seats_total })}>
+            <div className="seat-bar" role="group" aria-label={t("ride.seatsAria", { taken: accepted.length, total: ride.seats_total })}>
               {Array.from({ length: ride.seats_total }, (_, i) => {
-                const q = accepted[i];
-                if (!q) return <div key={i} className="f">{t("drive.seatFree", { n: i + 1 })}</div>;
-                const first = q.passenger.display_name.split(" ")[0];
-                return removing === q.id
-                  ? <div key={i} className="t ask">{t("drive.removeSure", { name: first })}
-                      <button type="button" disabled={busy === q.id} onClick={() => remove(q)}>{t("drive.yes")}</button>
-                      <button type="button" disabled={busy === q.id} onClick={() => setRemoving(null)}>{t("drive.no")}</button></div>
-                  : <div key={i} className="t">{q.passenger.display_name} <span>{t("drive.seatN", { n: i + 1 })}{q.match ? ` · ${q.match.percent}` : ""}</span>
-                      {!departed && <button type="button" className="x" aria-label={t("drive.remove", { name: q.passenger.display_name })} title={t("drive.remove", { name: q.passenger.display_name })} onClick={() => setRemoving(q.id)}><Icon name="x" /></button>}</div>;
+                const seated = accepted[i];
+                if (!seated) return <div key={i} className="seat-free">{t("drive.seatFree", { n: i + 1 })}</div>;
+                const first = seated.passenger.display_name.split(" ")[0];
+                return removing === seated.id
+                  ? <div key={i} className="seat-taken confirming">{t("drive.removeSure", { name: first })}
+                      <button type="button" disabled={busy === seated.id} onClick={() => remove(seated)}>{t("drive.yes")}</button>
+                      <button type="button" disabled={busy === seated.id} onClick={() => setRemoving(null)}>{t("drive.no")}</button></div>
+                  : <div key={i} className="seat-taken">{seated.passenger.display_name} <span>{t("drive.seatN", { n: i + 1 })}{seated.match ? ` · ${seated.match.percent}` : ""}</span>
+                      {!departed && <button type="button" className="remove-btn" aria-label={t("drive.remove", { name: seated.passenger.display_name })} title={t("drive.remove", { name: seated.passenger.display_name })} onClick={() => setRemoving(seated.id)}><Icon name="x" /></button>}</div>;
               })}
             </div>
 
-            <h2 className="want poster">{pending.length ? t("drive.want", { n: plural(pending.length, "person"), verb: verb(pending.length) }) : t("drive.noRequests")}</h2>
+            <h2 className="requests-title poster">{pending.length ? t("drive.want", { n: plural(pending.length, "person"), verb: verb(pending.length) }) : t("drive.noRequests")}</h2>
             {error && <p className="error" role="alert">{error}</p>}
             {all.loading && !all.data && <Loading />}
             {all.error != null && <ErrorBox error={all.error} onRetry={all.reload} />}
             {pending.length > 0 && (
-              <div className="tix3">
-                {pending.map((q) => {
-                  const k = q.match ? matchKey(q.match) : "diff";
-                  const first = q.passenger.display_name.split(" ")[0];
+              <div className="request-tickets">
+                {pending.map((request) => {
+                  const level = request.match ? matchKey(request.match) : "diff";
+                  const first = request.passenger.display_name.split(" ")[0];
                   return (
-                    <article className="tk" key={q.id}>
-                      <div className="b">
-                        <div className="who">
-                          <span className={`num c-${k}`}>{q.match?.percent ?? "·"}</span>
-                          <div style={{ minWidth: 0 }}><b>{q.passenger.display_name}</b><br />
-                            <small>{q.passenger.music_genres.slice(0, 3).join(", ")} · {t(`style.${q.passenger.driving_style}`)}</small></div>
+                    <article className="request-ticket" key={request.id}>
+                      <div className="ticket-body">
+                        <div className="passenger">
+                          <span className={`num score-text-${level}`}>{request.match?.percent ?? "·"}</span>
+                          <div style={{ minWidth: 0 }}><b>{request.passenger.display_name}</b><br />
+                            <small>{request.passenger.music_genres.slice(0, 3).join(", ")} · {t(`style.${request.passenger.driving_style}`)}</small></div>
                         </div>
-                        {q.message ? <q>{q.message}</q> : <div style={{ minHeight: 46 }} />}
-                        {why[String(q.id)] && <div className="ai"><Icon name="spark" /><span>{why[String(q.id)]} <AiBadge /></span></div>}
+                        {request.message ? <q>{request.message}</q> : <div style={{ minHeight: 46 }} />}
+                        {why[String(request.id)] && <div className="ai-reason"><Icon name="spark" /><span>{why[String(request.id)]} <AiBadge /></span></div>}
                       </div>
-                      <div className="cut" />
-                      <div className="acts">
-                        <button type="button" className="no" disabled={busy === q.id} onClick={() => decide(q, "declined")}>{t("drive.notNow")}</button>
-                        <button type="button" className="yes btn3" disabled={busy === q.id || full || departed} onClick={() => decide(q, "accepted")}>{full ? t("drive.full") : t("drive.take", { name: first })}</button>
+                      <div className="ticket-cut" />
+                      <div className="ticket-actions">
+                        <button type="button" className="decline" disabled={busy === request.id} onClick={() => decide(request, "declined")}>{t("drive.notNow")}</button>
+                        <button type="button" className="accept pill-btn" disabled={busy === request.id || full || departed} onClick={() => decide(request, "accepted")}>{full ? t("drive.full") : t("drive.take", { name: first })}</button>
                       </div>
                     </article>
                   );
@@ -174,19 +174,19 @@ export default function Drive() {
               </div>
             )}
             {declined.length > 0 && (
-              <p className="note" style={{ marginTop: 18 }}>{t("drive.decided")}: {declined.map((q) => q.passenger.display_name).join(", ")}</p>
+              <p className="note" style={{ marginTop: 18 }}>{t("drive.decided")}: {declined.map((request) => request.passenger.display_name).join(", ")}</p>
             )}
             {withdrew.length > 0 && (
-              <p className="note" style={{ marginTop: 8 }}>{t("drive.withdrew")}: {withdrew.map((q) => q.passenger.display_name).join(", ")}</p>
+              <p className="note" style={{ marginTop: 8 }}>{t("drive.withdrew")}: {withdrew.map((request) => request.passenger.display_name).join(", ")}</p>
             )}
             {removed.length > 0 && (
-              <p className="note" style={{ marginTop: 8 }}>{t("drive.removed")}: {removed.map((q) => q.passenger.display_name).join(", ")}</p>
+              <p className="note" style={{ marginTop: 8 }}>{t("drive.removed")}: {removed.map((request) => request.passenger.display_name).join(", ")}</p>
             )}
 
             {!departed && (
-              <div className="calloff">
+              <div className="call-off">
                 {!callingOff
-                  ? <button type="button" className="linkish" onClick={() => setCallingOff(true)}>{t("drive.callOff")}</button>
+                  ? <button type="button" className="text-button" onClick={() => setCallingOff(true)}>{t("drive.callOff")}</button>
                   : <>
                       <span>{pending.length + accepted.length ? t("drive.callOffSureWith") : t("drive.callOffSure")}</span>
                       <button type="button" className="btn btn-sm" disabled={busy === -ride.id} onClick={callOff}>{t("drive.callOffYes")}</button>

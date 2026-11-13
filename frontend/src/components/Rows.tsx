@@ -9,7 +9,7 @@ export function EventRow({ ev, i, on, rides, onSelect, asStatic, posters }: { ev
     <>
       <Thumb genre={ev.genre} shape={posters ? 3 /* uniform rounded square */ : i} image={posters ? ev.image_url : null} />
       <span style={{ minWidth: 0 }}>
-        <span className="ev-title">{ev.name}</span>
+        <span className="event-title">{ev.name}</span>
         <span className="meta" style={{ marginTop: 3 }}>
           {ev.event_date && <span className="tag">{dayLong(ev.event_date)}</span>}
           <span className="tag">{[ev.venue, ev.city].filter(Boolean).join(", ").toLowerCase()}</span>
@@ -18,10 +18,10 @@ export function EventRow({ ev, i, on, rides, onSelect, asStatic, posters }: { ev
       {rides !== undefined && <span className="count">{plural(rides, "ride")}</span>}
     </>
   );
-  if (asStatic) return <div className="ev">{body}</div>;
+  if (asStatic) return <div className="event-row">{body}</div>;
   return onSelect
-    ? <button type="button" className={`ev${on ? " on" : ""}`} onClick={onSelect} aria-pressed={on}>{body}</button>
-    : <Link className="ev" to={`/search?event_id=${ev.id}`}>{body}</Link>;
+    ? <button type="button" className={`event-row${on ? " on" : ""}`} onClick={onSelect} aria-pressed={on}>{body}</button>
+    : <Link className="event-row" to={`/search?event_id=${ev.id}`}>{body}</Link>;
 }
 
 export function RideRow({ ride, i, why, own }: { ride: Ride; i: number; why?: string; own?: boolean }) {

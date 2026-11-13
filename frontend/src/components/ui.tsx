@@ -23,7 +23,7 @@ const PATHS = {
 } as const;
 export type IconName = keyof typeof PATHS;
 
-export function Icon({ name, className = "ic" }: { name: IconName; className?: string }) {
+export function Icon({ name, className = "icon" }: { name: IconName; className?: string }) {
   return (
     <svg viewBox="0 0 24 24" className={className} aria-hidden="true">
       <path d={PATHS[name]} />
@@ -33,29 +33,29 @@ export function Icon({ name, className = "ic" }: { name: IconName; className?: s
 
 export type MatchKey = "great" | "good" | "some" | "diff";
 export function matchKey(m: Pick<Match, "percent"> | number): MatchKey {
-  const p = typeof m === "number" ? m : m.percent;
-  return p >= 85 ? "great" : p >= 60 ? "good" : p >= 30 ? "some" : "diff";
+  const percent = typeof m === "number" ? m : m.percent;
+  return percent >= 85 ? "great" : percent >= 60 ? "good" : percent >= 30 ? "some" : "diff";
 }
 
-export const shapeFor = (k: MatchKey) => ({ great: "starry", good: "round", some: "squircle", diff: "hexa" })[k];
+export const shapeFor = (level: MatchKey) => ({ great: "starry", good: "round", some: "squircle", diff: "hexa" })[level];
 
 export function Score({ match, shape = 0, size }: { match: Match; shape?: number; size?: number }) {
   const { t } = useI18n();
-  const k = matchKey(match);
+  const level = matchKey(match);
   const style = size ? { width: size, height: size, fontSize: size * 0.45 } : undefined;
   return (
-    <div className={`score m-${k}`}>
-      <span className={`blob num sh${shape % 3}`} style={style}>{match.percent}</span>
-      <span>{t(`match.${k}`)}</span>
+    <div className={`score score-blob-${level}`}>
+      <span className={`blob num shape-${shape % 3}`} style={style}>{match.percent}</span>
+      <span>{t(`match.${level}`)}</span>
     </div>
   );
 }
 
 export function Avatar({ name, shape = 2, size = 60 }: { name: string; shape?: number; size?: number }) {
-  const ini = initials(name);
+  const letters = initials(name);
   return (
-    <span className={`blob sh${shape % 3}`} style={{ width: size, height: size, fontSize: size * 0.3, background: "var(--lime)", color: "var(--on-bright)", fontWeight: 700 }} aria-hidden="true">
-      {ini}
+    <span className={`blob shape-${shape % 3}`} style={{ width: size, height: size, fontSize: size * 0.3, background: "var(--lime)", color: "var(--on-bright)", fontWeight: 700 }} aria-hidden="true">
+      {letters}
     </span>
   );
 }
@@ -67,7 +67,7 @@ export function AiBadge({ title }: { title?: string }) {
 export function Thumb({ genre, shape = 0, big = false, image }: { genre: string | null; shape?: number; big?: boolean; image?: string | null }) {
   if (image) return <img className={`thumb photo${big ? " big" : ""}`} src={image} alt="" loading="lazy" referrerPolicy="no-referrer" aria-hidden="true" />;
   return (
-    <span className={`thumb poster ${shape === 3 ? "sh3" : `sh${shape % 3}`} g-${familyOf(genre)}${big ? " big" : ""}`} aria-hidden="true">
+    <span className={`thumb poster ${shape === 3 ? "shape-3" : `shape-${shape % 3}`} genre-${familyOf(genre)}${big ? " big" : ""}`} aria-hidden="true">
       {genre ? genre.replace("Dance/Electronic", "Electronic").replace("Hip-Hop/Rap", "Hip-hop") : "live"}
     </span>
   );
@@ -87,23 +87,23 @@ export function Wristband({ ride, small = false }: { ride: Ride; small?: boolean
 
 export function CountUp({ to, suffix = "", ms = 900 }: { to: number; suffix?: string; ms?: number }) {
   const [still] = useState(() => typeof matchMedia !== "function" || matchMedia("(prefers-reduced-motion: reduce)").matches);
-  const [n, setN] = useState(still ? to : 0);
-  const shown = useRef(n);
-  shown.current = n;
+  const [value, setValue] = useState(still ? to : 0);
+  const shown = useRef(value);
+  shown.current = value;
   useEffect(() => {
-    if (still) { setN(to); return; }
-    let raf = 0;
+    if (still) { setValue(to); return; }
+    let frame = 0;
     const from = shown.current;
-    const t0 = performance.now();
+    const startedAt = performance.now();
     const step = (now: number) => {
-      const p = Math.min(1, (now - t0) / ms);
-      setN(Math.round(from + (to - from) * (1 - (1 - p) ** 3)));
-      if (p < 1) raf = requestAnimationFrame(step);
+      const progress = Math.min(1, (now - startedAt) / ms);
+      setValue(Math.round(from + (to - from) * (1 - (1 - progress) ** 3)));
+      if (progress < 1) frame = requestAnimationFrame(step);
     };
-    raf = requestAnimationFrame(step);
-    return () => cancelAnimationFrame(raf);
+    frame = requestAnimationFrame(step);
+    return () => cancelAnimationFrame(frame);
   }, [to, ms, still]);
-  return <>{n}{suffix}</>;
+  return <>{value}{suffix}</>;
 }
 
 export function Loading() {
@@ -116,12 +116,12 @@ export function ErrorBox({ error, onRetry }: { error: unknown; onRetry?: () => v
   const offline = error instanceof TypeError;
   return (
     <div className="card empty" role="alert">
-      <h3 className="disp">{offline ? t("common.offline") : t("common.error")}</h3>
+      <h3 className="display-title">{offline ? t("common.offline") : t("common.error")}</h3>
       {onRetry && <button className="btn btn-sm" type="button" onClick={onRetry}>{t("common.retry")}</button>}
     </div>
   );
 }
 
 export function Empty({ title, children }: { title: string; children?: ReactNode }) {
-  return <div className="card empty"><h3 className="disp">{title}</h3>{children}</div>;
+  return <div className="card empty"><h3 className="display-title">{title}</h3>{children}</div>;
 }

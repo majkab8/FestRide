@@ -49,7 +49,7 @@ def _norm(genre: str) -> str:
     return " ".join(re.sub(r"[-/]", " ", text).split())
 
 
-_FAMILY_OF: dict[str, str] = {_norm(g): fam for fam, genres in _FAMILIES.items() for g in genres}
+_FAMILY_OF: dict[str, str] = {_norm(genre): family for family, genres in _FAMILIES.items() for genre in genres}
 
 _NEIGHBOURS = {frozenset({"pop", "electronic"}), frozenset({"pop", "urban"})}
 
@@ -69,7 +69,7 @@ class Match:
 
 
 def _unique(genres: list[str]) -> list[str]:
-    return list(dict.fromkeys(_norm(g) for g in genres))
+    return list(dict.fromkeys(_norm(genre) for genre in genres))
 
 
 def genre_similarity(a: str, b: str) -> float:
@@ -87,7 +87,7 @@ def genre_similarity(a: str, b: str) -> float:
 
 
 def _directional(src: list[str], dst: list[str]) -> float:
-    return sum(max(genre_similarity(g, h) for h in dst) for g in src) / len(src)
+    return sum(max(genre_similarity(genre, other) for other in dst) for genre in src) / len(src)
 
 
 def music_similarity(a: list[str], b: list[str]) -> float:
@@ -112,7 +112,7 @@ def family_of(genre: str) -> str | None:
 
 def same_family(genre: str, candidates: list[str]) -> list[str]:
     family = family_of(genre)
-    return [c for c in candidates if family is not None and family_of(c) == family]
+    return [candidate for candidate in candidates if family is not None and family_of(candidate) == family]
 
 
 def label_for(percent: int) -> str:
@@ -126,7 +126,7 @@ def match(a, b) -> Match:
     total = WEIGHT_MUSIC * music + WEIGHT_STYLE * style + WEIGHT_SMOKING * smoking
 
     b_keys = set(_unique(b.music_genres))
-    shared = sorted({_norm(g): g for g in a.music_genres if _norm(g) in b_keys}.values())
+    shared = sorted({_norm(genre): genre for genre in a.music_genres if _norm(genre) in b_keys}.values())
     percent = round(total * 100)
     return Match(
         percent=percent,

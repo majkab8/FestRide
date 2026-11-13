@@ -52,12 +52,12 @@ def _to_reads(session: Session, rides: list[Ride], viewer: Optional[User] = None
     if not rides:
         return []
     events = {
-        e.id: e for e in session.exec(select(Event).where(col(Event.id).in_({r.event_id for r in rides})))
+        event.id: event for event in session.exec(select(Event).where(col(Event.id).in_({ride.event_id for ride in rides})))
     }
     drivers = {
-        u.id: u for u in session.exec(select(User).where(col(User.id).in_({r.driver_id for r in rides})))
+        user.id: user for user in session.exec(select(User).where(col(User.id).in_({ride.driver_id for ride in rides})))
     }
-    taken = _accepted_counts(session, (r.id for r in rides))
+    taken = _accepted_counts(session, (ride.id for ride in rides))
     return [
         RideRead(
             **ride.model_dump(exclude={"driver_id", "event_id"}),
@@ -94,14 +94,14 @@ def _same_event_requests(session: Session, passenger_id: int, event_id: int, sta
     return list(session.exec(stmt).all())
 
 
-def _request_read(req: RideRequest, passenger: User, driver: Optional[User] = None) -> RequestRead:
+def _request_read(ride_request: RideRequest, passenger: User, driver: Optional[User] = None) -> RequestRead:
     return RequestRead(
-        id=req.id,
-        ride_id=req.ride_id,
+        id=ride_request.id,
+        ride_id=ride_request.ride_id,
         passenger=_public(passenger),
-        status=req.status,
-        message=req.message,
-        created_at=req.created_at,
+        status=ride_request.status,
+        message=ride_request.message,
+        created_at=ride_request.created_at,
         match=_match(driver, passenger) if driver is not None else None,
     )
 
@@ -179,7 +179,7 @@ def list_rides(
     )
     if event_id is not None:
         stmt = stmt.where(Ride.event_id == event_id)
-    q, event_city, genre = (v.strip() if v else None for v in (q, event_city, genre))
+    q, event_city, genre = (value.strip() if value else None for value in (q, event_city, genre))
     if q or event_city or genre:
         stmt = stmt.join(Event, Event.id == Ride.event_id)
         if q:
@@ -213,7 +213,7 @@ def list_rides(
         return _to_reads(session, list(session.exec(stmt.offset(offset).limit(limit)).all()), viewer)
 
     reads = _to_reads(session, list(session.exec(stmt).all()), viewer)
-    reads.sort(key=lambda r: r.match.percent, reverse=True)
+    reads.sort(key=lambda ride_read: ride_read.match.percent, reverse=True)
     return reads[offset : offset + limit]
 
 
@@ -260,11 +260,11 @@ def cancel_ride(
     else:
         ride.cancelled = True
         session.add(ride)
-        for req in requests:
-            if req.status in (RequestStatus.pending, RequestStatus.accepted):
-                req.status = RequestStatus.called_off
-                session.add(req)
-                notify(session, req.passenger_id, current_user.id, ride.id, NotificationKind.called_off)
+        for ride_request in requests:
+            if ride_request.status in (RequestStatus.pending, RequestStatus.accepted):
+                ride_request.status = RequestStatus.called_off
+                session.add(ride_request)
+                notify(session, ride_request.passenger_id, current_user.id, ride.id, NotificationKind.called_off)
     session.commit()
 
 
@@ -296,11 +296,11 @@ def request_to_join(
         select(RideRequest).where(RideRequest.ride_id == ride.id, RideRequest.passenger_id == current_user.id)
     ).first()
     if earlier is not None and earlier.status == RequestStatus.cancelled:
-        req = earlier
-        req.status, req.message, req.created_at = RequestStatus.pending, message, _utcnow()
+        ride_request = earlier
+        ride_request.status, ride_request.message, ride_request.created_at = RequestStatus.pending, message, _utcnow()
     else:
-        req = RideRequest(ride_id=ride.id, passenger_id=current_user.id, message=message)
-    session.add(req)
+        ride_request = RideRequest(ride_id=ride.id, passenger_id=current_user.id, message=message)
+    session.add(ride_request)
     notify(session, ride.driver_id, current_user.id, ride.id, NotificationKind.request)
     try:
         session.commit()
@@ -310,8 +310,8 @@ def request_to_join(
             status_code=status.HTTP_409_CONFLICT,
             detail="You have already requested to join this ride",
         )
-    session.refresh(req)
-    return _request_read(req, current_user)
+    session.refresh(ride_request)
+    return _request_read(ride_request, current_user)
 
 
 @router.get("/{ride_id}/requests", response_model=list[RequestRead])
@@ -330,8 +330,8 @@ def ride_requests(
         .order_by(RideRequest.created_at, RideRequest.id)
     )
     return [
-        _request_read(req, passenger, driver=current_user)
-        for req, passenger in session.exec(stmt).all()
+        _request_read(ride_request, passenger, driver=current_user)
+        for ride_request, passenger in session.exec(stmt).all()
     ]
 
 
@@ -347,11 +347,11 @@ def my_requests(
             .order_by(col(RideRequest.created_at).desc(), col(RideRequest.id).desc())
         ).all()
     )
-    rides = list(session.exec(select(Ride).where(col(Ride.id).in_({q.ride_id for q in reqs}))))
-    ride_reads = {r.id: r for r in _to_reads(session, rides, viewer=current_user)}
+    rides = list(session.exec(select(Ride).where(col(Ride.id).in_({ride_request.ride_id for ride_request in reqs}))))
+    ride_reads = {ride_read.id: ride_read for ride_read in _to_reads(session, rides, viewer=current_user)}
     return [
-        MyRequestRead(**_request_read(req, current_user).model_dump(), ride=ride_reads[req.ride_id])
-        for req in reqs
+        MyRequestRead(**_request_read(ride_request, current_user).model_dump(), ride=ride_reads[ride_request.ride_id])
+        for ride_request in reqs
     ]
 
 
@@ -362,14 +362,14 @@ def decide_request(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    req = session.get(RideRequest, request_id)
-    if req is None:
+    ride_request = session.get(RideRequest, request_id)
+    if ride_request is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
-    ride = session.get(Ride, req.ride_id)
+    ride = session.get(Ride, ride_request.ride_id)
     if ride.driver_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the driver can decide")
-    if req.status != RequestStatus.pending:
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Request already {req.status.value}")
+    if ride_request.status != RequestStatus.pending:
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Request already {ride_request.status.value}")
     if data.status == RequestStatus.accepted and ride.departure_time <= now_pl():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This ride has already left")
     if (
@@ -378,25 +378,25 @@ def decide_request(
     ):
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="No seats left on this ride")
 
-    req.status = data.status
-    session.add(req)
-    notify(session, req.passenger_id, current_user.id, ride.id,
+    ride_request.status = data.status
+    session.add(ride_request)
+    notify(session, ride_request.passenger_id, current_user.id, ride.id,
            NotificationKind.accepted if data.status == RequestStatus.accepted else NotificationKind.declined)
     if data.status == RequestStatus.accepted:
-        for other in _same_event_requests(session, req.passenger_id, ride.event_id, RequestStatus.pending):
-            if other.id != req.id:
+        for other in _same_event_requests(session, ride_request.passenger_id, ride.event_id, RequestStatus.pending):
+            if other.id != ride_request.id:
                 other.status = RequestStatus.declined
                 session.add(other)
     session.commit()
-    session.refresh(req)
-    return _request_read(req, session.get(User, req.passenger_id))
+    session.refresh(ride_request)
+    return _request_read(ride_request, session.get(User, ride_request.passenger_id))
 
 
 def _get_request_or_404(session: Session, request_id: int) -> tuple[RideRequest, Ride]:
-    req = session.get(RideRequest, request_id)
-    if req is None:
+    ride_request = session.get(RideRequest, request_id)
+    if ride_request is None:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Request not found")
-    return req, session.get(Ride, req.ride_id)
+    return ride_request, session.get(Ride, ride_request.ride_id)
 
 
 @requests_router.post("/{request_id}/cancel", response_model=RequestRead)
@@ -405,19 +405,19 @@ def cancel_request(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    req, ride = _get_request_or_404(session, request_id)
-    if req.passenger_id != current_user.id:
+    ride_request, ride = _get_request_or_404(session, request_id)
+    if ride_request.passenger_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Not your request")
-    if req.status not in (RequestStatus.pending, RequestStatus.accepted):
-        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Request already {req.status.value}")
+    if ride_request.status not in (RequestStatus.pending, RequestStatus.accepted):
+        raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail=f"Request already {ride_request.status.value}")
     if ride.departure_time <= now_pl():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This ride has already left")
-    req.status = RequestStatus.cancelled
-    session.add(req)
+    ride_request.status = RequestStatus.cancelled
+    session.add(ride_request)
     notify(session, ride.driver_id, current_user.id, ride.id, NotificationKind.withdrew)
     session.commit()
-    session.refresh(req)
-    return _request_read(req, current_user)
+    session.refresh(ride_request)
+    return _request_read(ride_request, current_user)
 
 
 @requests_router.post("/{request_id}/remove", response_model=RequestRead)
@@ -426,16 +426,16 @@ def remove_passenger(
     current_user: User = Depends(get_current_user),
     session: Session = Depends(get_session),
 ) -> RequestRead:
-    req, ride = _get_request_or_404(session, request_id)
+    ride_request, ride = _get_request_or_404(session, request_id)
     if ride.driver_id != current_user.id:
         raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Only the driver can remove passengers")
-    if req.status != RequestStatus.accepted:
+    if ride_request.status != RequestStatus.accepted:
         raise HTTPException(status_code=status.HTTP_409_CONFLICT, detail="Only an accepted passenger can be removed")
     if ride.departure_time <= now_pl():
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="This ride has already left")
-    req.status = RequestStatus.removed
-    session.add(req)
-    notify(session, req.passenger_id, current_user.id, ride.id, NotificationKind.removed)
+    ride_request.status = RequestStatus.removed
+    session.add(ride_request)
+    notify(session, ride_request.passenger_id, current_user.id, ride.id, NotificationKind.removed)
     session.commit()
-    session.refresh(req)
-    return _request_read(req, session.get(User, req.passenger_id), driver=current_user)
+    session.refresh(ride_request)
+    return _request_read(ride_request, session.get(User, ride_request.passenger_id), driver=current_user)

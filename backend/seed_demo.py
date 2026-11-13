@@ -101,15 +101,15 @@ def _email(name: str) -> str:
 
 def _reset(session: Session) -> int:
     users = session.exec(select(User).where(col(User.email).like("%@example.com"))).all()
-    ids = [u.id for u in users]
+    ids = [user.id for user in users]
     if not ids:
         return 0
     rides = session.exec(select(Ride).where(col(Ride.driver_id).in_(ids))).all()
-    ride_ids = [r.id for r in rides]
-    for req in session.exec(
+    ride_ids = [ride.id for ride in rides]
+    for ride_request in session.exec(
         select(RideRequest).where(col(RideRequest.passenger_id).in_(ids) | col(RideRequest.ride_id).in_(ride_ids))
     ):
-        session.delete(req)
+        session.delete(ride_request)
     for note in session.exec(
         select(Notification).where(
             col(Notification.user_id).in_(ids) | col(Notification.actor_id).in_(ids) | col(Notification.ride_id).in_(ride_ids)
@@ -185,12 +185,12 @@ def _crowd(session: Session, lead: int, used: list[int], extra_drivers: list[Use
     count = 0
     for event in picked:
         drivers = rng.sample(everyone, k=rng.choice([1, 2, 2, 3, 3, 4]))
-        taken = {d.id for d in drivers}
+        taken = {driver.id for driver in drivers}
         for driver in drivers:
             seats = rng.choice([2, 3, 3, 4, 4])
             ride = _ride(
                 session, driver, event,
-                origin=rng.choice([c for c in ORIGINS if c != event.city]),
+                origin=rng.choice([city for city in ORIGINS if city != event.city]),
                 price=rng.choice([20, 25, 30, 35, 40, 45, 50, 60, 70]),
                 smoking=driver.smoker and rng.random() < 0.5,
                 note=rng.choice(NOTES),
@@ -201,7 +201,7 @@ def _crowd(session: Session, lead: int, used: list[int], extra_drivers: list[Use
             count += 1
             accepted = rng.randint(0, seats - 1)
             pending = rng.randint(0, 2)
-            pool = [p for p in people if p.id not in taken]
+            pool = [person for person in people if person.id not in taken]
             for i, passenger in enumerate(rng.sample(pool, k=min(len(pool), accepted + pending))):
                 taken.add(passenger.id)
                 status = RequestStatus.accepted if i < accepted else RequestStatus.pending

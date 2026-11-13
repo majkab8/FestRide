@@ -47,7 +47,7 @@ def _generate_json(system: str, user: str, schema: dict, max_tokens: int) -> Any
             "maxOutputTokens": max_tokens,
         },
     }
-    models = list(dict.fromkeys(m for m in (settings.gemini_model, settings.gemini_fallback_model) if m))
+    models = list(dict.fromkeys(model for model in (settings.gemini_model, settings.gemini_fallback_model) if model))
     deadline = time.monotonic() + settings.ai_timeout_seconds
     reason = "no model configured"
     for model in models:
@@ -72,7 +72,7 @@ def _generate_json(system: str, user: str, schema: dict, max_tokens: int) -> Any
             raise _fail(f"{model}: HTTP {resp.status_code}")
         try:
             parts = resp.json()["candidates"][0]["content"]["parts"]
-            text = "".join(p.get("text", "") for p in parts if not p.get("thought"))
+            text = "".join(part.get("text", "") for part in parts if not part.get("thought"))
             return json.loads(text)
         except (KeyError, IndexError, TypeError, ValueError, AttributeError):
             reason = f"{model}: unusable response"

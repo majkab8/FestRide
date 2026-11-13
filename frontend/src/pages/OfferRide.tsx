@@ -21,10 +21,10 @@ export default function OfferRide() {
   useEffect(() => {
     if (!listOpen) return;
     const away = (e: MouseEvent) => { if (!pickerRef.current?.contains(e.target as Node)) setListOpen(false); };
-    const esc = (e: KeyboardEvent) => { if (e.key === "Escape") setListOpen(false); };
+    const closeOnEscape = (e: KeyboardEvent) => { if (e.key === "Escape") setListOpen(false); };
     document.addEventListener("mousedown", away);
-    document.addEventListener("keydown", esc);
-    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", esc); };
+    document.addEventListener("keydown", closeOnEscape);
+    return () => { document.removeEventListener("mousedown", away); document.removeEventListener("keydown", closeOnEscape); };
   }, [listOpen]);
   const [origin, setOrigin] = useState("");
   const [departure, setDeparture] = useState("");
@@ -34,7 +34,7 @@ export default function OfferRide() {
   const [note, setNote] = useState("");
   const [error, setError] = useState("");
   const myRides = useAsync(() => api.myRides(), []);
-  const existing = event ? (myRides.data ?? []).find((r) => r.event.id === event.id && parseLocal(r.departure_time) > new Date()) : undefined;
+  const existing = event ? (myRides.data ?? []).find((ride) => ride.event.id === event.id && parseLocal(ride.departure_time) > new Date()) : undefined;
   const [busy, setBusy] = useState(false);
   const [sentence, setSentence] = useState("");
   const [drafting, setDrafting] = useState(false);
@@ -47,21 +47,21 @@ export default function OfferRide() {
     if (!text) return;
     setDrafting(true);
     try {
-      const d = await api.offerDraft(text);
-      if (d.event) pick(d.event);
-      else if (d.event_hint) {
+      const draft = await api.offerDraft(text);
+      if (draft.event) pick(draft.event);
+      else if (draft.event_hint) {
         setEvent(null);
-        suggested.current = d.event_options.length ? { q: d.event_hint, events: d.event_options } : null;
-        setQuery(d.event_hint);
+        suggested.current = draft.event_options.length ? { q: draft.event_hint, events: draft.event_options } : null;
+        setQuery(draft.event_hint);
         setListOpen(true);
       }
-      if (d.origin_city) setOrigin(d.origin_city);
-      if (d.departure) setDeparture(d.departure);
-      if (d.seats) setSeats(d.seats);
-      if (d.price !== null) setPrice(d.price);
-      if (d.smoking_allowed !== null) setSmoking(d.smoking_allowed);
-      if (d.note && !note.trim()) setNote(d.note);
-      setDraftInfo(d.understood ? d.source : "none");
+      if (draft.origin_city) setOrigin(draft.origin_city);
+      if (draft.departure) setDeparture(draft.departure);
+      if (draft.seats) setSeats(draft.seats);
+      if (draft.price !== null) setPrice(draft.price);
+      if (draft.smoking_allowed !== null) setSmoking(draft.smoking_allowed);
+      if (draft.note && !note.trim()) setNote(draft.note);
+      setDraftInfo(draft.understood ? draft.source : "none");
     } catch {
       setDraftInfo("error");
     } finally {
@@ -72,9 +72,9 @@ export default function OfferRide() {
   const writeNote = async () => {
     setWriting(true);
     try {
-      const r = await api.rideNote({ event_id: event?.id ?? null, origin_city: origin.trim() || null, departure: departure || null, smoking_allowed: smoking, hint: note.trim() || null, lang });
-      setNote(r.text);
-      setNoteBy(r.source);
+      const result = await api.rideNote({ event_id: event?.id ?? null, origin_city: origin.trim() || null, departure: departure || null, smoking_allowed: smoking, hint: note.trim() || null, lang });
+      setNote(result.text);
+      setNoteBy(result.source);
     } catch {
       setNoteBy("");
     } finally {
@@ -89,12 +89,12 @@ export default function OfferRide() {
 
   useEffect(() => {
     if (event) return;
-    const q = query.trim();
-    if (q.length < 2) { setResults(null); return; }
+    const needle = query.trim();
+    if (needle.length < 2) { setResults(null); return; }
     if (suggested.current?.q === query) { setResults(suggested.current.events); return; }
     let live = true;
-    const h = setTimeout(() => api.events({ q, limit: 8 }).then((r) => { if (live) setResults(r); }).catch(() => { if (live) setResults([]); }), 250);
-    return () => { live = false; clearTimeout(h); };
+    const timer = setTimeout(() => api.events({ q: needle, limit: 8 }).then((found) => { if (live) setResults(found); }).catch(() => { if (live) setResults([]); }), 250);
+    return () => { live = false; clearTimeout(timer); };
   }, [query, event]);
 
   function pick(e: Event) {
@@ -125,7 +125,7 @@ export default function OfferRide() {
   return (
     <Page>
       <form className="form" onSubmit={submit}>
-        <h1 className="disp">{t("offer.title")}</h1>
+        <h1 className="display-title">{t("offer.title")}</h1>
 
         {/* AI: describe the ride in one sentence and the form fills itself */}
         <div className="ai-fill">
@@ -151,13 +151,13 @@ export default function OfferRide() {
           )}
           {event ? null : (
             <>
-              <div className="ev-picker" ref={pickerRef}>
+              <div className="event-picker" ref={pickerRef}>
                 <div className="field"><label htmlFor="of-q" className="sr-only">{t("offer.event")}</label>
                   <input id="of-q" type="search" placeholder={t("offer.eventPh")} value={query} autoComplete="off" aria-expanded={listOpen && !!results?.length} aria-controls="of-results"
                     onChange={(e) => { setQuery(e.target.value); setListOpen(true); }} onFocus={() => setListOpen(true)} /></div>
                 {/* results float over the form as a dropdown instead of pushing it down */}
                 {listOpen && query.trim().length >= 2 && (
-                  <div className="ev-pop" id="of-results">
+                  <div className="event-results" id="of-results">
                     {results === null ? <Loading /> : results.map((ev, i) => <EventRow key={ev.id} ev={ev} i={i} posters onSelect={() => { pick(ev); setListOpen(false); }} />)}
                   </div>
                 )}

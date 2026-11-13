@@ -62,7 +62,7 @@ class SearchResponse(BaseModel):
 
 def _known_event_names(session: Session, today) -> list[str]:
     names = session.exec(select(Event.name).where(Event.event_date >= today).distinct()).all()
-    return [n for n in names if n]
+    return [name for name in names if name]
 
 
 def _known_cities(session: Session) -> list[str]:
@@ -117,12 +117,12 @@ def _music_relation(score: float) -> str:
 
 
 def _facts(you: User, them: User, other: str, extra: Optional[dict] = None) -> dict:
-    m = match(you, them)
-    style = {1.0: "same style", 0.5: "close but not the same"}.get(m.style, "opposite styles")
+    scores = match(you, them)
+    style = {1.0: "same style", 0.5: "close but not the same"}.get(scores.style, "opposite styles")
     return {
         "other": other,
-        "music": _music_relation(m.music),
-        "shared_genres": m.shared_genres,
+        "music": _music_relation(scores.music),
+        "shared_genres": scores.shared_genres,
         "your_genres": you.music_genres,
         "their_genres": them.music_genres,
         "driving_style": f"you: {you.driving_style.value}, them: {them.driving_style.value} ({style})",
@@ -150,7 +150,7 @@ def explain(
 
     if data.ride_ids:
         rides = session.exec(select(Ride).where(col(Ride.id).in_(set(data.ride_ids)))).all()
-        drivers = {u.id: u for u in session.exec(select(User).where(col(User.id).in_({r.driver_id for r in rides})))}
+        drivers = {user.id: user for user in session.exec(select(User).where(col(User.id).in_({ride.driver_id for ride in rides})))}
         for ride in rides:
             if ride.driver_id == current_user.id:
                 continue  # no "match with yourself"
@@ -223,7 +223,7 @@ _EVENT_STOPWORDS = {
 
 
 def _event_words(text: str) -> list[str]:
-    return [w for w in re.findall(r"\w+", fold(text)) if w not in _EVENT_STOPWORDS and not re.fullmatch(r"(19|20)\d\d", w)]
+    return [word for word in re.findall(r"\w+", fold(text)) if word not in _EVENT_STOPWORDS and not re.fullmatch(r"(19|20)\d\d", word)]
 
 
 def _word_match(hint_word: str, name_word: str) -> int:
@@ -237,14 +237,14 @@ def _word_match(hint_word: str, name_word: str) -> int:
     return 0
 
 
-def _hint_score(words: list[str], ev: Event) -> Optional[tuple[bool, float, float]]:
-    name_words = _event_words(ev.name)
-    place_words = _event_words(f"{ev.city} {ev.venue or ''}")
-    in_name = [max((_word_match(w, n) for n in name_words), default=0) for w in words]
+def _hint_score(words: list[str], event: Event) -> Optional[tuple[bool, float, float]]:
+    name_words = _event_words(event.name)
+    place_words = _event_words(f"{event.city} {event.venue or ''}")
+    in_name = [max((_word_match(word, name_word) for name_word in name_words), default=0) for word in words]
     if not any(in_name):
         return None
-    found = [q or max((_word_match(w, p) for p in place_words), default=0) for w, q in zip(words, in_name)]
-    return all(found), sum(1 for q in in_name if q) / len(words), sum(found) / (2 * len(words))
+    found = [name_score or max((_word_match(word, place_word) for place_word in place_words), default=0) for word, name_score in zip(words, in_name)]
+    return all(found), sum(1 for name_score in in_name if name_score) / len(words), sum(found) / (2 * len(words))
 
 
 def _event_candidates(events: list[Event], hint: Optional[str], day) -> tuple[Optional[Event], list[Event]]:
@@ -253,17 +253,17 @@ def _event_candidates(events: list[Event], hint: Optional[str], day) -> tuple[Op
     if not words:
         return None, []
     scored = []
-    for ev in events:
-        tries = [sc for sc in (_hint_score(words, ev), _hint_score([glued], ev) if len(words) > 1 else None) if sc]
+    for event in events:
+        tries = [score for score in (_hint_score(words, event), _hint_score([glued], event) if len(words) > 1 else None) if score]
         if tries:
             complete, in_name, quality = max(tries)
-            scored.append(((complete, day is not None and ev.event_date == day, in_name, quality), ev))
-    scored.sort(key=lambda t: t[0], reverse=True)
+            scored.append(((complete, day is not None and event.event_date == day, in_name, quality), event))
+    scored.sort(key=lambda entry: entry[0], reverse=True)
     if scored and scored[0][0][0]:
         top = scored[0][0]
         if not any(key == top for key, _ in scored[1:]):
             return scored[0][1], []
-    return None, [ev for _, ev in scored[:6]]
+    return None, [event for _, event in scored[:6]]
 
 
 def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dict:
@@ -276,9 +276,9 @@ def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dic
         "event_date": f.date_from if f.date_from and f.date_from == f.date_to else None,
         "event": f.q,
     }
-    m = re.search(r"\b(?:o|at|godz\.?|godzinie)\s*(\d{1,2})(?:[:.](\d{2}))?", folded)
-    if m and 0 <= int(m.group(1)) <= 23:
-        out["departure_time"] = f"{int(m.group(1)):02d}:{m.group(2) or '00'}"
+    time_match = re.search(r"\b(?:o|at|godz\.?|godzinie)\s*(\d{1,2})(?:[:.](\d{2}))?", folded)
+    if time_match and 0 <= int(time_match.group(1)) <= 23:
+        out["departure_time"] = f"{int(time_match.group(1)):02d}:{time_match.group(2) or '00'}"
     if f.no_smoking:
         out["smoking_allowed"] = False
     elif re.search(r"mozna palic|palenie dozwolone|smoking (is )?(ok|allowed)|palacy", folded):
@@ -286,7 +286,7 @@ def _offer_rules(text: str, today, session: Session, events: list[Event]) -> dic
     return out
 
 
-def _pick(raw: dict, key: str, cast, ok=lambda v: True):
+def _pick(raw: dict, key: str, cast, ok=lambda value: True):
     value = raw.get(key)
     if value in (None, ""):
         return None
@@ -310,25 +310,25 @@ def parse_offer(
     except ai.AIUnavailable:
         raw, source = _offer_rules(data.text, today, session, events), "rules"
 
-    day = _pick(raw, "event_date", lambda v: v if isinstance(v, date_cls) else date_cls.fromisoformat(str(v)), lambda d: d >= today)
-    hint = _pick(raw, "event", lambda v: " ".join(str(v).split())[:100])
+    day = _pick(raw, "event_date", lambda value: value if isinstance(value, date_cls) else date_cls.fromisoformat(str(value)), lambda parsed_day: parsed_day >= today)
+    hint = _pick(raw, "event", lambda value: " ".join(str(value).split())[:100])
     event, options = _event_candidates(events, hint, day)
-    hhmm = _pick(raw, "departure_time", str, lambda v: re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", v) is not None)
+    hhmm = _pick(raw, "departure_time", str, lambda value: re.fullmatch(r"([01]?\d|2[0-3]):[0-5]\d", value) is not None)
     when = day or (event.event_date if event else None)
     departure = None
     if when and hhmm:
-        hh, mm = hhmm.split(":")
-        departure = f"{when.isoformat()}T{int(hh):02d}:{mm}"
+        hours, minutes = hhmm.split(":")
+        departure = f"{when.isoformat()}T{int(hours):02d}:{minutes}"
     draft = OfferDraft(
         event=event,
         event_hint=hint if not event else None,
         event_options=options,
-        origin_city=_pick(raw, "origin_city", lambda v: normalize_city(str(v))[:60]),
+        origin_city=_pick(raw, "origin_city", lambda value: normalize_city(str(value))[:60]),
         departure=departure,
-        seats=_pick(raw, "seats", int, lambda n: 1 <= n <= 8),
-        price=_pick(raw, "price", float, lambda p: 0 <= p <= 1000),
-        smoking_allowed=_pick(raw, "smoking_allowed", lambda v: v if isinstance(v, bool) else None),
-        note=_pick(raw, "note", lambda v: " ".join(str(v).split())[:300]) if source == "ai" else None,
+        seats=_pick(raw, "seats", int, lambda count: 1 <= count <= 8),
+        price=_pick(raw, "price", float, lambda amount: 0 <= amount <= 1000),
+        smoking_allowed=_pick(raw, "smoking_allowed", lambda value: value if isinstance(value, bool) else None),
+        note=_pick(raw, "note", lambda value: " ".join(str(value).split())[:300]) if source == "ai" else None,
         source=source,
         understood=False,
     )

@@ -54,10 +54,10 @@ def my_notifications(
         unread=unread,
         items=[
             NotificationRead(
-                id=n.id, kind=n.kind, read=n.read, created_at=n.created_at,
-                ride_id=n.ride_id, event_name=event_name, actor_name=actor_name,
+                id=notification.id, kind=notification.kind, read=notification.read, created_at=notification.created_at,
+                ride_id=notification.ride_id, event_name=event_name, actor_name=actor_name,
             )
-            for n, event_name, actor_name in rows
+            for notification, event_name, actor_name in rows
         ],
     )
 

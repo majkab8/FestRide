@@ -16,7 +16,7 @@ app = FastAPI(title="FestRide API", version="0.1.0", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[o.strip() for o in settings.frontend_origin.split(",") if o.strip()],
+    allow_origins=[origin.strip() for origin in settings.frontend_origin.split(",") if origin.strip()],
     allow_credentials=False,
     allow_methods=["*"],
     allow_headers=["*"],

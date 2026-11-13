@@ -43,7 +43,7 @@ export function Login() {
   return (
     <Page>
       <form className="form" onSubmit={submit}>
-        <h1 className="disp">{t("auth.loginTitle")}</h1>
+        <h1 className="display-title">{t("auth.loginTitle")}</h1>
         <div className="field"><label htmlFor="li-email">{t("auth.email")}</label><input id="li-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
         <div className="field"><label htmlFor="li-pw">{t("auth.password")}</label><input id="li-pw" type="password" autoComplete="current-password" required value={password} onChange={(e) => setPassword(e.target.value)} /></div>
         {error && <p className="error" role="alert">{error}</p>}
@@ -56,9 +56,9 @@ export function Login() {
 }
 
 const GENRES = ["techno", "house", "drum and bass", "trance", "rock", "metal", "punk", "indie", "pop", "hip-hop", "r&b", "jazz", "reggae", "folk", "classical"];
-const famClass = (g: string) => {
-  const f = familyOf(g);
-  return f === "electronic" ? "f-electronic" : f === "rock" ? "f-rock" : f === "urban" ? "f-urban" : "f-other";
+const famClass = (genre: string) => {
+  const family = familyOf(genre);
+  return family === "electronic" ? "chip-genre-electronic" : family === "rock" ? "chip-genre-rock" : family === "urban" ? "chip-genre-urban" : "chip-genre-other";
 };
 const STYLE_DOT: Record<DrivingStyle, React.CSSProperties> = {
   quiet: { background: "var(--blue)", color: "var(--on-blue)" },
@@ -108,7 +108,7 @@ export function Signup() {
       <Page>
         <form className="form" onSubmit={toStep2}>
           {steps}
-          <div><span className="eyebrow">{t("su.step", { n: 1 })}</span><h1 className="disp">{t("su.h1a")}</h1></div>
+          <div><span className="eyebrow">{t("su.step", { n: 1 })}</span><h1 className="display-title">{t("su.h1a")}</h1></div>
           <div className="field"><label htmlFor="su-name">{t("su.name")}</label><input id="su-name" autoComplete="given-name" required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} /></div>
           <div className="field"><label htmlFor="su-email">{t("auth.email")}</label><input id="su-email" type="email" autoComplete="email" required value={email} onChange={(e) => setEmail(e.target.value)} /></div>
           <div className="field"><label htmlFor="su-pw">{t("auth.password")}</label><input id="su-pw" type="password" autoComplete="new-password" required minLength={8} maxLength={72} value={password} onChange={(e) => setPassword(e.target.value)} /><span className="hint">{t("su.pwHint")}</span></div>
@@ -125,7 +125,7 @@ export function Signup() {
     <Page>
       <div className="form">
         {steps}
-        <div><span className="eyebrow">{t("su.step", { n: 2 })}</span><h1 className="disp">{t("su.h1b")}</h1><p className="muted" style={{ marginTop: 8 }}>{t("su.subB")}</p></div>
+        <div><span className="eyebrow">{t("su.step", { n: 2 })}</span><h1 className="display-title">{t("su.h1b")}</h1><p className="muted" style={{ marginTop: 8 }}>{t("su.subB")}</p></div>
         <ProfileFields id="su" {...{ genres, setGenres, style, setStyle, smoker, setSmoker, gender, setGender }} />
         {error && <p className="error" role="alert">{error}</p>}
         <div className="row">
@@ -139,29 +139,29 @@ export function Signup() {
 
 interface ProfileFieldsProps {
   id: string;
-  genres: string[]; setGenres: (fn: (cur: string[]) => string[]) => void;
-  style: DrivingStyle; setStyle: (s: DrivingStyle) => void;
-  smoker: boolean; setSmoker: (v: boolean) => void;
-  gender: string; setGender: (g: string) => void;
+  genres: string[]; setGenres: (fn: (current: string[]) => string[]) => void;
+  style: DrivingStyle; setStyle: (style: DrivingStyle) => void;
+  smoker: boolean; setSmoker: (smoker: boolean) => void;
+  gender: string; setGender: (gender: string) => void;
 }
 
 /** The matching answers (genres, ride style, smoking, gender): sign-up step 2 and the profile page. */
 function ProfileFields({ id, genres, setGenres, style, setStyle, smoker, setSmoker, gender, setGender }: ProfileFieldsProps) {
   const { t } = useI18n();
   const [custom, setCustom] = useState("");
-  const toggle = (g: string) => setGenres((cur) => (cur.includes(g) ? cur.filter((x) => x !== g) : [...cur, g].slice(0, 20)));
+  const toggle = (genre: string) => setGenres((current) => (current.includes(genre) ? current.filter((selected) => selected !== genre) : [...current, genre].slice(0, 20)));
   const addCustom = () => {
-    const g = custom.trim().toLowerCase().slice(0, 40);
-    if (g) setGenres((cur) => (cur.includes(g) ? cur : [...cur, g].slice(0, 20)));
+    const genre = custom.trim().toLowerCase().slice(0, 40);
+    if (genre) setGenres((current) => (current.includes(genre) ? current : [...current, genre].slice(0, 20)));
     setCustom("");
   };
-  const shown = [...GENRES, ...genres.filter((g) => !GENRES.includes(g))];
+  const shown = [...GENRES, ...genres.filter((genre) => !GENRES.includes(genre))];
   return (
     <>
       <div className="group">
         <div className="row"><span className="label" id={`${id}-genres`}>{t("su.listen")}</span><span className="note">{t("su.selected", { n: genres.length })}</span></div>
         <div className="chips genres" role="group" aria-labelledby={`${id}-genres`}>
-          {shown.map((g) => <button key={g} type="button" className={`chip ${famClass(g)}`} aria-pressed={genres.includes(g)} onClick={() => toggle(g)}>{g}</button>)}
+          {shown.map((genre) => <button key={genre} type="button" className={`chip ${famClass(genre)}`} aria-pressed={genres.includes(genre)} onClick={() => toggle(genre)}>{genre}</button>)}
         </div>
         <div className="row" style={{ flexWrap: "nowrap" }}>
           <div className="field" style={{ flex: 1 }}><label htmlFor={`${id}-custom`} className="sr-only">{t("su.other")}</label>
@@ -172,17 +172,17 @@ function ProfileFields({ id, genres, setGenres, style, setStyle, smoker, setSmok
       <div className="group">
         <span className="label" id={`${id}-style`}>{t("su.style")}</span>
         <div className="tiles" role="group" aria-labelledby={`${id}-style`}>
-          {(["quiet", "chatty", "party"] as DrivingStyle[]).map((s, i) => (
-            <button key={s} className="tile" type="button" aria-pressed={style === s} onClick={() => setStyle(s)}>
-              <span className={`dot sh${i}`} style={STYLE_DOT[s]}><Icon name={s === "quiet" ? "moon" : s === "chatty" ? "spark" : "sun"} /></span>
-              <b>{t(`styleT.${s}`)}</b><span className="d">{t(`styleD.${s}`)}</span>
+          {(["quiet", "chatty", "party"] as DrivingStyle[]).map((option, i) => (
+            <button key={option} className="tile" type="button" aria-pressed={style === option} onClick={() => setStyle(option)}>
+              <span className={`dot shape-${i}`} style={STYLE_DOT[option]}><Icon name={option === "quiet" ? "moon" : option === "chatty" ? "spark" : "sun"} /></span>
+              <b>{t(`styleT.${option}`)}</b><span className="description">{t(`styleD.${option}`)}</span>
             </button>
           ))}
         </div>
       </div>
       <div className="row">
         <span className="label" id={`${id}-smoke`}>{t("su.smoking")}</span>
-        <div className="seg" role="group" aria-labelledby={`${id}-smoke`}>
+        <div className="segmented" role="group" aria-labelledby={`${id}-smoke`}>
           <button type="button" aria-pressed={!smoker} onClick={() => setSmoker(false)}>{t("su.noSmoke")}</button>
           <button type="button" aria-pressed={smoker} onClick={() => setSmoker(true)}>{t("su.smoke")}</button>
         </div>
@@ -234,7 +234,7 @@ export function Profile() {
   return (
     <Page>
       <form className="form" onSubmit={save}>
-        <div><span className="eyebrow">{t("pf.eyebrow")}</span><h1 className="disp">{t("pf.title")}</h1><p className="muted" style={{ marginTop: 8 }}>{t("pf.sub")}</p></div>
+        <div><span className="eyebrow">{t("pf.eyebrow")}</span><h1 className="display-title">{t("pf.title")}</h1><p className="muted" style={{ marginTop: 8 }}>{t("pf.sub")}</p></div>
         <div className="field">
           <label htmlFor="pf-name">{t("pf.name")}</label>
           <input id="pf-name" autoComplete="given-name" required maxLength={80} value={name} onChange={(e) => setName(e.target.value)} />
