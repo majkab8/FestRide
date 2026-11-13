@@ -1,9 +1,14 @@
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
+DEFAULT_SECRET_KEY = "dev-secret-change-me"
+
+
 class Settings(BaseSettings):
     model_config = SettingsConfigDict(env_file=".env", extra="ignore")
-    secret_key: str = "dev-secret-change-me"
+    secret_key: str = DEFAULT_SECRET_KEY
+    api_prefix: str = ""
+    static_dir: str = ""
     access_token_expire_minutes: int = 60 * 24 * 7
     database_url: str = "sqlite:///./festride.db"
     frontend_origin: str = "http://localhost:5173"
