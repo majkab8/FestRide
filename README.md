@@ -11,6 +11,8 @@
 </p>
 
 <p align="center">
+  <a href="https://youtu.be/4o-X1h1k8W4"><img src="https://img.shields.io/badge/%E2%96%B6_Zobacz_wideo-FF8A6A?style=for-the-badge" alt="Zobacz wideo"></a>
+  <br><br>
   <a href="https://festride-production.up.railway.app/"><img src="https://img.shields.io/badge/Wypr%C3%B3buj_FestRide_online-FF4F8B?style=for-the-badge" alt="Wypróbuj FestRide online"></a>
   <br>
   <sub>Konto demo: <code>demo@example.com</code> / <code>festride-demo</code></sub>
@@ -21,12 +23,8 @@
 >
 > Inne aplikacje do wspólnych przejazdów pokazują trasę, cenę i godzinę. FestRide mówi też, **czy dogadacie się w aucie**. Każdy kierowca i pasażer dostaje **wynik dopasowania**, który bierze pod uwagę gust muzyczny, styl jazdy (w ciszy, z rozmową albo z imprezą) i to, czy ktoś pali. Do tego AI w jednym zdaniu podpowiada, dlaczego złapiecie kontakt. Kilka godzin drogi na festiwal to dużo lepsza zabawa z kimś, kto słucha tej samej muzyki.
 
-### 🎬 Demo i zrzuty ekranu
+### 📸 Zrzuty ekranu
 <img src="docs/divider.svg" width="200" alt="">
-
-<p align="center">
-  <a href="https://github.com/user-attachments/assets/9a5ae1cc-379e-477a-a7ec-f19517ae9446"><img src="https://img.shields.io/badge/%E2%96%B6_Odtw%C3%B3rz_demo-FF8A6A?style=for-the-badge" alt="Odtwórz demo"></a>
-</p>
 
 ![Strona główna: „Każda droga kończy się pod sceną”, wyszukiwanie jednym zdaniem z plakietką AI](docs/screenshots/landing.webp)
 
