@@ -25,7 +25,7 @@
 <img src="docs/divider.svg" width="200" alt="">
 
 <p align="center">
-  <a href="https://github.com/user-attachments/assets/9a5ae1cc-379e-477a-a7ec-f19517ae9446"><img src="https://img.shields.io/badge/%E2%96%B6_Odtw%C3%B3rz_demo-FF8A6A?style=for-the-badge" alt="Odtwórz demo"></a>
+  <a href="https://github.com/majkab8/FestRide/blob/main/Festride%20demo.mp4"><img src="https://img.shields.io/badge/%E2%96%B6_Odtw%C3%B3rz_demo-FF8A6A?style=for-the-badge" alt="Odtwórz demo"></a>
 </p>
 
 ![Strona główna: „Każda droga kończy się pod sceną”, wyszukiwanie jednym zdaniem z plakietką AI](docs/screenshots/landing.webp)
