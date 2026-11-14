@@ -378,6 +378,10 @@
   margin-left: 26px;
   font-size: 46px;
   white-space: nowrap;
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  mask-image: linear-gradient(to right, #000 calc(100% - 140px), transparent);
 }
 
 .home-page {
@@ -552,11 +556,19 @@
     color-mix(in srgb, var(--inv-bg) 88%, transparent)
   );
 }
+.home-page .sound::after {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 130px;
+  z-index: -1;
+  background: linear-gradient(180deg, rgb(30 27 24 / 0.9), transparent);
+}
 .home-page .sound .eyebrow {
   font-family: var(--font-mono);
   font-size: 12px;
   letter-spacing: 0.08em;
-  color: var(--inv-accent);
+  color: var(--lime);
   text-transform: uppercase;
 }
 .home-page .sound .tier a {
@@ -1255,8 +1267,8 @@
   color: var(--on-bright);
 }
 .ride-page aside .state.accepted {
-  background: var(--blue);
-  color: var(--on-blue);
+  background: var(--m-best);
+  color: var(--on-bright);
 }
 .ride-page aside .state.called_off {
   background: var(--inv-soft);
@@ -1642,8 +1654,8 @@
   color: var(--on-bright);
 }
 .my-rides-page .status-tag.accepted {
-  background: var(--blue);
-  color: var(--on-blue);
+  background: var(--m-best);
+  color: var(--on-bright);
 }
 .my-rides-page .status-tag.cancelled,
 .my-rides-page .status-tag.removed,

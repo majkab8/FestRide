@@ -27,7 +27,6 @@
   --m-mid-ink: #e07b12;
   --m-low-ink: #e04848;
   --inv-bg: #1e1b18;
-  --inv-accent: #d7ff4a;
   --inv-fg: #f7ebd8;
   --inv-muted: #cfc5b6;
   --inv-soft: #2c2824;
@@ -61,7 +60,6 @@
     --muted: #b9ae9f;
     --faint: #998e80;
     --inv-bg: #f7ebd8;
-    --inv-accent: #4d6400;
     --inv-fg: #1e1b18;
     --inv-muted: #5e564c;
     --inv-soft: #efe0c9;
@@ -105,7 +103,6 @@
   --muted: #b9ae9f;
   --faint: #998e80;
   --inv-bg: #f7ebd8;
-  --inv-accent: #4d6400;
   --inv-fg: #1e1b18;
   --inv-muted: #5e564c;
   --inv-soft: #efe0c9;
@@ -1309,7 +1306,7 @@ footer.site p {
   color: #cfc5b6;
   position: relative;
 }
-.credit {
+.author-credit {
   background: #1e1b18;
   color: #cfc5b6;
   border-top: 1px solid rgba(247, 235, 216, 0.12);

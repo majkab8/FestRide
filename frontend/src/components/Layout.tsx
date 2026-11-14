@@ -484,6 +484,8 @@ export function Screen({
 
 export function Credit() {
   return (
-    <div className="credit">Made by Maja Bednarek with love for Xelerit</div>
+    <div className="author-credit">
+      Made by Maja Bednarek with love for Xelerit
+    </div>
   );
 }
