@@ -11,11 +11,11 @@
 </p>
 
 <p align="center">
+  <a href="https://youtu.be/4o-X1h1k8W4"><img src="https://img.shields.io/badge/%E2%96%B6_Zobacz_wideo-FF8A6A?style=for-the-badge" alt="Zobacz wideo"></a>
+  <br><br>
   <a href="https://festride-production.up.railway.app/"><img src="https://img.shields.io/badge/Wypr%C3%B3buj_FestRide_online-FF4F8B?style=for-the-badge" alt="Wypróbuj FestRide online"></a>
   <br>
   <sub>Konto demo: <code>demo@example.com</code> / <code>festride-demo</code></sub>
-  <br><br>
-  <a href="https://youtu.be/4o-X1h1k8W4"><img src="https://img.shields.io/badge/%E2%96%B6_Zobacz_wideo-FF8A6A?style=for-the-badge" alt="Zobacz wideo"></a>
 </p>
 
 
